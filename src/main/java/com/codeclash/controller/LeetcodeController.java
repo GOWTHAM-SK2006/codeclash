@@ -16,6 +16,37 @@ public class LeetcodeController {
 
     private final LeetcodeSyncService leetcodeSyncService;
 
+    @PostMapping("/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request, Authentication auth) {
+        String leetcodeUsername = request.get("username");
+        String email = request.get("email");
+        if (leetcodeUsername == null || leetcodeUsername.trim().isEmpty() || email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username and email are required"));
+        }
+        try {
+            User user = (User) auth.getPrincipal();
+            leetcodeSyncService.sendVerificationOtp(user.getUsername(), leetcodeUsername, email);
+            return ResponseEntity.ok(Map.of("message", "OTP sent to " + email));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request, Authentication auth) {
+        String otp = request.get("otp");
+        if (otp == null || otp.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "OTP is required"));
+        }
+        try {
+            User user = (User) auth.getPrincipal();
+            leetcodeSyncService.verifyOtp(user.getUsername(), otp);
+            return ResponseEntity.ok(Map.of("message", "LeetCode profile verified successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/connect")
     public ResponseEntity<?> connect(@RequestBody Map<String, String> request, Authentication auth) {
         String leetcodeUsername = request.get("username");

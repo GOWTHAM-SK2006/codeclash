@@ -36,5 +36,18 @@ public class LeetcodeProfile {
     @Builder.Default
     private Integer totalCoinsEarned = 0;
 
+    @Column(name = "leetcode_email")
+    private String leetcodeEmail;
+
+    @Column(name = "otp_code")
+    private String otpCode;
+
+    @Builder.Default
+    @Column(name = "is_verified")
+    private boolean verified = false;
+
+    @Column(name = "otp_created_at")
+    private LocalDateTime otpCreatedAt;
+
     private LocalDateTime lastSyncedAt;
 }

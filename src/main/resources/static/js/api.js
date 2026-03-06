@@ -126,6 +126,18 @@ const api = {
     getLesson(id) { return this.request(`/lessons/${id}`); },
 
     // LeetCode
+    sendOtp(username, email) {
+        return this.request('/leetcode/send-otp', {
+            method: 'POST',
+            body: JSON.stringify({ username, email })
+        });
+    },
+    verifyOtp(otp) {
+        return this.request('/leetcode/verify-otp', {
+            method: 'POST',
+            body: JSON.stringify({ otp })
+        });
+    },
     connectLeetcode(username) {
         return this.request('/leetcode/connect', {
             method: 'POST',

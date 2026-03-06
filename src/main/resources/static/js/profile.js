@@ -18,10 +18,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const leetcodeConnectView = document.getElementById('leetcodeConnectView');
     const leetcodeSyncView = document.getElementById('leetcodeSyncView');
     const leetcodeUsernameInput = document.getElementById('leetcodeUsernameInput');
-    const connectLeetcodeBtn = document.getElementById('connectLeetcodeBtn');
+    const leetcodeEmailInput = document.getElementById('leetcodeEmailInput');
+    const sendOtpBtn = document.getElementById('sendOtpBtn');
+    const otpSection = document.getElementById('otpSection');
+    const otpInput = document.getElementById('otpInput');
+    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+
     const syncLeetcodeBtn = document.getElementById('syncLeetcodeBtn');
     const displayLeetcodeUsername = document.getElementById('displayLeetcodeUsername');
     const lastSyncedText = document.getElementById('lastSyncedText');
+    const verifiedBadge = document.getElementById('verifiedBadge');
     const easyCountEl = document.getElementById('easySolvedCount');
     const mediumCountEl = document.getElementById('mediumSolvedCount');
     const hardCountEl = document.getElementById('hardSolvedCount');
@@ -64,10 +70,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Fetch LeetCode status
             try {
                 const lcProfile = await api.getLeetcodeProfile();
-                if (lcProfile) {
+                if (lcProfile && lcProfile.verified) {
                     leetcodeConnectView.classList.add('hidden');
                     leetcodeSyncView.classList.remove('hidden');
                     displayLeetcodeUsername.textContent = lcProfile.leetcodeUsername;
+                    if (verifiedBadge) verifiedBadge.classList.remove('hidden');
                     lastSyncedText.textContent = lcProfile.lastSyncedAt ?
                         `Last Synced: ${new Date(lcProfile.lastSyncedAt).toLocaleString()}` :
                         'Never synced';
@@ -77,6 +84,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     leetcodeConnectView.classList.remove('hidden');
                     leetcodeSyncView.classList.add('hidden');
+                    if (lcProfile) {
+                        leetcodeUsernameInput.value = lcProfile.leetcodeUsername || '';
+                        leetcodeEmailInput.value = lcProfile.leetcodeEmail || '';
+                        // If they have a profile but not verified, show OTP section if they just sent one
+                        // For now we just reset the view to allow them to resend
+                    }
                 }
             } catch (e) {
                 // If 404, just show connect view
@@ -96,26 +109,53 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Connect Button Handler
-    if (connectLeetcodeBtn) {
-        connectLeetcodeBtn.addEventListener('click', async () => {
+    // Send OTP Button Handler
+    if (sendOtpBtn) {
+        sendOtpBtn.addEventListener('click', async () => {
             const username = leetcodeUsernameInput.value.trim();
-            if (!username) {
-                alert('Please enter a LeetCode username');
+            const email = leetcodeEmailInput.value.trim();
+            const spinner = document.getElementById('sendOtpSpinner');
+
+            if (!username || !email) {
+                alert('Please enter both LeetCode username and email');
                 return;
             }
 
-            connectLeetcodeBtn.disabled = true;
-            connectLeetcodeBtn.textContent = 'Connecting...';
+            sendOtpBtn.disabled = true;
+            if (spinner) spinner.classList.remove('hidden');
 
             try {
-                await api.connectLeetcode(username);
+                await api.sendOtp(username, email);
+                alert('Verification OTP sent to your email!');
+                if (otpSection) otpSection.classList.remove('hidden');
+                sendOtpBtn.textContent = 'Resend OTP';
+            } catch (error) {
+                alert(error.message || 'Failed to send OTP');
+            } finally {
+                sendOtpBtn.disabled = false;
+                if (spinner) spinner.classList.add('hidden');
+            }
+        });
+    }
+
+    // Verify OTP Button Handler
+    if (verifyOtpBtn) {
+        verifyOtpBtn.addEventListener('click', async () => {
+            const otp = otpInput.value.trim();
+            if (!otp || otp.length !== 6) {
+                alert('Please enter a valid 6-digit OTP');
+                return;
+            }
+
+            verifyOtpBtn.disabled = true;
+            try {
+                await api.verifyOtp(otp);
+                alert('Verification successful!');
                 await loadProfileData();
             } catch (error) {
-                alert(error.message || 'Failed to connect LeetCode profile');
+                alert(error.message || 'Verification failed');
             } finally {
-                connectLeetcodeBtn.disabled = false;
-                connectLeetcodeBtn.textContent = 'Connect Profile';
+                verifyOtpBtn.disabled = false;
             }
         });
     }
