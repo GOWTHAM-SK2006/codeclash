@@ -34,16 +34,17 @@
         if (!requireAuth()) return;
 
         (async function () {
+            const profileEl = document.getElementById('profileView');
+            const histEl = document.getElementById('coinHistory');
+
             try {
                 const dash = await api.getDashboard();
-                const user = api.getUser();
-
-                document.getElementById('profileView').innerHTML = `
+                profileEl.innerHTML = `
                     <div class="profile-header">
                         <div class="avatar">${(dash.displayName || dash.username)[0].toUpperCase()}</div>
                         <div>
                             <h1 style="font-size:1.75rem; font-weight:800;">${dash.displayName || dash.username}</h1>
-                            <p style="color:var(--text-secondary);">@${dash.username}</p>
+                            <p style color:var(--text-secondary);">@${dash.username}</p>
                         </div>
                     </div>
                     
@@ -62,91 +63,95 @@
                         </div>
                     </div>
                 `;
+            } catch (e) {
+                profileEl.innerHTML = '<div class="empty-state"><p>Could not load profile stats.</p></div>';
+            }
 
-                const history = await api.getCoinHistory();
-                const histEl = document.getElementById('coinHistory');
-
-                // Render LeetCode Section
-                const leetcodeSection = document.createElement('div');
-                leetcodeSection.style.marginTop = '2rem';
-                leetcodeSection.innerHTML = `
-                    <div class="card">
-                        <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1rem;">LeetCode Synchronization</h2>
-                        <div id="leetcodeContent">
-                            <div class="spinner"></div>
-                        </div>
+            // Render LeetCode Section (Independent of other sections)
+            const leetcodeSection = document.createElement('div');
+            leetcodeSection.style.marginTop = '2rem';
+            leetcodeSection.innerHTML = `
+                <div class="card">
+                    <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1rem;">LeetCode Synchronization</h2>
+                    <div id="leetcodeContent">
+                        <div class="spinner"></div>
                     </div>
-                `;
-                document.querySelector('.container').insertBefore(leetcodeSection, document.querySelector('h2').closest('div'));
+                </div>
+            `;
+            const coinHistHeader = document.querySelector('h2');
+            if (coinHistHeader) {
+                document.querySelector('.container').insertBefore(leetcodeSection, coinHistHeader.closest('div'));
+            }
 
-                async function renderLeetcode() {
-                    const lcContent = document.getElementById('leetcodeContent');
-                    try {
-                        const lc = await api.getLeetcodeProfile();
-                        lcContent.innerHTML = `
-                            <div class="stats-grid" style="margin-bottom:1.5rem;">
-                                <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                    <div class="stat-value" style="font-size:1.25rem;">${lc.easySolved}</div>
-                                    <div class="stat-label">Easy</div>
-                                </div>
-                                <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                    <div class="stat-value" style="font-size:1.25rem;">${lc.mediumSolved}</div>
-                                    <div class="stat-label">Medium</div>
-                                </div>
-                                <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                    <div class="stat-value" style="font-size:1.25rem;">${lc.hardSolved}</div>
-                                    <div class="stat-label">Hard</div>
-                                </div>
+            async function renderLeetcode() {
+                const lcContent = document.getElementById('leetcodeContent');
+                try {
+                    const lc = await api.getLeetcodeProfile();
+                    lcContent.innerHTML = `
+                        <div class="stats-grid" style="margin-bottom:1.5rem;">
+                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
+                                <div class="stat-value" style="font-size:1.25rem;">${lc.easySolved}</div>
+                                <div class="stat-label">Easy</div>
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <div>
-                                    <p style="font-weight:600;">@${lc.leetcodeUsername}</p>
-                                    <p style="font-size:0.75rem; color:var(--text-secondary);">
-                                        Last synced: ${lc.lastSyncedAt ? new Date(lc.lastSyncedAt).toLocaleString() : 'Never'}
-                                    </p>
-                                </div>
-                                <button class="btn btn-primary" id="syncBtn">Sync Now</button>
+                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
+                                <div class="stat-value" style="font-size:1.25rem;">${lc.mediumSolved}</div>
+                                <div class="stat-label">Medium</div>
                             </div>
-                        `;
-                        document.getElementById('syncBtn').onclick = async () => {
-                            const btn = document.getElementById('syncBtn');
-                            btn.disabled = true;
-                            btn.innerText = 'Syncing...';
-                            try {
-                                await api.syncLeetcode();
-                                alert('LeetCode progress synced successfully!');
-                                location.reload();
-                            } catch (err) {
-                                alert(err.message);
-                                btn.disabled = false;
-                                btn.innerText = 'Sync Now';
-                            }
-                        };
-                    } catch (err) {
-                        lcContent.innerHTML = `
-                            <p style="color:var(--text-secondary); margin-bottom:1rem;">Connect your LeetCode account to earn coins for your progress.</p>
-                            <div style="display:flex; gap:0.5rem;">
-                                <input type="text" id="lcUsername" class="input" placeholder="LeetCode Username" style="flex:1;">
-                                <button class="btn btn-primary" id="connectBtn">Connect</button>
+                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
+                                <div class="stat-value" style="font-size:1.25rem;">${lc.hardSolved}</div>
+                                <div class="stat-label">Hard</div>
                             </div>
-                        `;
-                        document.getElementById('connectBtn').onclick = async () => {
-                            const username = document.getElementById('lcUsername').value;
-                            if (!username) return;
-                            try {
-                                await api.connectLeetcode(username);
-                                alert('LeetCode account connected!');
-                                renderLeetcode();
-                            } catch (err) {
-                                alert(err.message);
-                            }
-                        };
-                    }
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <p style="font-weight:600;">@${lc.leetcodeUsername}</p>
+                                <p style="font-size:0.75rem; color:var(--text-secondary);">
+                                    Last synced: ${lc.lastSyncedAt ? new Date(lc.lastSyncedAt).toLocaleString() : 'Never'}
+                                </p>
+                            </div>
+                            <button class="btn btn-primary" id="syncBtn">Sync Now</button>
+                        </div>
+                    `;
+                    document.getElementById('syncBtn').onclick = async () => {
+                        const btn = document.getElementById('syncBtn');
+                        btn.disabled = true;
+                        btn.innerText = 'Syncing...';
+                        try {
+                            await api.syncLeetcode();
+                            alert('LeetCode progress synced successfully!');
+                            location.reload();
+                        } catch (err) {
+                            alert(err.message);
+                            btn.disabled = false;
+                            btn.innerText = 'Sync Now';
+                        }
+                    };
+                } catch (err) {
+                    lcContent.innerHTML = `
+                        <p style="color:var(--text-secondary); margin-bottom:1rem;">Connect your LeetCode account to earn coins for your progress.</p>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="lcUsername" class="input" placeholder="LeetCode Username" style="flex:1;">
+                            <button class="btn btn-primary" id="connectBtn">Connect</button>
+                        </div>
+                    `;
+                    document.getElementById('connectBtn').onclick = async () => {
+                        const username = document.getElementById('lcUsername').value;
+                        if (!username) return;
+                        try {
+                            await api.connectLeetcode(username);
+                            alert('LeetCode account connected!');
+                            renderLeetcode();
+                        } catch (err) {
+                            alert(err.message);
+                        }
+                    };
                 }
-                renderLeetcode();
+            }
+            renderLeetcode();
 
+            try {
+                const history = await api.getCoinHistory();
                 if (history.length === 0) {
-
                     histEl.innerHTML = '<div class="empty-state"><p>No transaction history.</p></div>';
                 } else {
                     histEl.innerHTML = `
@@ -175,9 +180,10 @@
                     `;
                 }
             } catch (e) {
-                document.getElementById('profileView').innerHTML = '<div class="empty-state"><p>Could not load profile.</p></div>';
+                histEl.innerHTML = '<div class="empty-state"><p>Could not load coin history.</p></div>';
             }
         })();
+
     </script>
 </body>
 
