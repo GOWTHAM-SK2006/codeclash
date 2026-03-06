@@ -4,17 +4,20 @@ import com.codeclash.entity.LeetcodeProfile;
 import com.codeclash.entity.User;
 import com.codeclash.repository.LeetcodeProfileRepository;
 import com.codeclash.repository.UserRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -25,10 +28,14 @@ public class LeetcodeSyncService {
     private final LeetcodeProfileRepository leetcodeProfileRepository;
     private final UserRepository userRepository;
     private final CoinService coinService;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final int COINS_EASY = 5;
     private static final int COINS_MEDIUM = 10;
     private static final int COINS_HARD = 15;
+
+    private static final String LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql";
 
     @Transactional
     public LeetcodeProfile connectProfile(String username, String leetcodeUsername) {
@@ -65,23 +72,15 @@ public class LeetcodeSyncService {
         }
 
         try {
-            // Fetch and parse LeetCode profile
-            // LeetCode URLs are typically leetcode.com/u/username or leetcode.com/username
-            String url = "https://leetcode.com/u/" + profile.getLeetcodeUsername();
-            log.info("Syncing LeetCode profile for {} from {}", profile.getLeetcodeUsername(), url);
+            log.info("Syncing LeetCode profile for {}", profile.getLeetcodeUsername());
 
-            Document doc = Jsoup.connect(url)
-                    .userAgent(
-                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                    .timeout(10000)
-                    .get();
+            // Fetch solved counts via GraphQL
+            Map<String, Integer> counts = fetchSolvedCounts(profile.getLeetcodeUsername());
+            int easy = counts.getOrDefault("Easy", 0);
+            int medium = counts.getOrDefault("Medium", 0);
+            int hard = counts.getOrDefault("Hard", 0);
 
-            // Extract solved counts
-            int easy = parseCount(doc, "Easy");
-            int medium = parseCount(doc, "Medium");
-            int hard = parseCount(doc, "Hard");
-
-            log.info("Parsed counts for {}: Easy={}, Medium={}, Hard={}",
+            log.info("Fetched counts for {}: Easy={}, Medium={}, Hard={}",
                     profile.getLeetcodeUsername(), easy, medium, hard);
 
             // Calculate new solved counts
@@ -107,63 +106,58 @@ public class LeetcodeSyncService {
 
             return leetcodeProfileRepository.save(profile);
 
-        } catch (IOException e) {
-            log.error("Failed to fetch LeetCode profile for {}", profile.getLeetcodeUsername(), e);
-            throw new RuntimeException("Could not fetch LeetCode profile. Please check the username and try again.");
+        } catch (Exception e) {
+            log.error("Failed to sync LeetCode profile for {}", profile.getLeetcodeUsername(), e);
+            throw new RuntimeException("Could not fetch LeetCode profile data. " + e.getMessage());
         }
     }
 
-    private int parseCount(Document doc, String difficulty) {
-        try {
-            // Try to find elements containing the difficulty text
-            Elements elements = doc.getElementsContainingOwnText(difficulty);
-            for (Element el : elements) {
-                // LeetCode often has "Easy", "Medium", "Hard" labels
-                // We want to find the number associated with it.
-                // In the current profile layout, the count is often in a sibling or parent
-                // sibling
-
-                // Strategy 1: Look at parent text
-                Element parent = el.parent();
-                if (parent != null) {
-                    String text = parent.text();
-                    if (text.contains("/")) {
-                        String countPart = extractCountFromText(text, difficulty);
-                        if (countPart != null)
-                            return Integer.parseInt(countPart);
+    private Map<String, Integer> fetchSolvedCounts(String leetcodeUsername) throws Exception {
+        String query = """
+                query userProblemsSolved($username: String!) {
+                  matchedUser(username: $username) {
+                    submitStatsGlobal {
+                      acSubmissionNum {
+                        difficulty
+                        count
+                      }
                     }
+                  }
                 }
+                """;
 
-                // Strategy 2: Look at siblings
-                Element next = el.nextElementSibling();
-                if (next != null && next.text().contains("/")) {
-                    String countPart = extractCountFromText(next.text(), "");
-                    if (countPart != null)
-                        return Integer.parseInt(countPart);
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Failed to parse {} count: {}", difficulty, e.getMessage());
-        }
-        return 0;
-    }
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("username", leetcodeUsername);
 
-    private String extractCountFromText(String text, String difficulty) {
-        try {
-            // Remove difficulty word if present
-            String cleanText = text;
-            if (!difficulty.isEmpty() && text.contains(difficulty)) {
-                cleanText = text.substring(text.indexOf(difficulty) + difficulty.length()).trim();
-            }
-            // Find the "/" and take what's before it
-            if (cleanText.contains("/")) {
-                String countStr = cleanText.split("/")[0].replaceAll("[^0-9]", "");
-                if (!countStr.isEmpty())
-                    return countStr;
-            }
-        } catch (Exception e) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("query", query);
+        body.put("variables", variables);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+        headers.set("Referer", "https://leetcode.com/u/" + leetcodeUsername + "/");
+        headers.set("Origin", "https://leetcode.com");
+        headers.set("Accept", "application/json");
+
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+
+        String response = restTemplate.postForObject(LEETCODE_GRAPHQL_URL, entity, String.class);
+        JsonNode root = objectMapper.readTree(response);
+        JsonNode stats = root.path("data").path("matchedUser").path("submitStatsGlobal").path("acSubmissionNum");
+
+        if (stats.isMissingNode() || !stats.isArray()) {
+            throw new RuntimeException("Invalid username or profile is private.");
         }
-        return null;
+
+        Map<String, Integer> result = new HashMap<>();
+        for (JsonNode node : stats) {
+            String difficulty = node.path("difficulty").asText();
+            int count = node.path("count").asInt();
+            result.put(difficulty, count);
+        }
+        return result;
     }
 
     public Optional<LeetcodeProfile> getProfile(String username) {
