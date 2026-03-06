@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/lessons/**").permitAll()
                         .requestMatchers("/api/problems/**").permitAll()
                         .requestMatchers("/api/leaderboard/**").permitAll()
+                        .requestMatchers("/api/leetcode/**").authenticated()
                         .requestMatchers("/h2-console/**").permitAll()
                         .anyRequest().authenticated())
 

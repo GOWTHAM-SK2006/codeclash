@@ -124,4 +124,19 @@ const api = {
     getTopics(languageId) { return this.request(`/topics?languageId=${languageId}`); },
     getLessons(topicId) { return this.request(`/lessons?topicId=${topicId}`); },
     getLesson(id) { return this.request(`/lessons/${id}`); },
+
+    // LeetCode
+    connectLeetcode(username) {
+        return this.request('/leetcode/connect', {
+            method: 'POST',
+            body: JSON.stringify({ username })
+        });
+    },
+    syncLeetcode() {
+        return this.request('/leetcode/sync', { method: 'POST' });
+    },
+    getLeetcodeProfile() {
+        return this.request('/leetcode/profile');
+    }
 };
+
