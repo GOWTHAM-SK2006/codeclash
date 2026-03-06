@@ -1,5 +1,6 @@
 package com.codeclash.controller;
 
+import com.codeclash.entity.User;
 import com.codeclash.service.LeetcodeSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,8 @@ public class LeetcodeController {
             return ResponseEntity.badRequest().body(Map.of("error", "Username is required"));
         }
         try {
-            return ResponseEntity.ok(leetcodeSyncService.connectProfile(auth.getName(), leetcodeUsername));
+            User user = (User) auth.getPrincipal();
+            return ResponseEntity.ok(leetcodeSyncService.connectProfile(user.getUsername(), leetcodeUsername));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -31,7 +33,8 @@ public class LeetcodeController {
     @PostMapping("/sync")
     public ResponseEntity<?> sync(Authentication auth) {
         try {
-            return ResponseEntity.ok(leetcodeSyncService.syncProfile(auth.getName()));
+            User user = (User) auth.getPrincipal();
+            return ResponseEntity.ok(leetcodeSyncService.syncProfile(user.getUsername()));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -39,7 +42,8 @@ public class LeetcodeController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Authentication auth) {
-        return leetcodeSyncService.getProfile(auth.getName())
+        User user = (User) auth.getPrincipal();
+        return leetcodeSyncService.getProfile(user.getUsername())
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
