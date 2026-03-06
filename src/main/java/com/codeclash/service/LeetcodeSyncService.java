@@ -66,24 +66,28 @@ public class LeetcodeSyncService {
 
         try {
             // Fetch and parse LeetCode profile
-            String url = "https://leetcode.com/" + profile.getLeetcodeUsername();
+            // LeetCode URLs are typically leetcode.com/u/username or leetcode.com/username
+            String url = "https://leetcode.com/u/" + profile.getLeetcodeUsername();
+            log.info("Syncing LeetCode profile for {} from {}", profile.getLeetcodeUsername(), url);
+
             Document doc = Jsoup.connect(url)
                     .userAgent(
                             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .timeout(10000)
                     .get();
 
             // Extract solved counts
-            // Note: LeetCode's DOM structure might change, but typically solved counts are
-            // in specific spans/divs.
-            // We'll look for specific text patterns if classes are dynamic.
             int easy = parseCount(doc, "Easy");
             int medium = parseCount(doc, "Medium");
             int hard = parseCount(doc, "Hard");
 
+            log.info("Parsed counts for {}: Easy={}, Medium={}, Hard={}",
+                    profile.getLeetcodeUsername(), easy, medium, hard);
+
             // Calculate new solved counts
-            int newEasy = Math.max(0, easy - profile.getEasySolved());
-            int newMedium = Math.max(0, medium - profile.getMediumSolved());
-            int newHard = Math.max(0, hard - profile.getHardSolved());
+            int newEasy = Math.max(0, easy - (profile.getEasySolved() != null ? profile.getEasySolved() : 0));
+            int newMedium = Math.max(0, medium - (profile.getMediumSolved() != null ? profile.getMediumSolved() : 0));
+            int newHard = Math.max(0, hard - (profile.getHardSolved() != null ? profile.getHardSolved() : 0));
 
             int earnedCoins = (newEasy * COINS_EASY) + (newMedium * COINS_MEDIUM) + (newHard * COINS_HARD);
 
@@ -91,7 +95,9 @@ public class LeetcodeSyncService {
                 String reason = String.format("LeetCode Sync: +%d Easy, +%d Medium, +%d Hard", newEasy, newMedium,
                         newHard);
                 coinService.awardCoins(user, earnedCoins, reason);
-                profile.setTotalCoinsEarned(profile.getTotalCoinsEarned() + earnedCoins);
+                profile.setTotalCoinsEarned(
+                        (profile.getTotalCoinsEarned() != null ? profile.getTotalCoinsEarned() : 0) + earnedCoins);
+                log.info("Awarded {} coins to user {} for LeetCode sync", earnedCoins, user.getUsername());
             }
 
             profile.setEasySolved(easy);
@@ -108,29 +114,56 @@ public class LeetcodeSyncService {
     }
 
     private int parseCount(Document doc, String difficulty) {
-        // LeetCode solved counts are often in elements containing the difficulty text
-        // Example: <span>Easy</span> ... <span>40/700</span>
-        // This is a heuristic based on common profile structures.
         try {
+            // Try to find elements containing the difficulty text
             Elements elements = doc.getElementsContainingOwnText(difficulty);
             for (Element el : elements) {
-                // Look at the parent or sibling for the numeric value
+                // LeetCode often has "Easy", "Medium", "Hard" labels
+                // We want to find the number associated with it.
+                // In the current profile layout, the count is often in a sibling or parent
+                // sibling
+
+                // Strategy 1: Look at parent text
                 Element parent = el.parent();
                 if (parent != null) {
                     String text = parent.text();
-                    // Text usually looks like "Easy 40/700" or similar
-                    // We want the number right after the difficulty word
-                    String part = text.substring(text.indexOf(difficulty) + difficulty.length()).trim();
-                    String countStr = part.split("/")[0].replaceAll("[^0-9]", "");
-                    if (!countStr.isEmpty()) {
-                        return Integer.parseInt(countStr);
+                    if (text.contains("/")) {
+                        String countPart = extractCountFromText(text, difficulty);
+                        if (countPart != null)
+                            return Integer.parseInt(countPart);
                     }
+                }
+
+                // Strategy 2: Look at siblings
+                Element next = el.nextElementSibling();
+                if (next != null && next.text().contains("/")) {
+                    String countPart = extractCountFromText(next.text(), "");
+                    if (countPart != null)
+                        return Integer.parseInt(countPart);
                 }
             }
         } catch (Exception e) {
-            log.warn("Failed to parse {} count", difficulty);
+            log.warn("Failed to parse {} count: {}", difficulty, e.getMessage());
         }
         return 0;
+    }
+
+    private String extractCountFromText(String text, String difficulty) {
+        try {
+            // Remove difficulty word if present
+            String cleanText = text;
+            if (!difficulty.isEmpty() && text.contains(difficulty)) {
+                cleanText = text.substring(text.indexOf(difficulty) + difficulty.length()).trim();
+            }
+            // Find the "/" and take what's before it
+            if (cleanText.contains("/")) {
+                String countStr = cleanText.split("/")[0].replaceAll("[^0-9]", "");
+                if (!countStr.isEmpty())
+                    return countStr;
+            }
+        } catch (Exception e) {
+        }
+        return null;
     }
 
     public Optional<LeetcodeProfile> getProfile(String username) {
