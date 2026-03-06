@@ -124,13 +124,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             sendOtpBtn.disabled = true;
             if (spinner) spinner.classList.remove('hidden');
 
+            // Show the OTP input area immediately so the user sees the 'space'
+            if (otpSection) {
+                otpSection.classList.remove('hidden');
+                otpSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+
             try {
                 await api.sendOtp(username, email);
-                alert('Verification OTP sent to your email!');
-                if (otpSection) otpSection.classList.remove('hidden');
                 sendOtpBtn.textContent = 'Resend OTP';
+                // Success! The section is already visible.
             } catch (error) {
                 alert(error.message || 'Failed to send OTP');
+                // We keep the section visible so they can see where it would have been
             } finally {
                 sendOtpBtn.disabled = false;
                 if (spinner) spinner.classList.add('hidden');
