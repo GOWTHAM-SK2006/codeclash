@@ -43,8 +43,8 @@ public class LeetcodeProfile {
     private String otpCode;
 
     @Builder.Default
-    @Column(name = "is_verified")
-    private boolean verified = false;
+    @Column(name = "is_verified", nullable = false)
+    private Boolean verified = false;
 
     @Column(name = "otp_created_at")
     private LocalDateTime otpCreatedAt;

@@ -107,7 +107,7 @@ public class LeetcodeSyncService {
         LeetcodeProfile profile = leetcodeProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("LeetCode profile not connected"));
 
-        if (!profile.isVerified()) {
+        if (!Boolean.TRUE.equals(profile.getVerified())) {
             throw new RuntimeException("Please verify your email before syncing LeetCode.");
         }
 
