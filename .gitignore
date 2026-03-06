@@ -1,0 +1,12 @@
+target/
+*.class
+.mvn/
+.idea/
+*.iml
+*.log
+.DS_Store
+node_modules/
+dist/
+.env
+bin/
+out/

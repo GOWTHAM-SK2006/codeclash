@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Arena — CodeClash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <main class="page-content">
+        <div class="container">
+            <div class="page-header">
+                <h1>⚔️ Battle Arena</h1>
+                <p>Challenge another coder to a 1v1 coding duel</p>
+            </div>
+
+            <!-- Battle Lobby -->
+            <div id="lobbyView">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
+                    <div class="card card-glow">
+                        <h3 style="font-weight:700;margin-bottom:1rem;">Create Battle</h3>
+                        <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:1rem;">Choose a problem
+                            and wait for an opponent.</p>
+                        <select id="battleProblem" class="form-input" style="margin-bottom:1rem;">
+                            <option value="">Loading problems...</option>
+                        </select>
+                        <button onclick="createBattle()" class="btn btn-primary" style="width:100%;">Create
+                            Battle</button>
+                    </div>
+                    <div class="card">
+                        <h3 style="font-weight:700;margin-bottom:1rem;">Available Battles</h3>
+                        <div id="availableBattles">
+                            <div class="spinner"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Battle -->
+            <div id="battleView" style="display:none;">
+                <div class="timer" id="timer">15:00</div>
+
+                <div class="battle-arena">
+                    <div class="player-panel">
+                        <h3 style="font-weight:700;text-align:center;margin-bottom:1rem;" id="p1Name">Player 1</h3>
+                        <div style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">Coding...</div>
+                    </div>
+                    <div class="vs-badge">VS</div>
+                    <div class="player-panel">
+                        <h3 style="font-weight:700;text-align:center;margin-bottom:1rem;" id="p2Name">Player 2</h3>
+                        <div style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">Coding...</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:1.5rem;">
+                    <h3 style="font-weight:700;margin-bottom:0.5rem;" id="battleProblemTitle">Problem</h3>
+                    <p style="color:var(--text-secondary);margin-bottom:1rem;" id="battleProblemDesc"></p>
+                    <textarea id="battleEditor" class="code-editor" placeholder="Write your solution..."></textarea>
+                    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                        <button onclick="submitBattleSolution()" class="btn btn-primary btn-lg" style="flex:1;">⚡ Submit
+                            Solution</button>
+                    </div>
+                </div>
+
+                <div id="battleResult" style="display:none;margin-top:1.5rem;"></div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/battle.js"></script>
+</body>
+
+</html>

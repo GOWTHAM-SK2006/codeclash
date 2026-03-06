@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeClash — Gamified Coding Platform</title>
+    <meta name="description" content="Learn programming, solve coding challenges, battle other coders, and climb the leaderboard on CodeClash.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <main class="page-content">
+        <div class="container">
+            <section class="hero">
+                <h1>Code. <span class="highlight">Compete.</span> Conquer.</h1>
+                <p>Master programming through interactive lessons, challenging problems, and real-time coding battles. Earn coins and climb the leaderboard.</p>
+                <div class="hero-actions">
+                    <a href="register.html" class="btn btn-primary btn-lg">Get Started Free</a>
+                    <a href="problems.html" class="btn btn-secondary btn-lg">Browse Problems</a>
+                </div>
+            </section>
+
+            <section class="features-grid">
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">📚</span>
+                    <h3>Interactive Learning</h3>
+                    <p>Structured courses in Python, Java, C, C++, and JavaScript with examples and exercises.</p>
+                </div>
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">💻</span>
+                    <h3>Coding Problems</h3>
+                    <p>Hundreds of problems across Easy, Medium, and Hard difficulty levels to sharpen your skills.</p>
+                </div>
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">⚔️</span>
+                    <h3>1v1 Code Battles</h3>
+                    <p>Challenge other programmers in real-time coding duels. Fastest correct solution wins.</p>
+                </div>
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">🪙</span>
+                    <h3>Earn Coins</h3>
+                    <p>Solve problems, complete lessons, and win battles to earn coins and unlock rewards.</p>
+                </div>
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">🏆</span>
+                    <h3>Leaderboard</h3>
+                    <p>Compete with your peers and climb to the top of the department ranking.</p>
+                </div>
+                <div class="feature-card card-glow">
+                    <span class="feature-icon">🔒</span>
+                    <h3>Secure Execution</h3>
+                    <p>Your code runs in sandboxed containers with CPU and memory limits for safe execution.</p>
+                </div>
+            </section>
+
+            <section style="text-align:center; margin-top:5rem; padding:3rem 0;">
+                <h2 style="font-size:2rem; font-weight:800; margin-bottom:1rem;">Ready to <span style="color:var(--accent)">level up</span> your coding?</h2>
+                <p style="color:var(--text-secondary); margin-bottom:2rem; max-width:500px; margin-left:auto; margin-right:auto;">Join thousands of CS students already competing on CodeClash.</p>
+                <a href="register.html" class="btn btn-primary btn-lg">Create Free Account</a>
+            </section>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>renderNav('home');</script>
+</body>
+</html>

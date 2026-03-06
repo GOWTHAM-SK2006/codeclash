@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile — CodeClash</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <main class="page-content">
+        <div class="container" style="max-width:800px;">
+            <div class="card" id="profileView">
+                <div class="spinner"></div>
+            </div>
+
+            <div style="margin-top:2rem;">
+                <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1rem;">Coin History</h2>
+                <div id="coinHistory">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        renderNav('profile');
+        if (!requireAuth()) return;
+
+        (async function () {
+            try {
+                const dash = await api.getDashboard();
+                const user = api.getUser();
+
+                document.getElementById('profileView').innerHTML = `
+                    <div class="profile-header">
+                        <div class="avatar">${(dash.displayName || dash.username)[0].toUpperCase()}</div>
+                        <div>
+                            <h1 style="font-size:1.75rem; font-weight:800;">${dash.displayName || dash.username}</h1>
+                            <p style="color:var(--text-secondary);">@${dash.username}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value">${dash.totalCoins}</div>
+                            <div class="stat-label">🪙 Coins</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${dash.problemsSolved}</div>
+                            <div class="stat-label">✅ Solved</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">#${dash.userRank}</div>
+                            <div class="stat-label">🏆 Rank</div>
+                        </div>
+                    </div>
+                `;
+
+                const history = await api.getCoinHistory();
+                const histEl = document.getElementById('coinHistory');
+
+                if (history.length === 0) {
+                    histEl.innerHTML = '<div class="empty-state"><p>No transaction history.</p></div>';
+                } else {
+                    histEl.innerHTML = `
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Reason</th>
+                                        <th style="text-align:right">Amount</th>
+                                        <th style="text-align:right">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${history.map(tx => `
+                                        <tr>
+                                            <td>${tx.reason}</td>
+                                            <td style="text-align:right; font-weight:600; color:var(--success);">+${tx.amount} 🪙</td>
+                                            <td style="text-align:right; color:var(--text-secondary); font-size:0.8125rem;">
+                                                ${new Date(tx.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('profileView').innerHTML = '<div class="empty-state"><p>Could not load profile.</p></div>';
+            }
+        })();
+    </script>
+</body>
+
+</html>
