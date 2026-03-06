@@ -1,0 +1,271 @@
+package com.codeclash.service;
+
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.model.Bind;
+import com.github.dockerjava.api.model.HostConfig;
+import com.github.dockerjava.api.model.Volume;
+import com.github.dockerjava.core.DefaultDockerClientConfig;
+import com.github.dockerjava.core.DockerClientImpl;
+import com.github.dockerjava.zerodep.ZerodepDockerHttpClient;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+@Service
+public class DockerSandboxService {
+
+    private static final Logger log = LoggerFactory.getLogger(DockerSandboxService.class);
+    private DockerClient dockerClient;
+    private boolean isAvailable = false;
+
+    public static class ExecutionResult {
+        private String stdout;
+        private String stderr;
+        private int exitCode;
+        private boolean timedOut;
+
+        public ExecutionResult(String stdout, String stderr, int exitCode, boolean timedOut) {
+            this.stdout = stdout;
+            this.stderr = stderr;
+            this.exitCode = exitCode;
+            this.timedOut = timedOut;
+        }
+
+        public String getStdout() {
+            return stdout;
+        }
+
+        public String getStderr() {
+            return stderr;
+        }
+
+        public int getExitCode() {
+            return exitCode;
+        }
+
+        public boolean isTimedOut() {
+            return timedOut;
+        }
+
+        public static class Builder {
+            private String stdout = "";
+            private String stderr = "";
+            private int exitCode = 0;
+            private boolean timedOut = false;
+
+            public Builder stdout(String s) {
+                this.stdout = s;
+                return this;
+            }
+
+            public Builder stderr(String s) {
+                this.stderr = s;
+                return this;
+            }
+
+            public Builder exitCode(int e) {
+                this.exitCode = e;
+                return this;
+            }
+
+            public Builder timedOut(boolean t) {
+                this.timedOut = t;
+                return this;
+            }
+
+            public ExecutionResult build() {
+                return new ExecutionResult(stdout, stderr, exitCode, timedOut);
+            }
+        }
+
+        public static Builder builder() {
+            return new Builder();
+        }
+    }
+
+    @PostConstruct
+    public void init() {
+        try {
+            DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder().build();
+            ZerodepDockerHttpClient httpClient = new ZerodepDockerHttpClient.Builder()
+                    .dockerHost(config.getDockerHost())
+                    .sslConfig(config.getSSLConfig())
+                    .maxConnections(100)
+                    .connectionTimeout(Duration.ofSeconds(5))
+                    .responseTimeout(Duration.ofSeconds(5))
+                    .build();
+
+            this.dockerClient = DockerClientImpl.getInstance(config, httpClient);
+
+            // Ping to check availability
+            dockerClient.pingCmd().exec();
+            isAvailable = true;
+            log.info("Docker is available. Sandboxing enabled.");
+
+            // Pull images asynchronously
+            new Thread(() -> {
+                pullImage("python:3.11-slim");
+                pullImage("openjdk:17-slim");
+                pullImage("node:20-slim");
+            }).start();
+        } catch (Exception e) {
+            isAvailable = false;
+            log.warn(
+                    "Docker is NOT available (missing installation or permissions). Secure execution will be skipped: {}",
+                    e.getMessage());
+        }
+    }
+
+    private void pullImage(String image) {
+        if (!isAvailable)
+            return;
+        try {
+            log.info("Checking image presence: {}", image);
+            dockerClient.pullImageCmd(image)
+                    .exec(new PullImageResultCallback())
+                    .awaitCompletion(5, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.warn("Failed to pull image {}: {}", image, e.getMessage());
+        }
+    }
+
+    public ExecutionResult execute(String code, String language) {
+        if (!isAvailable) {
+            return ExecutionResult.builder()
+                    .stderr("Docker is not available on this system. Execution failed.")
+                    .exitCode(1)
+                    .build();
+        }
+
+        String containerId = null;
+        Path tempDir = null;
+        try {
+            tempDir = Files.createTempDirectory("codeclash-exec-" + UUID.randomUUID());
+            String fileName = getFileName(language);
+            File codeFile = new File(tempDir.toFile(), fileName);
+            try (FileWriter writer = new FileWriter(codeFile)) {
+                writer.write(code);
+            }
+
+            String image = getImage(language);
+            String[] cmd = getRunCommand(language, fileName);
+
+            HostConfig hostConfig = HostConfig.newHostConfig()
+                    .withMemory(128 * 1024 * 1024L) // 128MB
+                    .withNanoCPUs(500000000L) // 0.5 vCPU
+                    .withNetworkMode("none")
+                    .withBinds(new Bind(tempDir.toAbsolutePath().toString(), new Volume("/app")));
+
+            CreateContainerResponse container = dockerClient.createContainerCmd(image)
+                    .withHostConfig(hostConfig)
+                    .withWorkingDir("/app")
+                    .withCmd(cmd)
+                    .withUser("nobody")
+                    .exec();
+
+            containerId = container.getId();
+            dockerClient.startContainerCmd(containerId).exec();
+
+            // Wait for completion (max 5s)
+            int exitCode = -1;
+            boolean timedOut = false;
+            try {
+                exitCode = dockerClient.waitContainerCmd(containerId)
+                        .start()
+                        .awaitStatusCode(5, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                timedOut = true;
+                log.warn("Container timed out: {}", containerId);
+            }
+
+            // Capture logs
+            StringBuilder stdout = new StringBuilder();
+            StringBuilder stderr = new StringBuilder();
+
+            dockerClient.logContainerCmd(containerId)
+                    .withStdOut(true)
+                    .withStdErr(true)
+                    .withFollowStream(true)
+                    .exec(new com.github.dockerjava.api.async.ResultCallback.Adapter<com.github.dockerjava.api.model.Frame>() {
+                        @Override
+                        public void onNext(com.github.dockerjava.api.model.Frame item) {
+                            if (item.getStreamType() == com.github.dockerjava.api.model.StreamType.STDOUT) {
+                                stdout.append(new String(item.getPayload()));
+                            } else if (item.getStreamType() == com.github.dockerjava.api.model.StreamType.STDERR) {
+                                stderr.append(new String(item.getPayload()));
+                            }
+                        }
+                    }).awaitCompletion(5, TimeUnit.SECONDS);
+
+            return ExecutionResult.builder()
+                    .stdout(stdout.toString())
+                    .stderr(stderr.toString())
+                    .exitCode(exitCode)
+                    .timedOut(timedOut)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("Execution failed", e);
+            return ExecutionResult.builder()
+                    .stderr(e.getMessage())
+                    .exitCode(1)
+                    .build();
+        } finally {
+            if (containerId != null) {
+                try {
+                    dockerClient.removeContainerCmd(containerId).withForce(true).exec();
+                } catch (Exception e) {
+                    log.warn("Failed to remove container {}", containerId);
+                }
+            }
+            if (tempDir != null) {
+                try {
+                    Files.walk(tempDir)
+                            .sorted((a, b) -> b.compareTo(a))
+                            .forEach(p -> p.toFile().delete());
+                } catch (Exception e) {
+                    log.warn("Failed to cleanup temp dir {}", tempDir);
+                }
+            }
+        }
+    }
+
+    private String getFileName(String language) {
+        return switch (language.toUpperCase()) {
+            case "PYTHON" -> "solution.py";
+            case "JAVA" -> "Solution.java";
+            case "JAVASCRIPT" -> "solution.js";
+            default -> "solution.txt";
+        };
+    }
+
+    private String getImage(String language) {
+        return switch (language.toUpperCase()) {
+            case "PYTHON" -> "python:3.11-slim";
+            case "JAVA" -> "openjdk:17-slim";
+            case "JAVASCRIPT" -> "node:20-slim";
+            default -> "python:3.11-slim";
+        };
+    }
+
+    private String[] getRunCommand(String language, String fileName) {
+        return switch (language.toUpperCase()) {
+            case "PYTHON" -> new String[] { "python3", fileName };
+            case "JAVA" -> new String[] { "sh", "-c", "javac " + fileName + " && java Solution" };
+            case "JAVASCRIPT" -> new String[] { "node", fileName };
+            default -> new String[] { "cat", fileName };
+        };
+    }
+}
