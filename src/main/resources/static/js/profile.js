@@ -142,6 +142,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (verifyOtpBtn) {
         verifyOtpBtn.addEventListener('click', async () => {
             const otp = otpInput.value.trim();
+            const username = leetcodeUsernameInput.value.trim();
+
             if (!otp || otp.length !== 6) {
                 alert('Please enter a valid 6-digit OTP');
                 return;
@@ -149,7 +151,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             verifyOtpBtn.disabled = true;
             try {
-                await api.verifyOtp(otp);
+                await api.verifyOtp(username, otp);
                 alert('Verification successful!');
                 await loadProfileData();
             } catch (error) {

@@ -132,10 +132,10 @@ const api = {
             body: JSON.stringify({ username, email })
         });
     },
-    verifyOtp(otp) {
+    verifyOtp(username, otp) {
         return this.request('/leetcode/verify-otp', {
             method: 'POST',
-            body: JSON.stringify({ otp })
+            body: JSON.stringify({ username, otp })
         });
     },
     connectLeetcode(username) {

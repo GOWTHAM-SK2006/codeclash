@@ -18,9 +18,9 @@ public class EmailService {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom("dygoncodeclash@gmail.com");
             message.setTo(toEmail);
-            message.setSubject("CodeClash Verification");
-            message.setText("Your CodeClash verification OTP is:\n\n" + otp
-                    + "\n\nEnter this OTP to verify your LeetCode account.");
+            message.setSubject("CodeClash OTP Verification");
+            message.setText("Your CodeClash verification code is:\n\n" + otp
+                    + "\n\nEnter this code to verify your email before syncing your LeetCode account.");
 
             mailSender.send(message);
             log.info("OTP email sent successfully to {}", toEmail);

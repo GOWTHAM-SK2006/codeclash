@@ -29,6 +29,7 @@ public class LeetcodeSyncService {
     private final UserRepository userRepository;
     private final CoinService coinService;
     private final EmailService emailService;
+    private final OtpService otpService;
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -51,14 +52,9 @@ public class LeetcodeSyncService {
 
         profile.setLeetcodeUsername(leetcodeUsername);
         profile.setLeetcodeEmail(email);
+        profile.setVerified(false);
 
-        // Generate 6-digit OTP
-        String otp = String.format("%06d", (int) (Math.random() * 1000000));
-        profile.setOtpCode(otp);
-        profile.setOtpCreatedAt(LocalDateTime.now());
-        profile.setVerified(false); // Reset verification on new OTP request
-
-        leetcodeProfileRepository.save(profile);
+        String otp = otpService.generateOtp(profile);
         emailService.sendOtpEmail(email, otp);
     }
 
@@ -70,12 +66,9 @@ public class LeetcodeSyncService {
         LeetcodeProfile profile = leetcodeProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("LeetCode profile not found. Please request OTP first."));
 
-        if (profile.getOtpCode() == null || !profile.getOtpCode().equals(otp)) {
+        if (!otpService.validateOtp(profile, otp)) {
             throw new RuntimeException("Invalid OTP code.");
         }
-
-        profile.setVerified(true);
-        leetcodeProfileRepository.save(profile);
     }
 
     @Transactional

@@ -33,14 +33,14 @@ public class LeetcodeController {
     }
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request, Authentication auth) {
+    public ResponseEntity<?> verifyOtp(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
         String otp = request.get("otp");
-        if (otp == null || otp.trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "OTP is required"));
+        if (username == null || username.trim().isEmpty() || otp == null || otp.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username and OTP are required"));
         }
         try {
-            User user = (User) auth.getPrincipal();
-            leetcodeSyncService.verifyOtp(user.getUsername(), otp);
+            leetcodeSyncService.verifyOtp(username, otp);
             return ResponseEntity.ok(Map.of("message", "LeetCode profile verified successfully"));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
