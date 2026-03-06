@@ -66,10 +66,7 @@ public class LeetcodeSyncService {
         LeetcodeProfile profile = leetcodeProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new RuntimeException("LeetCode profile not connected"));
 
-        // Check 24h limit
-        if (profile.getLastSyncedAt() != null && profile.getLastSyncedAt().plusHours(24).isAfter(LocalDateTime.now())) {
-            throw new RuntimeException("You can only sync once every 24 hours.");
-        }
+        // No sync time limit — users can sync whenever they want
 
         try {
             log.info("Syncing LeetCode profile for {}", profile.getLeetcodeUsername());
