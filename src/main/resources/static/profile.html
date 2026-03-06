@@ -4,187 +4,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Profile — CodeClash</title>
+    <title>Profile — CodeClash</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
+    <style>
+        :root {
+            --bg-primary: #0F0F0F;
+            --bg-secondary: #1A1A1A;
+            --accent: #FF6B00;
+            --accent-hover: #FF8C32;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: white;
+            font-family: 'Inter', -apple-system, sans-serif;
+        }
+
+        .profile-card {
+            background-color: var(--bg-secondary);
+            border: 1px solid #2A2A2A;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .profile-card:hover {
+            border-color: #3A3A3A;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+    </style>
 </head>
 
 <body>
     <nav class="navbar" id="navbar"></nav>
 
-    <main class="page-content">
-        <div class="container" style="max-width:800px;">
-            <div class="card" id="profileView">
-                <div class="spinner"></div>
-            </div>
+    <main class="page-content min-h-screen pt-24 pb-12">
+        <div class="container mx-auto px-4 max-w-4xl space-y-10">
 
-            <div style="margin-top:2rem;">
-                <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1rem;">Coin History</h2>
-                <div id="coinHistory">
-                    <div class="spinner"></div>
+            <!-- User Details Section -->
+            <section>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-2 h-8 bg-[#FF6B00] rounded-full"></div>
+                    <h2 class="text-2xl font-extrabold tracking-tight">User Details</h2>
                 </div>
-            </div>
+                <div class="profile-card p-6 shadow-xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Username</label>
+                            <p id="profileUsername" class="text-lg font-semibold text-white tracking-wide">...</p>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-widest">Email
+                                Address</label>
+                            <p id="profileEmail" class="text-lg font-semibold text-white tracking-wide">...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coin Summary Section -->
+            <section>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-2 h-8 bg-[#FF6B00] rounded-full"></div>
+                    <h2 class="text-2xl font-extrabold tracking-tight">Coin Summary</h2>
+                </div>
+                <div
+                    class="profile-card p-8 border-l-4 border-l-[#FF6B00] flex items-center justify-between shadow-2xl">
+                    <div>
+                        <p class="text-sm font-medium text-gray-400 mb-1 uppercase tracking-widest">Available Balance
+                        </p>
+                        <div class="flex items-baseline gap-2">
+                            <h3 id="totalCoinsDisplay" class="text-5xl font-black text-white">0</h3>
+                            <span class="text-[#FF6B00] font-bold text-xl">Coins</span>
+                        </div>
+                    </div>
+                    <div class="bg-[#242424] p-4 rounded-full">
+                        <span class="text-5xl">🪙</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Coin History Section -->
+            <section>
+                <div class="flex items-center gap-2 mb-6">
+                    <div class="w-2 h-8 bg-[#FF6B00] rounded-full"></div>
+                    <h2 class="text-2xl font-extrabold tracking-tight">Coin History</h2>
+                </div>
+                <div class="profile-card overflow-hidden shadow-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-[#1F1F1F] border-b border-[#2A2A2A]">
+                                <tr>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Date
+                                    </th>
+                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
+                                        Action</th>
+                                    <th
+                                        class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">
+                                        Coins</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coinHistoryBody" class="divide-y divide-[#242424]">
+                                <!-- Rows populated by profile.js -->
+                                <tr>
+                                    <td colspan="3" class="px-6 py-8 text-center">
+                                        <div class="flex flex-col items-center gap-3">
+                                            <div
+                                                class="w-6 h-6 border-2 border-gray-600 border-t-[#FF6B00] rounded-full animate-spin">
+                                            </div>
+                                            <span class="text-gray-500 text-sm">Fetching transaction history...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </main>
 
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        renderNav('profile');
-        if (!requireAuth()) return;
-
-        (async function () {
-            const profileEl = document.getElementById('profileView');
-            const histEl = document.getElementById('coinHistory');
-
-            try {
-                const dash = await api.getDashboard();
-                profileEl.innerHTML = `
-                    <div class="profile-header">
-                        <div class="avatar">${(dash.displayName || dash.username)[0].toUpperCase()}</div>
-                        <div>
-                            <h1 style="font-size:1.75rem; font-weight:800;">${dash.displayName || dash.username}</h1>
-                            <p style color:var(--text-secondary);">@${dash.username}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value">${dash.totalCoins}</div>
-                            <div class="stat-label">🪙 Coins</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">${dash.problemsSolved}</div>
-                            <div class="stat-label">✅ Solved</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value">#${dash.userRank}</div>
-                            <div class="stat-label">🏆 Rank</div>
-                        </div>
-                    </div>
-                `;
-            } catch (e) {
-                profileEl.innerHTML = '<div class="empty-state"><p>Could not load profile stats.</p></div>';
-            }
-
-            // Render LeetCode Section (Independent of other sections)
-            const leetcodeSection = document.createElement('div');
-            leetcodeSection.style.marginTop = '2rem';
-            leetcodeSection.innerHTML = `
-                <div class="card">
-                    <h2 style="font-size:1.25rem; font-weight:700; margin-bottom:1rem;">LeetCode Synchronization</h2>
-                    <div id="leetcodeContent">
-                        <div class="spinner"></div>
-                    </div>
-                </div>
-            `;
-            const coinHistHeader = document.querySelector('h2');
-            if (coinHistHeader) {
-                document.querySelector('.container').insertBefore(leetcodeSection, coinHistHeader.closest('div'));
-            }
-
-            async function renderLeetcode() {
-                const lcContent = document.getElementById('leetcodeContent');
-                try {
-                    const lc = await api.getLeetcodeProfile();
-                    lcContent.innerHTML = `
-                        <div class="stats-grid" style="margin-bottom:1.5rem;">
-                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                <div class="stat-value" style="font-size:1.25rem;">${lc.easySolved}</div>
-                                <div class="stat-label">Easy</div>
-                            </div>
-                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                <div class="stat-value" style="font-size:1.25rem;">${lc.mediumSolved}</div>
-                                <div class="stat-label">Medium</div>
-                            </div>
-                            <div class="stat-card" style="background:rgba(255,107,0,0.05);">
-                                <div class="stat-value" style="font-size:1.25rem;">${lc.hardSolved}</div>
-                                <div class="stat-label">Hard</div>
-                            </div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <p style="font-weight:600;">@${lc.leetcodeUsername}</p>
-                                <p style="font-size:0.75rem; color:var(--text-secondary);">
-                                    Last synced: ${lc.lastSyncedAt ? new Date(lc.lastSyncedAt).toLocaleString() : 'Never'}
-                                </p>
-                            </div>
-                            <button class="btn btn-primary" id="syncBtn">Sync Now</button>
-                        </div>
-                    `;
-                    document.getElementById('syncBtn').onclick = async () => {
-                        const btn = document.getElementById('syncBtn');
-                        btn.disabled = true;
-                        btn.innerText = 'Syncing...';
-                        try {
-                            await api.syncLeetcode();
-                            alert('LeetCode progress synced successfully!');
-                            location.reload();
-                        } catch (err) {
-                            alert(err.message);
-                            btn.disabled = false;
-                            btn.innerText = 'Sync Now';
-                        }
-                    };
-                } catch (err) {
-                    lcContent.innerHTML = `
-                        <p style="color:var(--text-secondary); margin-bottom:1rem;">Connect your LeetCode account to earn coins for your progress.</p>
-                        <div style="display:flex; gap:0.5rem;">
-                            <input type="text" id="lcUsername" class="input" placeholder="LeetCode Username" style="flex:1;">
-                            <button class="btn btn-primary" id="connectBtn">Connect</button>
-                        </div>
-                    `;
-                    document.getElementById('connectBtn').onclick = async () => {
-                        const username = document.getElementById('lcUsername').value;
-                        if (!username) return;
-                        try {
-                            await api.connectLeetcode(username);
-                            alert('LeetCode account connected!');
-                            renderLeetcode();
-                        } catch (err) {
-                            alert(err.message);
-                        }
-                    };
-                }
-            }
-            renderLeetcode();
-
-            try {
-                const history = await api.getCoinHistory();
-                if (history.length === 0) {
-                    histEl.innerHTML = '<div class="empty-state"><p>No transaction history.</p></div>';
-                } else {
-                    histEl.innerHTML = `
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Reason</th>
-                                        <th style="text-align:right">Amount</th>
-                                        <th style="text-align:right">Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${history.map(tx => `
-                                        <tr>
-                                            <td>${tx.reason}</td>
-                                            <td style="text-align:right; font-weight:600; color:var(--success);">+${tx.amount} 🪙</td>
-                                            <td style="text-align:right; color:var(--text-secondary); font-size:0.8125rem;">
-                                                ${new Date(tx.createdAt).toLocaleDateString()}
-                                            </td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-            } catch (e) {
-                histEl.innerHTML = '<div class="empty-state"><p>Could not load coin history.</p></div>';
-            }
-        })();
-
-    </script>
+    <script src="js/profile.js"></script>
 </body>
 
 </html>

@@ -25,7 +25,7 @@ function renderNav(activePage) {
         </ul>
         <div class="nav-auth">
             ${isLoggedIn
-            ? `<a href="profile.html" class="btn btn-ghost">${user?.displayName || user?.username}</a>
+            ? `<a href="profile.html" class="btn btn-ghost">Profile</a>
                    <button onclick="api.logout()" class="btn btn-secondary btn-sm">Logout</button>`
             : `<a href="login.html" class="btn btn-ghost">Log in</a>
                    <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>`
