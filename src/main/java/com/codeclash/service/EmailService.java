@@ -1,36 +1,50 @@
 package com.codeclash.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
+import okhttp3.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${RESEND_API_KEY}")
+    private String apiKey;
 
-    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:dygoncodeclash@gmail.com}")
-    private String fromEmail;
+    private final OkHttpClient client = new OkHttpClient();
 
     public void sendOtpEmail(String toEmail, String otp) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(toEmail);
-            message.setSubject("CodeClash OTP Verification");
-            message.setText("Your CodeClash verification code is:\n\n" + otp
-                    + "\n\nEnter this code to verify your email before syncing your LeetCode account.");
+            String json = "{"
+                    + "\"from\":\"CodeClash <onboarding@resend.dev>\","
+                    + "\"to\":[\"" + toEmail + "\"],"
+                    + "\"subject\":\"CodeClash OTP Verification\","
+                    + "\"html\":\"<h2>Your CodeClash OTP is: " + otp + "</h2>\""
+                    + "}";
 
-            mailSender.send(message);
-            log.info("OTP email sent successfully to {}", toEmail);
+            RequestBody body = RequestBody.create(
+                    json,
+                    MediaType.parse("application/json"));
+
+            Request request = new Request.Builder()
+                    .url("https://api.resend.com/emails")
+                    .post(body)
+                    .addHeader("Authorization", "Bearer " + apiKey)
+                    .addHeader("Content-Type", "application/json")
+                    .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    String errorBody = response.body() != null ? response.body().string() : "No error body";
+                    log.error("Failed to send email via Resend: {} - {}", response.code(), errorBody);
+                    throw new RuntimeException("Resend API error: " + response.code());
+                }
+                log.info("OTP email sent successfully via Resend to {}", toEmail);
+            }
         } catch (Exception e) {
             log.error("Failed to send OTP email to {}: {}", toEmail, e.getMessage(), e);
-            throw new RuntimeException("Could not send verification email: " + e.getMessage()
-                    + ". Please check your email address and configuration.");
+            throw new RuntimeException("Could not send verification email: " + e.getMessage());
         }
     }
 }
