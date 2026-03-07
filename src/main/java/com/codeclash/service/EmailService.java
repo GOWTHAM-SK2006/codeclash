@@ -22,9 +22,9 @@ public class EmailService {
         try {
             String json = "{"
                     + "\"from\":\"CodeClash <onboarding@resend.dev>\","
-                    + "\"to\":[\"" + toEmail + "\"],"
-                    + "\"subject\":\"CodeClash OTP Verification\","
-                    + "\"html\":\"<h2>Your CodeClash OTP is: " + otp + "</h2>\""
+                    + "\"to\":[\"" + toEmail.trim() + "\"],"
+                    + "\"subject\":\"CodeClash OTP\","
+                    + "\"html\":\"<h2>Your OTP is: " + otp + "</h2>\""
                     + "}";
 
             RequestBody body = RequestBody.create(
