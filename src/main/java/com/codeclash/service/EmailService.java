@@ -9,12 +9,16 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailService {
 
-    @Value("${RESEND_API_KEY}")
+    @Value("${RESEND_API_KEY:}")
     private String apiKey;
 
     private final OkHttpClient client = new OkHttpClient();
 
     public void sendOtpEmail(String toEmail, String otp) {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            log.error("RESEND_API_KEY is not configured. Cannot send email to {}", toEmail);
+            throw new RuntimeException("Email service is temporarily unavailable. Please check configuration.");
+        }
         try {
             String json = "{"
                     + "\"from\":\"CodeClash <onboarding@resend.dev>\","
