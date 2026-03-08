@@ -8,4 +8,6 @@ public interface BattleParticipantRepository extends JpaRepository<BattlePartici
     List<BattleParticipant> findByBattleId(Long battleId);
 
     long countByBattleId(Long battleId);
+
+    java.util.Optional<BattleParticipant> findTopByUserIdOrderByBattleIdDesc(Long userId);
 }

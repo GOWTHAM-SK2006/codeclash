@@ -16,58 +16,38 @@
         <div class="container">
             <div class="page-header">
                 <h1>⚔️ Battle Arena</h1>
-                <p>Challenge another coder to a 1v1 coding duel</p>
+                <p>Find an opponent and start a coding duel</p>
             </div>
 
-            <!-- Battle Lobby -->
-            <div id="lobbyView">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;">
-                    <div class="card card-glow">
-                        <h3 style="font-weight:700;margin-bottom:1rem;">Create Battle</h3>
-                        <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:1rem;">Choose a problem
-                            and wait for an opponent.</p>
-                        <select id="battleProblem" class="form-input" style="margin-bottom:1rem;">
-                            <option value="">Loading problems...</option>
-                        </select>
-                        <button onclick="createBattle()" class="btn btn-primary" style="width:100%;">Create
+            <div id="lobbyView" class="max-w-md mx-auto">
+                <div class="card card-glow text-center p-8">
+                    <div id="defaultLobby">
+                        <span style="font-size:4rem;display:block;margin-bottom:1.5rem;">⚔️</span>
+                        <h3 style="font-weight:700;font-size:1.5rem;margin-bottom:1rem;">Ready for a Duel?</h3>
+                        <p style="color:var(--text-secondary);margin-bottom:2rem;">The system will match you with a
+                            waiting player and select a random problem.</p>
+                        <button onclick="findRandomBattle()" class="btn btn-primary btn-lg w-full">Find Random
                             Battle</button>
                     </div>
-                    <div class="card">
-                        <h3 style="font-weight:700;margin-bottom:1rem;">Available Battles</h3>
-                        <div id="availableBattles">
-                            <div class="spinner"></div>
+
+                    <div id="waitingLobby" style="display:none;">
+                        <div class="spinner mx-auto mb-4" style="width:3rem;height:3rem;"></div>
+                        <h3 style="font-weight:700;font-size:1.5rem;margin-bottom:1rem;">Finding Opponent...</h3>
+                        <p style="color:var(--text-secondary);">Please wait while we match you with another player.</p>
+                        <button onclick="cancelSearch()" class="btn btn-secondary mt-6">Cancel Search</button>
+                    </div>
+
+                    <div id="matchedLobby" style="display:none;">
+                        <div class="success-icon mb-4">✅</div>
+                        <h3 style="font-weight:700;font-size:1.5rem;margin-bottom:1rem;color:var(--success);">Battle
+                            Found!</h3>
+                        <div class="mb-6 p-4 rounded bg-dark-lighter">
+                            <p id="opponentInfo" class="mb-2 font-bold"></p>
+                            <p id="problemInfo" class="text-secondary text-sm"></p>
                         </div>
+                        <p style="color:var(--text-secondary);">Redirecting to battle room...</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Active Battle -->
-            <div id="battleView" style="display:none;">
-                <div class="timer" id="timer">15:00</div>
-
-                <div class="battle-arena">
-                    <div class="player-panel">
-                        <h3 style="font-weight:700;text-align:center;margin-bottom:1rem;" id="p1Name">Player 1</h3>
-                        <div style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">Coding...</div>
-                    </div>
-                    <div class="vs-badge">VS</div>
-                    <div class="player-panel">
-                        <h3 style="font-weight:700;text-align:center;margin-bottom:1rem;" id="p2Name">Player 2</h3>
-                        <div style="text-align:center;color:var(--text-secondary);font-size:0.875rem;">Coding...</div>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top:1.5rem;">
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;" id="battleProblemTitle">Problem</h3>
-                    <p style="color:var(--text-secondary);margin-bottom:1rem;" id="battleProblemDesc"></p>
-                    <textarea id="battleEditor" class="code-editor" placeholder="Write your solution..."></textarea>
-                    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-                        <button onclick="submitBattleSolution()" class="btn btn-primary btn-lg" style="flex:1;">⚡ Submit
-                            Solution</button>
-                    </div>
-                </div>
-
-                <div id="battleResult" style="display:none;margin-top:1.5rem;"></div>
             </div>
         </div>
     </main>

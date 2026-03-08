@@ -100,9 +100,6 @@ const api = {
             body: JSON.stringify({ problemId })
         });
     },
-    joinBattle(id) {
-        return this.request(`/battles/${id}/join`, { method: 'POST' });
-    },
     submitBattle(id, code, language) {
         return this.request(`/battles/${id}/submit`, {
             method: 'POST',
@@ -110,7 +107,12 @@ const api = {
         });
     },
     getBattle(id) { return this.request(`/battles/${id}`); },
-    getAvailableBattles() { return this.request('/battles/available'); },
+    findBattle() {
+        return this.request('/battles/find', { method: 'POST' });
+    },
+    checkMyActiveBattle() {
+        return this.request('/battles/my-active');
+    },
 
     // Coins
     getCoinBalance() { return this.request('/coins/balance'); },

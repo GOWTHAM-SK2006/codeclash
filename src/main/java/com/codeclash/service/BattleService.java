@@ -8,6 +8,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class BattleService {
@@ -16,6 +18,7 @@ public class BattleService {
         private final BattleParticipantRepository participantRepository;
         private final ProblemRepository problemRepository;
         private final UserRepository userRepository;
+        private final BattleQueueRepository queueRepository;
         private final CoinService coinService;
         private final DockerSandboxService dockerSandboxService;
 
@@ -23,14 +26,83 @@ public class BattleService {
                         BattleParticipantRepository participantRepository,
                         ProblemRepository problemRepository,
                         UserRepository userRepository,
+                        BattleQueueRepository queueRepository,
                         CoinService coinService,
                         DockerSandboxService dockerSandboxService) {
                 this.battleRepository = battleRepository;
                 this.participantRepository = participantRepository;
                 this.problemRepository = problemRepository;
                 this.userRepository = userRepository;
+                this.queueRepository = queueRepository;
                 this.coinService = coinService;
                 this.dockerSandboxService = dockerSandboxService;
+        }
+
+        @Transactional
+        public Map<String, Object> findMatch(String username) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                // Check if user is already in a battle or in queue
+                Optional<BattleParticipant> activeParticipant = participantRepository
+                                .findTopByUserIdOrderByBattleIdDesc(user.getId());
+                if (activeParticipant.isPresent()) {
+                        Battle battle = activeParticipant.get().getBattle();
+                        if ("ACTIVE".equals(battle.getStatus())) {
+                                return Map.of("status", "matched", "battleId", battle.getId());
+                        }
+                }
+
+                Optional<BattleQueue> waitingUser = queueRepository.findFirstByOrderByCreatedAtAsc();
+
+                if (waitingUser.isEmpty() || waitingUser.get().getUser().getId().equals(user.getId())) {
+                        if (queueRepository.findByUser(user).isEmpty()) {
+                                queueRepository.save(new BattleQueue(null, user, LocalDateTime.now()));
+                        }
+                        return Map.of("status", "waiting");
+                }
+
+                // Match found!
+                User opponent = waitingUser.get().getUser();
+                queueRepository.delete(waitingUser.get());
+
+                // Randomly select a problem
+                List<Problem> problems = problemRepository.findAll();
+                if (problems.isEmpty())
+                        throw new RuntimeException("No problems available");
+                Problem randomProblem = problems.get(new java.util.Random().nextInt(problems.size()));
+
+                Battle battle = new Battle();
+                battle.setProblem(randomProblem);
+                battle.setStatus("ACTIVE");
+                battle.setStartedAt(LocalDateTime.now());
+                battleRepository.save(battle);
+
+                // Add both participants
+                saveParticipant(battle, user);
+                saveParticipant(battle, opponent);
+
+                return Map.of(
+                                "status", "matched",
+                                "battleId", battle.getId(),
+                                "problemName", randomProblem.getTitle(),
+                                "opponentName", opponent.getDisplayName());
+        }
+
+        private void saveParticipant(Battle battle, User user) {
+                BattleParticipant participant = new BattleParticipant();
+                participant.setBattle(battle);
+                participant.setUser(user);
+                participantRepository.save(participant);
+        }
+
+        public Optional<Battle> getActiveBattleForUser(String username) {
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                return participantRepository.findTopByUserIdOrderByBattleIdDesc(user.getId())
+                                .map(BattleParticipant::getBattle)
+                                .filter(b -> "ACTIVE".equals(b.getStatus()));
         }
 
         @Transactional

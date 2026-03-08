@@ -17,17 +17,37 @@ public class BattleController {
 
     private final BattleService battleService;
 
+    @PostMapping("/find")
+    public ResponseEntity<?> findMatch(Authentication auth) {
+        String username = auth.getName();
+        try {
+            return ResponseEntity.ok(battleService.findMatch(username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/my-active")
+    public ResponseEntity<?> getMyActiveBattle(Authentication auth) {
+        String username = auth.getName();
+        return battleService.getActiveBattleForUser(username)
+                .map(battle -> ResponseEntity.ok(Map.of(
+                        "status", "matched",
+                        "battleId", battle.getId())))
+                .orElse(ResponseEntity.ok(Map.of("status", "none")));
+    }
+
     @PostMapping("/create")
     public ResponseEntity<?> createBattle(Authentication auth, @RequestBody BattleRequest request) {
-        User user = (User) auth.getPrincipal();
-        return ResponseEntity.ok(battleService.createBattle(user.getUsername(), request));
+        String username = auth.getName();
+        return ResponseEntity.ok(battleService.createBattle(username, request));
     }
 
     @PostMapping("/{id}/join")
     public ResponseEntity<?> joinBattle(@PathVariable Long id, Authentication auth) {
         try {
-            User user = (User) auth.getPrincipal();
-            return ResponseEntity.ok(battleService.joinBattle(id, user.getUsername()));
+            String username = auth.getName();
+            return ResponseEntity.ok(battleService.joinBattle(id, username));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
@@ -36,8 +56,8 @@ public class BattleController {
     @PostMapping("/{id}/submit")
     public ResponseEntity<?> submitSolution(@PathVariable Long id, Authentication auth,
             @RequestBody BattleSubmitRequest request) {
-        User user = (User) auth.getPrincipal();
-        return ResponseEntity.ok(battleService.submitBattleSolution(id, user.getUsername(), request));
+        String username = auth.getName();
+        return ResponseEntity.ok(battleService.submitBattleSolution(id, username, request));
     }
 
     @GetMapping("/{id}")
