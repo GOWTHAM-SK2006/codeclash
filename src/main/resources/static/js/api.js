@@ -107,8 +107,11 @@ const api = {
         });
     },
     getBattle(id) { return this.request(`/battles/${id}`); },
-    findBattle() {
-        return this.request('/battles/find', { method: 'POST' });
+    findBattle(difficulty) {
+        return this.request('/battles/find', {
+            method: 'POST',
+            body: JSON.stringify({ difficulty })
+        });
     },
     checkMyActiveBattle() {
         return this.request('/battles/my-active');

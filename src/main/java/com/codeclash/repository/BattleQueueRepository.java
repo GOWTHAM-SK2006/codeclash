@@ -11,6 +11,8 @@ import java.util.Optional;
 public interface BattleQueueRepository extends JpaRepository<BattleQueue, Long> {
     Optional<BattleQueue> findFirstByOrderByCreatedAtAsc();
 
+    Optional<BattleQueue> findFirstByDifficultyIgnoreCaseOrderByCreatedAtAsc(String difficulty);
+
     Optional<BattleQueue> findByUser(User user);
 
     void deleteByUser(User user);

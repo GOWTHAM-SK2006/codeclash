@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BattleService {
@@ -39,9 +40,10 @@ public class BattleService {
         }
 
         @Transactional
-        public Map<String, Object> findMatch(String username) {
+        public Map<String, Object> findMatch(String username, String difficultyInput) {
                 User user = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
+                String difficulty = normalizeDifficulty(difficultyInput);
 
                 // Check if user is already in a battle or in queue
                 Optional<BattleParticipant> activeParticipant = participantRepository
@@ -53,23 +55,43 @@ public class BattleService {
                         }
                 }
 
-                Optional<BattleQueue> waitingUser = queueRepository.findFirstByOrderByCreatedAtAsc();
+                Optional<BattleQueue> waitingUser = queueRepository
+                                .findFirstByDifficultyIgnoreCaseOrderByCreatedAtAsc(difficulty)
+                                .filter(queue -> !queue.getUser().getId().equals(user.getId()));
 
-                if (waitingUser.isEmpty() || waitingUser.get().getUser().getId().equals(user.getId())) {
-                        if (queueRepository.findByUser(user).isEmpty()) {
-                                queueRepository.save(new BattleQueue(null, user, LocalDateTime.now()));
-                        }
-                        return Map.of("status", "waiting");
+                if (waitingUser.isEmpty()) {
+                        BattleQueue queueEntry = queueRepository.findByUser(user)
+                                        .orElseGet(BattleQueue::new);
+                        queueEntry.setUser(user);
+                        queueEntry.setDifficulty(difficulty);
+                        queueEntry.setCreatedAt(LocalDateTime.now());
+                        queueRepository.save(queueEntry);
+                        return Map.of("status", "waiting", "difficulty", difficulty);
                 }
 
-                // Match found!
-                User opponent = waitingUser.get().getUser();
-                queueRepository.delete(waitingUser.get());
+                BattleQueue currentUserQueue = queueRepository.findByUser(user).orElse(null);
+                if (currentUserQueue != null) {
+                        queueRepository.delete(currentUserQueue);
+                }
 
-                // Randomly select a problem
-                List<Problem> problems = problemRepository.findAll();
-                if (problems.isEmpty())
-                        throw new RuntimeException("No problems available");
+                BattleQueue matchedQueueEntry = waitingUser.get();
+                User opponent = matchedQueueEntry.getUser();
+                queueRepository.delete(matchedQueueEntry);
+
+                // Randomly select a problem from selected difficulty
+                List<Problem> problems = problemRepository.findByDifficulty(difficulty);
+                if (problems.isEmpty()) {
+                        List<Problem> allProblems = problemRepository.findAll();
+                        problems = allProblems.stream()
+                                        .filter(problem -> problem.getDifficulty() != null)
+                                        .filter(problem -> difficulty.equalsIgnoreCase(problem.getDifficulty()))
+                                        .collect(Collectors.toList());
+                }
+
+                if (problems.isEmpty()) {
+                        throw new RuntimeException("No problems available for " + difficulty + " difficulty");
+                }
+
                 Problem randomProblem = problems.get(new java.util.Random().nextInt(problems.size()));
 
                 Battle battle = new Battle();
@@ -86,7 +108,21 @@ public class BattleService {
                                 "status", "matched",
                                 "battleId", battle.getId(),
                                 "problemName", randomProblem.getTitle(),
-                                "opponentName", opponent.getDisplayName());
+                                "opponentName", opponent.getDisplayName(),
+                                "difficulty", difficulty);
+        }
+
+        private String normalizeDifficulty(String difficultyInput) {
+                if (difficultyInput == null || difficultyInput.isBlank()) {
+                        return "Easy";
+                        }
+
+                return switch (difficultyInput.trim().toLowerCase()) {
+                        case "easy" -> "Easy";
+                        case "medium" -> "Medium";
+                        case "hard" -> "Hard";
+                        default -> throw new RuntimeException("Invalid difficulty. Use Easy, Medium, or Hard");
+                };
         }
 
         private void saveParticipant(Battle battle, User user) {

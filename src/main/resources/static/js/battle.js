@@ -1,5 +1,6 @@
 // Battle lobby logic
 let searchInterval = null;
+let selectedDifficulty = null;
 
 (async function () {
     renderNav('battle');
@@ -14,12 +15,14 @@ let searchInterval = null;
     } catch (e) { }
 })();
 
-async function findRandomBattle() {
+async function findRandomBattle(difficulty) {
+    selectedDifficulty = difficulty;
     document.getElementById('defaultLobby').style.display = 'none';
     document.getElementById('waitingLobby').style.display = 'block';
+    document.getElementById('waitingInfo').textContent = `Searching for a ${difficulty} opponent...`;
 
     try {
-        const res = await api.findBattle();
+        const res = await api.findBattle(difficulty);
         if (res.status === 'matched') {
             handleMatch(res);
         } else {
@@ -63,6 +66,7 @@ function handleMatch(data) {
 
 function cancelSearch() {
     if (searchInterval) clearInterval(searchInterval);
+    selectedDifficulty = null;
     document.getElementById('waitingLobby').style.display = 'none';
     document.getElementById('defaultLobby').style.display = 'block';
 }

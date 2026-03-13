@@ -1,7 +1,6 @@
 package com.codeclash.controller;
 
 import com.codeclash.dto.*;
-import com.codeclash.entity.User;
 import com.codeclash.service.BattleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,12 @@ public class BattleController {
     private final BattleService battleService;
 
     @PostMapping("/find")
-    public ResponseEntity<?> findMatch(Authentication auth) {
+    public ResponseEntity<?> findMatch(Authentication auth,
+            @RequestBody(required = false) Map<String, String> request) {
         String username = auth.getName();
+        String difficulty = request != null ? request.get("difficulty") : null;
         try {
-            return ResponseEntity.ok(battleService.findMatch(username));
+            return ResponseEntity.ok(battleService.findMatch(username, difficulty));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

@@ -21,6 +21,9 @@ public class BattleQueue {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @Column(length = 20)
+    private String difficulty;
+
     @Column(nullable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

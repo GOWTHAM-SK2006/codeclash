@@ -25,15 +25,19 @@
                         <span style="font-size:4rem;display:block;margin-bottom:1.5rem;">⚔️</span>
                         <h3 style="font-weight:700;font-size:1.5rem;margin-bottom:1rem;">Ready for a Duel?</h3>
                         <p style="color:var(--text-secondary);margin-bottom:2rem;">The system will match you with a
-                            waiting player and select a random problem.</p>
-                        <button onclick="findRandomBattle()" class="btn btn-primary btn-lg w-full">Find Random
-                            Battle</button>
+                            waiting player with the same level and select a random problem.</p>
+                        <p style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.95rem;">Choose Difficulty</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <button onclick="findRandomBattle('Easy')" class="btn btn-primary">Easy</button>
+                            <button onclick="findRandomBattle('Medium')" class="btn btn-primary">Medium</button>
+                            <button onclick="findRandomBattle('Hard')" class="btn btn-primary">Hard</button>
+                        </div>
                     </div>
 
                     <div id="waitingLobby" style="display:none;">
                         <div class="spinner mx-auto mb-4" style="width:3rem;height:3rem;"></div>
                         <h3 style="font-weight:700;font-size:1.5rem;margin-bottom:1rem;">Finding Opponent...</h3>
-                        <p style="color:var(--text-secondary);">Please wait while we match you with another player.</p>
+                        <p id="waitingInfo" style="color:var(--text-secondary);">Please wait while we match you with another player.</p>
                         <button onclick="cancelSearch()" class="btn btn-secondary mt-6">Cancel Search</button>
                     </div>
 
