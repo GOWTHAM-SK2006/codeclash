@@ -24,7 +24,7 @@ public class BattleController {
         try {
             return ResponseEntity.ok(battleService.findMatch(username, difficulty));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", getSafeMessage(e)));
         }
     }
 
@@ -50,8 +50,13 @@ public class BattleController {
             String username = auth.getName();
             return ResponseEntity.ok(battleService.joinBattle(id, username));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("error", getSafeMessage(e)));
         }
+    }
+
+    private String getSafeMessage(Exception exception) {
+        String message = exception.getMessage();
+        return (message == null || message.isBlank()) ? "Request failed" : message;
     }
 
     @PostMapping("/{id}/submit")

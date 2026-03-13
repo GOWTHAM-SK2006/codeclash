@@ -44,13 +44,15 @@ const api = {
 
             if (contentType && contentType.includes('application/json')) {
                 data = await res.json();
+                if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+                return data;
             } else {
                 const text = await res.text();
-                throw new Error(text || res.statusText || 'Request failed');
+                if (!res.ok) {
+                    throw new Error(text || res.statusText || `Request failed (${res.status})`);
+                }
+                return text;
             }
-
-            if (!res.ok) throw new Error(data.error || 'Request failed');
-            return data;
         } catch (err) {
             console.error(`API Error [${endpoint}]:`, err);
             throw err;
