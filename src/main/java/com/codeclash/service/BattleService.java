@@ -44,6 +44,12 @@ public class BattleService {
                 User user = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
                 String difficulty = normalizeDifficulty(difficultyInput);
+                int entryFee = getEntryFeeByDifficulty(difficulty);
+
+                if (!coinService.hasEnoughCoins(user, entryFee)) {
+                        throw new RuntimeException(
+                                        "Not enough coins. " + difficulty + " battle requires " + entryFee + " coins");
+                }
 
                 // Check if user is already in a battle or in queue
                 Optional<BattleParticipant> activeParticipant = participantRepository
@@ -76,7 +82,23 @@ public class BattleService {
 
                 BattleQueue matchedQueueEntry = waitingUser.get();
                 User opponent = matchedQueueEntry.getUser();
+
+                if (!coinService.hasEnoughCoins(opponent, entryFee)) {
+                        queueRepository.delete(matchedQueueEntry);
+
+                        BattleQueue queueEntry = queueRepository.findByUser(user)
+                                        .orElseGet(BattleQueue::new);
+                        queueEntry.setUser(user);
+                        queueEntry.setDifficulty(difficulty);
+                        queueEntry.setCreatedAt(LocalDateTime.now());
+                        queueRepository.save(queueEntry);
+                        return Map.of("status", "waiting", "difficulty", difficulty);
+                }
+
                 queueRepository.delete(matchedQueueEntry);
+
+                coinService.spendCoins(user, entryFee, "Battle entry fee (" + difficulty + ")");
+                coinService.spendCoins(opponent, entryFee, "Battle entry fee (" + difficulty + ")");
 
                 // Randomly select a problem from selected difficulty
                 List<Problem> problems = problemRepository.findByDifficulty(difficulty);
@@ -115,13 +137,26 @@ public class BattleService {
         private String normalizeDifficulty(String difficultyInput) {
                 if (difficultyInput == null || difficultyInput.isBlank()) {
                         return "Easy";
-                        }
+                }
 
                 return switch (difficultyInput.trim().toLowerCase()) {
                         case "easy" -> "Easy";
                         case "medium" -> "Medium";
                         case "hard" -> "Hard";
                         default -> throw new RuntimeException("Invalid difficulty. Use Easy, Medium, or Hard");
+                };
+        }
+
+        private int getEntryFeeByDifficulty(String difficultyInput) {
+                if (difficultyInput == null || difficultyInput.isBlank()) {
+                        return 15;
+                }
+
+                return switch (difficultyInput.trim().toLowerCase()) {
+                        case "easy" -> 15;
+                        case "medium" -> 20;
+                        case "hard" -> 30;
+                        default -> 15;
                 };
         }
 
@@ -230,7 +265,8 @@ public class BattleService {
                         battle.setStatus("FINISHED");
                         battle.setEndedAt(LocalDateTime.now());
                         battleRepository.save(battle);
-                        coinService.awardCoins(user, 50, "Battle victory #" + battleId);
+                        int winnerReward = getEntryFeeByDifficulty(battle.getProblem().getDifficulty()) * 2;
+                        coinService.awardCoins(user, winnerReward, "Battle victory reward (2x) #" + battleId);
                 }
 
                 return battle;
