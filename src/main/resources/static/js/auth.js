@@ -1,6 +1,11 @@
 // Auth helpers
 function requireAuth() {
-    if (!api.isLoggedIn()) {
+    const token = api.getToken();
+    const looksLikeJwt = token && token.split('.').length === 3;
+
+    if (!token || !looksLikeJwt) {
+        localStorage.removeItem('cc_token');
+        localStorage.removeItem('cc_user');
         window.location.href = 'login.html';
         return false;
     }

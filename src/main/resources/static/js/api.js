@@ -42,6 +42,11 @@ const api = {
             const contentType = res.headers.get('content-type');
             let data;
 
+            if (res.status === 401 || res.status === 403) {
+                this.logout();
+                throw new Error('Session expired. Please log in again.');
+            }
+
             if (contentType && contentType.includes('application/json')) {
                 data = await res.json();
                 if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
