@@ -1,59 +1,53 @@
-// Problems page logic
-let allProblems = [];
-
-(async function () {
+document.addEventListener('DOMContentLoaded', async () => {
     renderNav('problems');
 
+    if (typeof requireAuth === 'function') {
+        if (!requireAuth()) return;
+    }
+
+    const card = document.getElementById('leetcodePracticeCard');
+
     try {
-        allProblems = await api.getProblems();
-        renderProblems(allProblems);
+        const profile = await api.getLeetcodeProfile();
+        const username = profile?.leetcodeUsername;
+
+        if (!username) {
+            renderDisconnectedState(card);
+            return;
+        }
+
+        const profileLink = `https://leetcode.com/u/${encodeURIComponent(username)}/`;
+
+        card.innerHTML = `
+            <div class="empty-state" style="padding:2rem 1rem;">
+                <span class="icon">🔗</span>
+                <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:0.75rem;">LeetCode Profile Connected</h2>
+                <p style="margin-bottom:0.5rem;">Hi ${escapeHtml(username)}, solve your coding challenges directly on LeetCode.</p>
+                <p style="margin-bottom:1.5rem;color:var(--text-muted);">Your profile link is ready below.</p>
+                <a class="btn btn-primary" href="${profileLink}" target="_blank" rel="noopener noreferrer">Go to Your LeetCode</a>
+            </div>
+        `;
     } catch (e) {
-        document.getElementById('problemsList').innerHTML = '<div class="empty-state"><p>Could not load problems.</p></div>';
+        renderDisconnectedState(card);
     }
-})();
+});
 
-function filterProblems(difficulty) {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-
-    if (difficulty === 'all') {
-        renderProblems(allProblems);
-    } else {
-        renderProblems(allProblems.filter(p => p.difficulty === difficulty));
-    }
-}
-
-function renderProblems(problems) {
-    const el = document.getElementById('problemsList');
-    if (problems.length === 0) {
-        el.innerHTML = '<div class="empty-state"><span class="icon">🔍</span><p>No problems found.</p></div>';
-        return;
-    }
-
-    el.innerHTML = `
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width:50px">#</th>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Difficulty</th>
-                        <th>Points</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${problems.map((p, i) => `
-                        <tr style="cursor:pointer;" onclick="window.location.href='problem.html?id=${p.id}'">
-                            <td style="color:var(--text-muted);">${p.id}</td>
-                            <td><strong>${p.title}</strong></td>
-                            <td style="color:var(--text-secondary);font-size:0.8125rem;">${p.category || '—'}</td>
-                            <td><span class="badge badge-${p.difficulty.toLowerCase()}">${p.difficulty}</span></td>
-                            <td style="color:var(--accent);font-weight:600;">🪙 ${p.points}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+function renderDisconnectedState(card) {
+    card.innerHTML = `
+        <div class="empty-state" style="padding:2rem 1rem;">
+            <span class="icon">👤</span>
+            <h2 style="font-size:1.5rem;font-weight:700;margin-bottom:0.75rem;">Connect Your LeetCode Profile</h2>
+            <p style="margin-bottom:1.5rem;">No linked LeetCode account found. Connect it from your profile page and solve there.</p>
+            <a class="btn btn-primary" href="profile.html">Connect in Profile</a>
         </div>
     `;
+}
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }
