@@ -28,9 +28,18 @@
                             waiting player with the same level and select a random problem.</p>
                         <p style="color:var(--text-secondary);margin-bottom:1rem;font-size:0.95rem;">Choose Difficulty</p>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <button onclick="findRandomBattle('Easy')" class="btn btn-primary">Easy</button>
-                            <button onclick="findRandomBattle('Medium')" class="btn btn-primary">Medium</button>
-                            <button onclick="findRandomBattle('Hard')" class="btn btn-primary">Hard</button>
+                            <button onclick="findRandomBattle('Easy')" class="btn btn-primary" style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding-top:0.6rem;padding-bottom:0.6rem;">
+                                <span>Easy</span>
+                                <span style="font-size:0.75rem;opacity:0.85;">15 coins</span>
+                            </button>
+                            <button onclick="findRandomBattle('Medium')" class="btn btn-primary" style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding-top:0.6rem;padding-bottom:0.6rem;">
+                                <span>Medium</span>
+                                <span style="font-size:0.75rem;opacity:0.85;">20 coins</span>
+                            </button>
+                            <button onclick="findRandomBattle('Hard')" class="btn btn-primary" style="display:flex;flex-direction:column;align-items:center;gap:0.2rem;padding-top:0.6rem;padding-bottom:0.6rem;">
+                                <span>Hard</span>
+                                <span style="font-size:0.75rem;opacity:0.85;">30 coins</span>
+                            </button>
                         </div>
                         <div style="margin-top:1rem;padding:0.85rem;border-radius:0.75rem;background:rgba(255,255,255,0.03);">
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.35rem;">Entry Fees</p>
