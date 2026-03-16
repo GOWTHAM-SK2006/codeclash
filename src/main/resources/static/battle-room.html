@@ -29,51 +29,60 @@
                     </div>
                 </div>
 
-                <div class="card" style="margin-top:1.5rem;">
-                    <div
-                        style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
-                        <h3 style="font-weight:700;" id="battleProblemTitle">Problem</h3>
-                        <span id="difficultyBadge" class="badge">Easy</span>
-                    </div>
-                    <p style="color:var(--text-secondary);margin-bottom:1rem;" id="battleProblemDesc"></p>
-                    <div style="margin-bottom:0.75rem;display:flex;justify-content:flex-end;">
-                        <select id="languageSelect" class="input" style="max-width:220px;">
-                            <option value="python">Python</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="java">Java</option>
-                        </select>
-                    </div>
-                    <textarea id="battleEditor" class="code-editor" placeholder="Write your solution..."></textarea>
-                    <div style="display:flex;gap:0.75rem;margin-top:1rem;">
-                        <button onclick="runBattleCode()" class="btn btn-secondary btn-lg" style="min-width:160px;">▶ Run
-                            Code</button>
-                        <button onclick="submitBattleSolution()" class="btn btn-primary btn-lg" style="flex:1;">⚡ Submit
-                            Solution</button>
-                        <button onclick="cancelMatch()" class="btn btn-secondary btn-lg" style="min-width:180px;">❌ Cancel
-                            Match</button>
-                    </div>
-                    <div id="runOutput" class="card" style="display:none;margin-top:1rem;padding:1rem;">
-                        <h4 style="font-weight:700;margin-bottom:0.5rem;">Compiler Output</h4>
-                        <pre id="runOutputText" style="white-space:pre-wrap;color:var(--text-secondary);font-size:0.9rem;"></pre>
-                    </div>
-
-                    <div class="card" style="margin-top:1rem;padding:1rem;">
-                        <div id="testcaseTabs" style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem;"></div>
-
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                            <div>
-                                <h4 style="font-size:0.8rem;font-weight:700;margin-bottom:0.35rem;color:var(--text-secondary);">Input</h4>
-                                <pre id="testcaseInput"
-                                    style="background:#0D0D0D;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;min-height:70px;white-space:pre-wrap;"></pre>
+                <div class="card" style="margin-top:1.5rem;padding:1rem;">
+                    <div style="display:grid;grid-template-columns:46% 54%;gap:1rem;">
+                        <div class="card" style="padding:1rem;">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;">
+                                <h3 style="font-weight:700;" id="battleProblemTitle">Problem</h3>
+                                <span id="difficultyBadge" class="badge">Easy</span>
                             </div>
-                            <div>
-                                <h4 style="font-size:0.8rem;font-weight:700;margin-bottom:0.35rem;color:var(--text-secondary);">Expected Output</h4>
-                                <pre id="testcaseExpected"
-                                    style="background:#0D0D0D;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;min-height:70px;white-space:pre-wrap;"></pre>
+                            <p style="color:var(--text-secondary);margin-bottom:0.8rem;white-space:pre-wrap;" id="battleProblemDesc"></p>
+                            <h4 style="font-size:0.8rem;font-weight:700;margin-bottom:0.35rem;color:var(--text-secondary);">Testcases</h4>
+                            <div id="testcaseTabs" style="display:flex;gap:0.45rem;flex-wrap:wrap;margin-bottom:0.75rem;"></div>
+                            <div style="display:grid;grid-template-columns:1fr;gap:0.55rem;">
+                                <div>
+                                    <h4 style="font-size:0.76rem;font-weight:700;margin-bottom:0.3rem;color:var(--text-secondary);">Input</h4>
+                                    <pre id="testcaseInput" style="background:#0D0D0D;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.65rem;min-height:56px;white-space:pre-wrap;"></pre>
+                                </div>
+                                <div>
+                                    <h4 style="font-size:0.76rem;font-weight:700;margin-bottom:0.3rem;color:var(--text-secondary);">Expected</h4>
+                                    <pre id="testcaseExpected" style="background:#0D0D0D;border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.65rem;min-height:56px;white-space:pre-wrap;"></pre>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="testcaseVerdict" style="display:none;margin-top:0.75rem;"></div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                                <div style="display:flex;gap:0.4rem;">
+                                    <span class="badge badge-accent">Code</span>
+                                    <span class="badge">Editorial</span>
+                                    <span class="badge">Testcase</span>
+                                </div>
+                                <select id="languageSelect" class="input" style="max-width:180px;">
+                                    <option value="python">Python</option>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="java">Java</option>
+                                </select>
+                            </div>
+                            <textarea id="battleEditor" class="code-editor" placeholder="Write your solution..." style="min-height:300px;"></textarea>
+                            <div style="display:flex;gap:0.65rem;margin-top:0.7rem;">
+                                <button onclick="runBattleCode()" class="btn btn-secondary btn-lg" style="min-width:130px;">▶ Run Code</button>
+                                <button onclick="submitBattleSolution()" class="btn btn-primary btn-lg" style="flex:1;">⚡ Submit Solution</button>
+                                <button onclick="cancelMatch()" class="btn btn-secondary btn-lg" style="min-width:160px;">❌ Cancel Match</button>
+                            </div>
+
+                            <div id="runOutput" class="card" style="display:none;margin-top:0.8rem;padding:0.8rem;">
+                                <div style="display:flex;align-items:center;gap:0.8rem;justify-content:space-between;margin-bottom:0.4rem;">
+                                    <div>
+                                        <h4 id="judgeStatusTitle" style="font-size:1.1rem;font-weight:800;color:var(--success);">Accepted</h4>
+                                        <p id="judgeRuntime" style="font-size:0.8rem;color:var(--text-secondary);"></p>
+                                    </div>
+                                    <div id="judgeCaseBadges" style="display:flex;gap:0.4rem;flex-wrap:wrap;"></div>
+                                </div>
+                                <pre id="runOutputText" style="white-space:pre-wrap;color:var(--text-secondary);font-size:0.86rem;margin-top:0.4rem;"></pre>
+                                <div id="testcaseVerdict" style="display:none;margin-top:0.6rem;"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

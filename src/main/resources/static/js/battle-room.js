@@ -5,6 +5,7 @@ let statusPollInterval = null;
 let timeLeft = 900;
 let battleTestcases = [];
 let selectedTestcaseIndex = 0;
+let testcaseRunResults = [];
 
 (async function () {
     renderNav('battle');
@@ -123,7 +124,7 @@ async function runBattleCode() {
 
     const code = document.getElementById('battleEditor').value;
     const language = getSelectedLanguage();
-    const selectedCase = battleTestcases[selectedTestcaseIndex] || { input: '', expected: '' };
+    const testcases = battleTestcases.length ? battleTestcases : [{ input: '', expected: '' }];
 
     if (!code || !code.trim()) {
         alert('Please write code before running.');
@@ -140,33 +141,55 @@ async function runBattleCode() {
             runBtn.textContent = 'Running...';
         }
 
-        const result = await api.runBattle(currentBattleId, code, language, selectedCase.input);
+        const startedAt = performance.now();
+        testcaseRunResults = [];
 
-        const lines = [];
-        lines.push(`Language: ${result.language || language.toUpperCase()}`);
-        lines.push(`Exit Code: ${result.exitCode}`);
-        lines.push(`Timed Out: ${result.timedOut ? 'Yes' : 'No'}`);
+        for (let index = 0; index < testcases.length; index++) {
+            const testCase = testcases[index];
+            const result = await api.runBattle(currentBattleId, code, language, testCase.input);
 
-        if (result.stdout && result.stdout.trim()) {
-            lines.push('');
-            lines.push('STDOUT:');
-            lines.push(result.stdout.trim());
+            const actual = normalizeText(result?.stdout || '');
+            const expected = normalizeText(testCase?.expected || '');
+            const runStatus = result.timedOut
+                ? 'TLE'
+                : ((result.exitCode ?? 1) !== 0)
+                    ? 'RUNTIME_ERROR'
+                    : actual === expected
+                        ? 'PASSED'
+                        : 'FAILED';
+
+            testcaseRunResults.push({
+                index,
+                input: testCase.input,
+                expected: testCase.expected,
+                actual: result?.stdout || '',
+                stderr: result?.stderr || '',
+                exitCode: result?.exitCode ?? 1,
+                timedOut: !!result?.timedOut,
+                language: result?.language || language.toUpperCase(),
+                status: runStatus
+            });
         }
 
-        if (result.stderr && result.stderr.trim()) {
-            lines.push('');
-            lines.push('STDERR:');
-            lines.push(result.stderr.trim());
+        const passedCount = testcaseRunResults.filter(c => c.status === 'PASSED').length;
+        const allPassed = testcaseRunResults.length > 0 && passedCount === testcaseRunResults.length;
+        const runtimeMs = Math.max(0, Math.round(performance.now() - startedAt));
+
+        renderRunSummary(allPassed, runtimeMs);
+        renderTestcaseTabs();
+        renderSelectedTestcase();
+
+        const selectedRun = testcaseRunResults[selectedTestcaseIndex] || testcaseRunResults[0];
+        if (selectedRun) {
+            outputText.textContent = buildRunOutputText(selectedRun, selectedTestcaseIndex + 1);
+            outputCard.style.display = 'block';
+            renderRunVerdict(selectedRun, selectedRun);
         }
-
-        outputText.textContent = lines.join('\n');
-        outputCard.style.display = 'block';
-
-        renderRunVerdict(result, selectedCase);
     } catch (e) {
         outputText.textContent = `Run failed: ${e.message}`;
         outputCard.style.display = 'block';
-        renderRunVerdict({ stdout: '', stderr: e.message, timedOut: false, exitCode: 1 }, selectedCase);
+        renderRunSummary(false, 0, true);
+        renderRunVerdict({ stdout: '', stderr: e.message, timedOut: false, exitCode: 1 }, { expected: '' });
     } finally {
         if (runBtn) {
             runBtn.disabled = false;
@@ -329,7 +352,10 @@ function renderTestcaseTabs() {
 
     tabs.innerHTML = battleTestcases.map((_, idx) => {
         const active = idx === selectedTestcaseIndex;
-        return `<button class="btn btn-secondary testcase-tab-btn" style="padding:0.35rem 0.75rem;${active ? 'border-color:var(--accent);color:var(--accent);' : ''}" onclick="selectTestcase(${idx})">Case ${idx + 1}</button>`;
+        const status = testcaseRunResults[idx]?.status;
+        const statusColor = status === 'PASSED' ? 'var(--success)' : (status ? 'var(--danger)' : 'var(--text-secondary)');
+        const marker = status === 'PASSED' ? '✅ ' : status ? '❌ ' : '';
+        return `<button class="btn btn-secondary testcase-tab-btn" style="padding:0.32rem 0.7rem;border-color:${active ? 'var(--accent)' : 'var(--border)'};color:${active ? 'var(--accent)' : statusColor};" onclick="selectTestcase(${idx})">${marker}Case ${idx + 1}</button>`;
     }).join('');
 }
 
@@ -341,20 +367,33 @@ function selectTestcase(index) {
 
 function renderSelectedTestcase() {
     const test = battleTestcases[selectedTestcaseIndex] || { input: '', expected: '' };
+    const run = testcaseRunResults[selectedTestcaseIndex];
     const inputEl = document.getElementById('testcaseInput');
     const expectedEl = document.getElementById('testcaseExpected');
     if (inputEl) inputEl.textContent = test.input || '<empty>';
     if (expectedEl) expectedEl.textContent = test.expected || '<empty>';
 
     const verdict = document.getElementById('testcaseVerdict');
-    if (verdict) verdict.style.display = 'none';
+    if (!verdict) return;
+
+    if (!run) {
+        verdict.style.display = 'none';
+        return;
+    }
+
+    const runOutput = document.getElementById('runOutputText');
+    if (runOutput) {
+        runOutput.textContent = buildRunOutputText(run, selectedTestcaseIndex + 1);
+    }
+
+    renderRunVerdict(run, run);
 }
 
 function renderRunVerdict(result, testCase) {
     const verdict = document.getElementById('testcaseVerdict');
     if (!verdict) return;
 
-    const actual = normalizeText(result?.stdout || '');
+    const actual = normalizeText(result?.actual || result?.stdout || '');
     const expected = normalizeText(testCase?.expected || '');
 
     if (result?.timedOut) {
@@ -374,9 +413,51 @@ function renderRunVerdict(result, testCase) {
     verdict.innerHTML = `
         <div class="card" style="border-color:${passed ? 'var(--success)' : 'var(--danger)'};padding:0.75rem;">
             <strong style="color:${passed ? 'var(--success)' : 'var(--danger)'};">Testcase ${selectedTestcaseIndex + 1}: ${passed ? 'Passed' : 'Failed'}</strong>
-            ${passed ? '' : `<div style="margin-top:0.5rem;color:var(--text-secondary);">Expected: <code>${escapeHtml(testCase?.expected || '<empty>')}</code><br/>Got: <code>${escapeHtml(result?.stdout || '<empty>')}</code></div>`}
+            ${passed ? '' : `<div style="margin-top:0.5rem;color:var(--text-secondary);">Expected: <code>${escapeHtml(testCase?.expected || '<empty>')}</code><br/>Got: <code>${escapeHtml(result?.actual || result?.stdout || '<empty>')}</code></div>`}
         </div>
     `;
+}
+
+function renderRunSummary(allPassed, runtimeMs, forceFailed = false) {
+    const statusTitle = document.getElementById('judgeStatusTitle');
+    const runtime = document.getElementById('judgeRuntime');
+    const badges = document.getElementById('judgeCaseBadges');
+
+    if (statusTitle) {
+        statusTitle.textContent = (!forceFailed && allPassed) ? 'Accepted' : 'Failed';
+        statusTitle.style.color = (!forceFailed && allPassed) ? 'var(--success)' : 'var(--danger)';
+    }
+    if (runtime) {
+        runtime.textContent = `Runtime: ${runtimeMs} ms`;
+    }
+    if (badges) {
+        badges.innerHTML = testcaseRunResults.map((c, i) => {
+            const passed = c.status === 'PASSED';
+            return `<span class="badge" style="background:${passed ? 'rgba(0,200,83,0.12)' : 'rgba(255,61,0,0.12)'};color:${passed ? 'var(--success)' : 'var(--danger)'};">${passed ? '✅' : '❌'} Case ${i + 1}</span>`;
+        }).join('');
+    }
+}
+
+function buildRunOutputText(run, caseNo) {
+    const lines = [];
+    lines.push(`Case ${caseNo}`);
+    lines.push(`Language: ${run.language || 'PYTHON'}`);
+    lines.push(`Exit Code: ${run.exitCode}`);
+    lines.push(`Timed Out: ${run.timedOut ? 'Yes' : 'No'}`);
+
+    if (run.actual && String(run.actual).trim()) {
+        lines.push('');
+        lines.push('Output:');
+        lines.push(String(run.actual).trim());
+    }
+
+    if (run.stderr && String(run.stderr).trim()) {
+        lines.push('');
+        lines.push('Error:');
+        lines.push(String(run.stderr).trim());
+    }
+
+    return lines.join('\n');
 }
 
 function normalizeText(value) {
