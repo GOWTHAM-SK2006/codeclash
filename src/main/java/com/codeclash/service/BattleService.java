@@ -3,17 +3,24 @@ package com.codeclash.service;
 import com.codeclash.dto.*;
 import com.codeclash.entity.*;
 import com.codeclash.repository.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
 public class BattleService {
+
+        private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
         private final BattleRepository battleRepository;
         private final BattleParticipantRepository participantRepository;
@@ -241,15 +248,17 @@ public class BattleService {
 
                 String language = normalizeLanguage(request.getLanguage());
 
-                DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
-
-                boolean correct = false;
-                if (!result.isTimedOut() && result.getExitCode() == 0) {
-                        String output = result.getStdout().trim();
-                        String expected = battle.getProblem().getExpectedOutput() != null
-                                        ? battle.getProblem().getExpectedOutput().trim()
-                                        : "";
-                        correct = output.equals(expected);
+                boolean correct;
+                if ("PYTHON".equals(language)) {
+                        correct = evaluatePythonBattleSubmission(battle.getProblem(), request.getCode());
+                } else {
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
+                        correct = false;
+                        if (!result.isTimedOut() && result.getExitCode() == 0) {
+                                String output = normalizeOutput(result.getStdout());
+                                String expected = normalizeOutput(battle.getProblem().getExpectedOutput());
+                                correct = output.equals(expected);
+                        }
                 }
 
                 myEntry.setIsCorrect(correct);
@@ -288,11 +297,18 @@ public class BattleService {
                 }
 
                 String language = normalizeLanguage(request.getLanguage());
-                DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
+                DockerSandboxService.ExecutionResult result;
+                if ("PYTHON".equals(language)) {
+                        result = runPythonBattleCode(battle.getProblem(), request.getCode());
+                } else {
+                        result = dockerSandboxService.execute(request.getCode(), language);
+                }
+
+                String cleanedStderr = cleanRunnerWarning(result.getStderr());
 
                 return Map.of(
                                 "stdout", result.getStdout() == null ? "" : result.getStdout(),
-                                "stderr", result.getStderr() == null ? "" : result.getStderr(),
+                                "stderr", cleanedStderr,
                                 "exitCode", result.getExitCode(),
                                 "timedOut", result.isTimedOut(),
                                 "language", language);
@@ -363,5 +379,225 @@ public class BattleService {
                         case "java" -> "JAVA";
                         default -> "PYTHON";
                 };
+        }
+
+        private boolean evaluatePythonBattleSubmission(Problem problem, String userCode) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+                String functionName = extractFirstPythonFunctionName(userCode);
+
+                if (testCases.isEmpty()) {
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "PYTHON");
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+                        return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
+                }
+
+                for (TestCaseData testCase : testCases) {
+                        String codeToRun = buildPythonExecutionScript(userCode, functionName, testCase.input());
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "PYTHON");
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+
+                        String actual = normalizeOutput(result.getStdout());
+                        String expected = normalizeOutput(testCase.expected());
+                        if (!actual.equals(expected)) {
+                                return false;
+                        }
+                }
+
+                return true;
+        }
+
+        private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+                String functionName = extractFirstPythonFunctionName(userCode);
+
+                if (testCases.isEmpty()) {
+                        return dockerSandboxService.execute(userCode, "PYTHON");
+                }
+
+                TestCaseData firstCase = testCases.get(0);
+                String codeToRun = buildPythonExecutionScript(userCode, functionName, firstCase.input());
+                return dockerSandboxService.execute(codeToRun, "PYTHON");
+        }
+
+        private List<TestCaseData> parseTestCases(Problem problem) {
+                List<TestCaseData> jsonCases = parseJsonTestCases(problem.getTestCases());
+                if (!jsonCases.isEmpty()) {
+                        return jsonCases;
+                }
+
+                List<TestCaseData> legacyCases = parseLegacyTextCases(problem.getTestCases());
+                if (!legacyCases.isEmpty()) {
+                        return legacyCases;
+                }
+
+                String expected = safe(problem.getExpectedOutput()).trim();
+                if (!expected.isBlank()) {
+                        return List.of(new TestCaseData("", expected));
+                }
+
+                return List.of();
+        }
+
+        private List<TestCaseData> parseJsonTestCases(String raw) {
+                if (raw == null || raw.isBlank() || !raw.trim().startsWith("[")) {
+                        return List.of();
+                }
+
+                try {
+                        JsonNode root = OBJECT_MAPPER.readTree(raw);
+                        if (!root.isArray()) {
+                                return List.of();
+                        }
+
+                        List<TestCaseData> cases = new ArrayList<>();
+                        for (JsonNode item : root) {
+                                String input = item.path("input").asText("");
+                                String expected = item.path("expected").asText("");
+                                if (!expected.isBlank()) {
+                                        cases.add(new TestCaseData(input, expected));
+                                }
+                        }
+                        return cases;
+                } catch (Exception ignored) {
+                        return List.of();
+                }
+        }
+
+        private List<TestCaseData> parseLegacyTextCases(String raw) {
+                if (raw == null || raw.isBlank()) {
+                        return List.of();
+                }
+
+                List<TestCaseData> cases = new ArrayList<>();
+                Pattern pattern = Pattern.compile("Input:\\s*(.*?)\\s*Expected:\\s*(.*?)(?:\\r?\\n\\r?\\n|$)",
+                                Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+                Matcher matcher = pattern.matcher(raw);
+                while (matcher.find()) {
+                        String input = stripQuotes(safe(matcher.group(1)).trim());
+                        String expected = stripQuotes(safe(matcher.group(2)).trim());
+                        if (!expected.isBlank()) {
+                                cases.add(new TestCaseData(input, expected));
+                        }
+                }
+
+                if (!cases.isEmpty()) {
+                        return cases;
+                }
+
+                Matcher inputMatcher = Pattern.compile("Input:\\s*(.*)", Pattern.CASE_INSENSITIVE).matcher(raw);
+                Matcher expectedMatcher = Pattern.compile("Expected:\\s*(.*)", Pattern.CASE_INSENSITIVE).matcher(raw);
+                String input = inputMatcher.find() ? stripQuotes(safe(inputMatcher.group(1)).trim()) : "";
+                if (expectedMatcher.find()) {
+                        String expected = stripQuotes(safe(expectedMatcher.group(1)).trim());
+                        if (!expected.isBlank()) {
+                                return List.of(new TestCaseData(input, expected));
+                        }
+                }
+
+                return List.of();
+        }
+
+        private String extractFirstPythonFunctionName(String code) {
+                if (code == null || code.isBlank()) {
+                        return null;
+                }
+
+                Matcher matcher = Pattern.compile("(?m)^\\s*def\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(").matcher(code);
+                return matcher.find() ? matcher.group(1) : null;
+        }
+
+        private String buildPythonExecutionScript(String userCode, String functionName, String rawInput) {
+                if (functionName == null || functionName.isBlank()) {
+                        return userCode;
+                }
+
+                String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
+                return userCode + "\n\n"
+                                + "import ast\n"
+                                + "def __cc_parse(raw):\n"
+                                + "    raw = (raw or '').strip()\n"
+                                + "    if raw == '':\n"
+                                + "        return (), {}\n"
+                                + "    if '=' in raw and not raw.startswith(('\\"', '\\'', '[', '{', '(')):\n"
+                                + "        parts = []\n"
+                                + "        token = ''\n"
+                                + "        depth = 0\n"
+                                + "        for ch in raw:\n"
+                                + "            if ch == ',' and depth == 0:\n"
+                                + "                if token.strip():\n"
+                                + "                    parts.append(token.strip())\n"
+                                + "                token = ''\n"
+                                + "                continue\n"
+                                + "            token += ch\n"
+                                + "            if ch in '[{(':\n"
+                                + "                depth += 1\n"
+                                + "            elif ch in ']})':\n"
+                                + "                depth -= 1\n"
+                                + "        if token.strip():\n"
+                                + "            parts.append(token.strip())\n"
+                                + "        kwargs = {}\n"
+                                + "        for part in parts:\n"
+                                + "            if '=' in part:\n"
+                                + "                key, value = part.split('=', 1)\n"
+                                + "                kwargs[key.strip()] = ast.literal_eval(value.strip())\n"
+                                + "        return (), kwargs\n"
+                                + "    try:\n"
+                                + "        parsed = ast.literal_eval(raw)\n"
+                                + "    except Exception:\n"
+                                + "        parsed = raw\n"
+                                + "    if isinstance(parsed, tuple):\n"
+                                + "        return parsed, {}\n"
+                                + "    if isinstance(parsed, list):\n"
+                                + "        return tuple(parsed), {}\n"
+                                + "    return (parsed,), {}\n"
+                                + "\n"
+                                + "if __name__ == '__main__':\n"
+                                + "    args, kwargs = __cc_parse(" + inputLiteral + ")\n"
+                                + "    result = " + functionName + "(*args, **kwargs)\n"
+                                + "    if result is not None:\n"
+                                + "        print(result)\n";
+        }
+
+        private String toPythonStringLiteral(String value) {
+                return "'" + value
+                                .replace("\\", "\\\\")
+                                .replace("'", "\\'")
+                                .replace("\r", "\\r")
+                                .replace("\n", "\\n") + "'";
+        }
+
+        private String stripQuotes(String value) {
+                if (value == null || value.length() < 2) {
+                        return safe(value);
+                }
+                if ((value.startsWith("\"") && value.endsWith("\""))
+                                || (value.startsWith("'") && value.endsWith("'"))) {
+                        return value.substring(1, value.length() - 1);
+                }
+                return value;
+        }
+
+        private String normalizeOutput(String value) {
+                return safe(value).replace("\r\n", "\n").trim();
+        }
+
+        private String safe(String value) {
+                return value == null ? "" : value;
+        }
+
+        private String cleanRunnerWarning(String stderr) {
+                String text = safe(stderr);
+                String warning = "Docker not available. Executed using local fallback runner.";
+                if (text.startsWith(warning)) {
+                        text = text.substring(warning.length()).trim();
+                }
+                return text;
+        }
+
+        private record TestCaseData(String input, String expected) {
         }
 }
