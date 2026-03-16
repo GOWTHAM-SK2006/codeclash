@@ -17,9 +17,12 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -143,10 +146,7 @@ public class DockerSandboxService {
 
     public ExecutionResult execute(String code, String language) {
         if (!isAvailable) {
-            return ExecutionResult.builder()
-                    .stderr("Docker is not available on this system. Execution failed.")
-                    .exitCode(1)
-                    .build();
+            return executeWithoutDocker(code, language);
         }
 
         String containerId = null;
@@ -239,6 +239,88 @@ public class DockerSandboxService {
                     log.warn("Failed to cleanup temp dir {}", tempDir);
                 }
             }
+        }
+    }
+
+    private ExecutionResult executeWithoutDocker(String code, String language) {
+        Path tempDir = null;
+        try {
+            tempDir = Files.createTempDirectory("codeclash-local-exec-" + UUID.randomUUID());
+            String fileName = getFileName(language);
+            File codeFile = new File(tempDir.toFile(), fileName);
+            try (FileWriter writer = new FileWriter(codeFile)) {
+                writer.write(code);
+            }
+
+            String[] cmd = getRunCommand(language, fileName);
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.directory(tempDir.toFile());
+
+            Process process = pb.start();
+            StringBuilder stdout = new StringBuilder();
+            StringBuilder stderr = new StringBuilder();
+
+            Thread outThread = new Thread(() -> appendStream(process.getInputStream(), stdout));
+            Thread errThread = new Thread(() -> appendStream(process.getErrorStream(), stderr));
+            outThread.start();
+            errThread.start();
+
+            boolean finished = process.waitFor(5, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                outThread.join(1000);
+                errThread.join(1000);
+                return ExecutionResult.builder()
+                        .stdout(stdout.toString())
+                        .stderr("Execution timed out (local fallback).\n" + stderr)
+                        .exitCode(1)
+                        .timedOut(true)
+                        .build();
+            }
+
+            int exitCode = process.exitValue();
+            outThread.join(1000);
+            errThread.join(1000);
+
+            String warning = "Docker not available. Executed using local fallback runner.\n";
+            return ExecutionResult.builder()
+                    .stdout(stdout.toString())
+                    .stderr((warning + stderr).trim())
+                    .exitCode(exitCode)
+                    .timedOut(false)
+                    .build();
+        } catch (IOException ioException) {
+            String command = Arrays.toString(getRunCommand(language, getFileName(language)));
+            return ExecutionResult.builder()
+                    .stderr("Local runner unavailable for language " + language + ". Command: " + command
+                            + "\nReason: " + ioException.getMessage())
+                    .exitCode(1)
+                    .timedOut(false)
+                    .build();
+        } catch (Exception e) {
+            return ExecutionResult.builder()
+                    .stderr("Local fallback execution failed: " + e.getMessage())
+                    .exitCode(1)
+                    .timedOut(false)
+                    .build();
+        } finally {
+            if (tempDir != null) {
+                try {
+                    Files.walk(tempDir)
+                            .sorted((a, b) -> b.compareTo(a))
+                            .forEach(p -> p.toFile().delete());
+                } catch (Exception e) {
+                    log.warn("Failed to cleanup local temp dir {}", tempDir);
+                }
+            }
+        }
+    }
+
+    private void appendStream(InputStream inputStream, StringBuilder target) {
+        try {
+            byte[] bytes = inputStream.readAllBytes();
+            target.append(new String(bytes, StandardCharsets.UTF_8));
+        } catch (IOException ignored) {
         }
     }
 
