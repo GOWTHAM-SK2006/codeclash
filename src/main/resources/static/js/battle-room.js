@@ -101,13 +101,67 @@ function startTimer(startTimeStr) {
 async function submitBattleSolution() {
     if (!currentBattleId) return;
     const code = document.getElementById('battleEditor').value;
+    const language = getSelectedLanguage();
 
     try {
-        const result = await api.submitBattle(currentBattleId, code, 'python');
+        const result = await api.submitBattle(currentBattleId, code, language);
         showResult(result);
         clearInterval(timerInterval);
     } catch (e) {
         alert('Error: ' + e.message);
+    }
+}
+
+async function runBattleCode() {
+    if (!currentBattleId) return;
+
+    const code = document.getElementById('battleEditor').value;
+    const language = getSelectedLanguage();
+
+    if (!code || !code.trim()) {
+        alert('Please write code before running.');
+        return;
+    }
+
+    const runBtn = document.querySelector('button[onclick="runBattleCode()"]');
+    const outputCard = document.getElementById('runOutput');
+    const outputText = document.getElementById('runOutputText');
+
+    try {
+        if (runBtn) {
+            runBtn.disabled = true;
+            runBtn.textContent = 'Running...';
+        }
+
+        const result = await api.runBattle(currentBattleId, code, language);
+
+        const lines = [];
+        lines.push(`Language: ${result.language || language.toUpperCase()}`);
+        lines.push(`Exit Code: ${result.exitCode}`);
+        lines.push(`Timed Out: ${result.timedOut ? 'Yes' : 'No'}`);
+
+        if (result.stdout && result.stdout.trim()) {
+            lines.push('');
+            lines.push('STDOUT:');
+            lines.push(result.stdout.trim());
+        }
+
+        if (result.stderr && result.stderr.trim()) {
+            lines.push('');
+            lines.push('STDERR:');
+            lines.push(result.stderr.trim());
+        }
+
+        outputText.textContent = lines.join('\n');
+        outputCard.style.display = 'block';
+    } catch (e) {
+        outputText.textContent = `Run failed: ${e.message}`;
+        outputCard.style.display = 'block';
+    } finally {
+        if (runBtn) {
+            runBtn.disabled = false;
+            runBtn.textContent = '▶ Run Code';
+        }
     }
 }
 
@@ -138,10 +192,14 @@ function showResult(result) {
     }
 
     const submitBtn = document.querySelector('button[onclick="submitBattleSolution()"]');
+    const runBtn = document.querySelector('button[onclick="runBattleCode()"]');
     const cancelBtn = document.querySelector('button[onclick="cancelMatch()"]');
+    const languageSelect = document.getElementById('languageSelect');
     const editor = document.getElementById('battleEditor');
     if (submitBtn) submitBtn.disabled = true;
+    if (runBtn) runBtn.disabled = true;
     if (cancelBtn) cancelBtn.disabled = true;
+    if (languageSelect) languageSelect.disabled = true;
     if (editor) editor.disabled = true;
 
     const user = api.getUser();
@@ -192,4 +250,11 @@ function showResult(result) {
         // Keep polling for results
         setTimeout(loadBattleDetails, 5000);
     }
+}
+
+function getSelectedLanguage() {
+    const selected = document.getElementById('languageSelect')?.value || 'python';
+    if (selected === 'java') return 'java';
+    if (selected === 'javascript') return 'javascript';
+    return 'python';
 }

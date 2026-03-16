@@ -36,12 +36,25 @@
                         <span id="difficultyBadge" class="badge">Easy</span>
                     </div>
                     <p style="color:var(--text-secondary);margin-bottom:1rem;" id="battleProblemDesc"></p>
+                    <div style="margin-bottom:0.75rem;display:flex;justify-content:flex-end;">
+                        <select id="languageSelect" class="input" style="max-width:220px;">
+                            <option value="python">Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="java">Java</option>
+                        </select>
+                    </div>
                     <textarea id="battleEditor" class="code-editor" placeholder="Write your solution..."></textarea>
                     <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                        <button onclick="runBattleCode()" class="btn btn-secondary btn-lg" style="min-width:160px;">▶ Run
+                            Code</button>
                         <button onclick="submitBattleSolution()" class="btn btn-primary btn-lg" style="flex:1;">⚡ Submit
                             Solution</button>
                         <button onclick="cancelMatch()" class="btn btn-secondary btn-lg" style="min-width:180px;">❌ Cancel
                             Match</button>
+                    </div>
+                    <div id="runOutput" class="card" style="display:none;margin-top:1rem;padding:1rem;">
+                        <h4 style="font-weight:700;margin-bottom:0.5rem;">Compiler Output</h4>
+                        <pre id="runOutputText" style="white-space:pre-wrap;color:var(--text-secondary);font-size:0.9rem;"></pre>
                     </div>
                 </div>
 

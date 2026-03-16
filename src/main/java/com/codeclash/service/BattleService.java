@@ -239,12 +239,7 @@ public class BattleService {
                 myEntry.setCode(request.getCode());
                 myEntry.setSubmittedAt(LocalDateTime.now());
 
-                // Evaluate using Docker sandbox
-                // Note: BattleSubmitRequest should ideally include the language.
-                // Assuming "PYTHON" for now or retrieving from problem if language-specific.
-                // For simplicity, we'll try to find a reasonable default or check if request
-                // has it.
-                String language = "PYTHON";
+                String language = normalizeLanguage(request.getLanguage());
 
                 DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
 
@@ -270,6 +265,37 @@ public class BattleService {
                 }
 
                 return battle;
+        }
+
+        public Map<String, Object> runBattleCode(Long battleId, String username, BattleSubmitRequest request) {
+                Battle battle = battleRepository.findById(battleId)
+                                .orElseThrow(() -> new RuntimeException("Battle not found"));
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        throw new RuntimeException("Battle is not active");
+                }
+
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                participantRepository.findByBattleId(battleId).stream()
+                                .filter(p -> p.getUser().getId().equals(user.getId()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("Not a participant"));
+
+                if (request == null || request.getCode() == null || request.getCode().isBlank()) {
+                        throw new RuntimeException("Code is required");
+                }
+
+                String language = normalizeLanguage(request.getLanguage());
+                DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
+
+                return Map.of(
+                                "stdout", result.getStdout() == null ? "" : result.getStdout(),
+                                "stderr", result.getStderr() == null ? "" : result.getStderr(),
+                                "exitCode", result.getExitCode(),
+                                "timedOut", result.isTimedOut(),
+                                "language", language);
         }
 
         @Transactional
@@ -323,5 +349,19 @@ public class BattleService {
 
         public List<BattleParticipant> getBattleParticipants(Long battleId) {
                 return participantRepository.findByBattleId(battleId);
+        }
+
+        private String normalizeLanguage(String languageInput) {
+                if (languageInput == null || languageInput.isBlank()) {
+                        return "PYTHON";
+                }
+
+                String value = languageInput.trim().toLowerCase();
+                return switch (value) {
+                        case "python", "py" -> "PYTHON";
+                        case "javascript", "js", "node" -> "JAVASCRIPT";
+                        case "java" -> "JAVA";
+                        default -> "PYTHON";
+                };
         }
 }
