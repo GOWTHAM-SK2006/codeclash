@@ -444,26 +444,20 @@ function parseRoadmap(input) {
 
     const problems = [];
     let section = 'General';
-    let level = '';
 
     for (const line of lines) {
         const numbered = line.match(/^(\d+)\s+(.+)$/);
         if (numbered) {
             const leetcodeNo = Number(numbered[1]);
             const title = numbered[2].trim();
-            const topic = level ? `${section} • ${level}` : section;
-            problems.push({ leetcodeNo, title, topic });
+            problems.push({ leetcodeNo, title, topic: section });
             continue;
         }
 
-        if (/^\d+️⃣|^🔟|^1️⃣1️⃣|^1️⃣2️⃣/.test(line)) {
-            section = line;
-            level = '';
+        const parsedTopic = extractTopicName(line);
+        if (parsedTopic) {
+            section = parsedTopic;
             continue;
-        }
-
-        if (/^[🟢🟡🟠🔴]/u.test(line)) {
-            level = line;
         }
     }
 
@@ -472,6 +466,13 @@ function parseRoadmap(input) {
         ...problem,
         url: buildLeetcodeUrl(problem.leetcodeNo, problem.title)
     }));
+}
+
+function extractTopicName(line) {
+    // Match topic lines like '1️⃣ Prefix Sum (30)' and extract only the topic name (no symbol, no count)
+    const topicMatch = line.match(/^[^a-zA-Z0-9]*\s*([a-zA-Z\s]+).*$/);
+    if (!topicMatch) return null;
+    return topicMatch[1].trim();
 }
 
 function buildLeetcodeUrl(leetcodeNo, title) {
@@ -498,6 +499,29 @@ function renderProblems(container, problems) {
         return;
     }
 
+    let currentTopic = '';
+    const bodyRows = problems.map(problem => {
+        const topicHeadingRow = problem.topic !== currentTopic
+            ? `<tr class="topic-heading-row"><td colspan="4">${escapeHtml(problem.topic)}</td></tr>`
+            : '';
+
+        currentTopic = problem.topic;
+
+        return `
+            ${topicHeadingRow}
+            <tr>
+                <td>${problem.sNo}</td>
+                <td><span class="badge badge-accent">${problem.leetcodeNo}</span></td>
+                <td><strong>${escapeHtml(problem.title)}</strong></td>
+                <td>
+                    <a class="btn btn-sm btn-primary" href="${problem.url}" target="_blank" rel="noopener noreferrer">
+                        Solve
+                    </a>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
     container.innerHTML = `
         <div class="table-container">
             <table class="problems-master-table">
@@ -506,24 +530,11 @@ function renderProblems(container, problems) {
                         <th style="width:72px;">S.No</th>
                         <th style="width:100px;">LC #</th>
                         <th>Problem</th>
-                        <th style="width:280px;">Track</th>
                         <th style="width:130px;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${problems.map(problem => `
-                        <tr>
-                            <td>${problem.sNo}</td>
-                            <td><span class="badge badge-accent">${problem.leetcodeNo}</span></td>
-                            <td><strong>${escapeHtml(problem.title)}</strong></td>
-                            <td style="color:var(--text-secondary);">${escapeHtml(problem.topic)}</td>
-                            <td>
-                                <a class="btn btn-sm btn-primary" href="${problem.url}" target="_blank" rel="noopener noreferrer">
-                                    Solve
-                                </a>
-                            </td>
-                        </tr>
-                    `).join('')}
+                    ${bodyRows}
                 </tbody>
             </table>
         </div>

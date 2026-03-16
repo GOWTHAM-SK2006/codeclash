@@ -298,6 +298,17 @@ table {
     z-index: 1;
 }
 
+.problems-master-table .topic-heading-row td {
+    background: var(--bg-secondary);
+    color: var(--accent);
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border-top: 1px solid var(--border-hover);
+    border-bottom: 1px solid var(--border-hover);
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
 th, td {
     padding: 0.875rem 1.25rem;
     text-align: left;
