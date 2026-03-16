@@ -522,7 +522,7 @@ public class BattleService {
                                 + "    raw = (raw or '').strip()\n"
                                 + "    if raw == '':\n"
                                 + "        return (), {}\n"
-                                + "    if '=' in raw and not raw.startswith(('\\"', '\\'', '[', '{', '(')):\n"
+                                + "    if '=' in raw and not raw.lstrip().startswith('[') and not raw.lstrip().startswith('{') and not raw.lstrip().startswith('('):\n"
                                 + "        parts = []\n"
                                 + "        token = ''\n"
                                 + "        depth = 0\n"
