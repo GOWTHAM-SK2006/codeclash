@@ -113,10 +113,10 @@ const api = {
             body: JSON.stringify({ code, language })
         });
     },
-    runBattle(id, code, language) {
+    runBattle(id, code, language, inputData) {
         return this.request(`/battles/${id}/run`, {
             method: 'POST',
-            body: JSON.stringify({ code, language })
+            body: JSON.stringify({ code, language, inputData })
         });
     },
     cancelBattle(id) {

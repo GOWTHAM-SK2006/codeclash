@@ -299,7 +299,7 @@ public class BattleService {
                 String language = normalizeLanguage(request.getLanguage());
                 DockerSandboxService.ExecutionResult result;
                 if ("PYTHON".equals(language)) {
-                        result = runPythonBattleCode(battle.getProblem(), request.getCode());
+                        result = runPythonBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
                 } else {
                         result = dockerSandboxService.execute(request.getCode(), language);
                 }
@@ -394,7 +394,7 @@ public class BattleService {
                 }
 
                 for (TestCaseData testCase : testCases) {
-                        String codeToRun = buildPythonExecutionScript(userCode, functionName, testCase.input());
+                        String codeToRun = buildExecutablePythonCode(userCode, functionName, testCase.input());
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "PYTHON");
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
@@ -410,17 +410,47 @@ public class BattleService {
                 return true;
         }
 
-        private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode) {
+        private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode,
+                        String selectedInputData) {
                 List<TestCaseData> testCases = parseTestCases(problem);
                 String functionName = extractFirstPythonFunctionName(userCode);
+
+                if (selectedInputData != null) {
+                        String codeToRun = buildExecutablePythonCode(userCode, functionName, selectedInputData);
+                        return dockerSandboxService.execute(codeToRun, "PYTHON");
+                }
 
                 if (testCases.isEmpty()) {
                         return dockerSandboxService.execute(userCode, "PYTHON");
                 }
 
                 TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildPythonExecutionScript(userCode, functionName, firstCase.input());
+                String codeToRun = buildExecutablePythonCode(userCode, functionName, firstCase.input());
                 return dockerSandboxService.execute(codeToRun, "PYTHON");
+        }
+
+        private String buildExecutablePythonCode(String userCode, String functionName, String rawInput) {
+                if (usesInputFunction(userCode)) {
+                        return buildPythonInputPatchedScript(userCode, rawInput);
+                }
+                return buildPythonExecutionScript(userCode, functionName, rawInput);
+        }
+
+        private boolean usesInputFunction(String userCode) {
+                if (userCode == null || userCode.isBlank()) {
+                        return false;
+                }
+                return Pattern.compile("\\binput\\s*\\(").matcher(userCode).find();
+        }
+
+        private String buildPythonInputPatchedScript(String userCode, String rawInput) {
+                String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
+                return "import builtins\\n"
+                                + "__cc_raw = " + inputLiteral + "\\n"
+                                + "__cc_lines = __cc_raw.splitlines()\\n"
+                                + "__cc_iter = iter(__cc_lines)\\n"
+                                + "builtins.input = lambda: next(__cc_iter, '')\\n\\n"
+                                + userCode;
         }
 
         private List<TestCaseData> parseTestCases(Problem problem) {

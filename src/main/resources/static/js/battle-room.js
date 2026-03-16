@@ -3,6 +3,8 @@ let currentBattleId = null;
 let timerInterval = null;
 let statusPollInterval = null;
 let timeLeft = 900;
+let battleTestcases = [];
+let selectedTestcaseIndex = 0;
 
 (async function () {
     renderNav('battle');
@@ -41,6 +43,10 @@ async function loadBattleDetails() {
         if (battle.problem?.starterCode) {
             document.getElementById('battleEditor').value = battle.problem.starterCode;
         }
+
+        battleTestcases = parseBattleTestcases(battle.problem);
+        renderTestcaseTabs();
+        renderSelectedTestcase();
 
         document.getElementById('p1Name').textContent = participants[0]?.user?.displayName || 'Player 1';
         document.getElementById('p2Name').textContent = participants[1]?.user?.displayName || 'Player 2';
@@ -117,6 +123,7 @@ async function runBattleCode() {
 
     const code = document.getElementById('battleEditor').value;
     const language = getSelectedLanguage();
+    const selectedCase = battleTestcases[selectedTestcaseIndex] || { input: '', expected: '' };
 
     if (!code || !code.trim()) {
         alert('Please write code before running.');
@@ -133,7 +140,7 @@ async function runBattleCode() {
             runBtn.textContent = 'Running...';
         }
 
-        const result = await api.runBattle(currentBattleId, code, language);
+        const result = await api.runBattle(currentBattleId, code, language, selectedCase.input);
 
         const lines = [];
         lines.push(`Language: ${result.language || language.toUpperCase()}`);
@@ -154,9 +161,12 @@ async function runBattleCode() {
 
         outputText.textContent = lines.join('\n');
         outputCard.style.display = 'block';
+
+        renderRunVerdict(result, selectedCase);
     } catch (e) {
         outputText.textContent = `Run failed: ${e.message}`;
         outputCard.style.display = 'block';
+        renderRunVerdict({ stdout: '', stderr: e.message, timedOut: false, exitCode: 1 }, selectedCase);
     } finally {
         if (runBtn) {
             runBtn.disabled = false;
@@ -196,11 +206,13 @@ function showResult(result) {
     const cancelBtn = document.querySelector('button[onclick="cancelMatch()"]');
     const languageSelect = document.getElementById('languageSelect');
     const editor = document.getElementById('battleEditor');
+    const testcaseTabButtons = document.querySelectorAll('.testcase-tab-btn');
     if (submitBtn) submitBtn.disabled = true;
     if (runBtn) runBtn.disabled = true;
     if (cancelBtn) cancelBtn.disabled = true;
     if (languageSelect) languageSelect.disabled = true;
     if (editor) editor.disabled = true;
+    testcaseTabButtons.forEach(btn => btn.disabled = true);
 
     const user = api.getUser();
     if (result.status === 'CANCELLED' && result.winnerId === user?.userId) {
@@ -257,4 +269,125 @@ function getSelectedLanguage() {
     if (selected === 'java') return 'java';
     if (selected === 'javascript') return 'javascript';
     return 'python';
+}
+
+function parseBattleTestcases(problem) {
+    const testCaseText = problem?.testCases || '';
+    if (!testCaseText || !String(testCaseText).trim()) {
+        return [{ input: '', expected: problem?.expectedOutput || '' }];
+    }
+
+    try {
+        const parsed = JSON.parse(testCaseText);
+        if (Array.isArray(parsed) && parsed.length) {
+            const normalized = parsed
+                .map(item => ({
+                    input: String(item?.input ?? ''),
+                    expected: String(item?.expected ?? '')
+                }))
+                .filter(item => item.expected.length > 0 || item.input.length > 0);
+            if (normalized.length) return normalized;
+        }
+    } catch (_) {
+    }
+
+    const regex = /Input:\s*([\s\S]*?)\s*Expected:\s*([^\n\r]*)(?:\r?\n\r?\n|$)/gi;
+    const found = [];
+    let match;
+    while ((match = regex.exec(testCaseText)) !== null) {
+        found.push({
+            input: stripQuote((match[1] || '').trim()),
+            expected: stripQuote((match[2] || '').trim())
+        });
+    }
+    if (found.length) return found;
+
+    const inputMatch = /Input:\s*([^\n\r]*)/i.exec(testCaseText);
+    const expectedMatch = /Expected:\s*([^\n\r]*)/i.exec(testCaseText);
+    return [{
+        input: stripQuote((inputMatch?.[1] || '').trim()),
+        expected: stripQuote((expectedMatch?.[1] || (problem?.expectedOutput || '')).trim())
+    }];
+}
+
+function stripQuote(value) {
+    const text = String(value || '');
+    if (text.length >= 2 && ((text.startsWith('"') && text.endsWith('"')) || (text.startsWith("'") && text.endsWith("'")))) {
+        return text.slice(1, -1);
+    }
+    return text;
+}
+
+function renderTestcaseTabs() {
+    const tabs = document.getElementById('testcaseTabs');
+    if (!tabs) return;
+
+    if (!battleTestcases.length) {
+        tabs.innerHTML = '<span style="color:var(--text-secondary);font-size:0.85rem;">No testcases</span>';
+        return;
+    }
+
+    tabs.innerHTML = battleTestcases.map((_, idx) => {
+        const active = idx === selectedTestcaseIndex;
+        return `<button class="btn btn-secondary testcase-tab-btn" style="padding:0.35rem 0.75rem;${active ? 'border-color:var(--accent);color:var(--accent);' : ''}" onclick="selectTestcase(${idx})">Case ${idx + 1}</button>`;
+    }).join('');
+}
+
+function selectTestcase(index) {
+    selectedTestcaseIndex = index;
+    renderTestcaseTabs();
+    renderSelectedTestcase();
+}
+
+function renderSelectedTestcase() {
+    const test = battleTestcases[selectedTestcaseIndex] || { input: '', expected: '' };
+    const inputEl = document.getElementById('testcaseInput');
+    const expectedEl = document.getElementById('testcaseExpected');
+    if (inputEl) inputEl.textContent = test.input || '<empty>';
+    if (expectedEl) expectedEl.textContent = test.expected || '<empty>';
+
+    const verdict = document.getElementById('testcaseVerdict');
+    if (verdict) verdict.style.display = 'none';
+}
+
+function renderRunVerdict(result, testCase) {
+    const verdict = document.getElementById('testcaseVerdict');
+    if (!verdict) return;
+
+    const actual = normalizeText(result?.stdout || '');
+    const expected = normalizeText(testCase?.expected || '');
+
+    if (result?.timedOut) {
+        verdict.style.display = 'block';
+        verdict.innerHTML = `<div class="card" style="border-color:var(--danger);padding:0.75rem;"><strong style="color:var(--danger);">Time Limit Exceeded</strong></div>`;
+        return;
+    }
+
+    if ((result?.exitCode ?? 1) !== 0) {
+        verdict.style.display = 'block';
+        verdict.innerHTML = `<div class="card" style="border-color:var(--danger);padding:0.75rem;"><strong style="color:var(--danger);">Runtime Error</strong><pre style="white-space:pre-wrap;margin-top:0.5rem;color:var(--text-secondary);">${escapeHtml(result?.stderr || 'Execution failed')}</pre></div>`;
+        return;
+    }
+
+    const passed = actual === expected;
+    verdict.style.display = 'block';
+    verdict.innerHTML = `
+        <div class="card" style="border-color:${passed ? 'var(--success)' : 'var(--danger)'};padding:0.75rem;">
+            <strong style="color:${passed ? 'var(--success)' : 'var(--danger)'};">Testcase ${selectedTestcaseIndex + 1}: ${passed ? 'Passed' : 'Failed'}</strong>
+            ${passed ? '' : `<div style="margin-top:0.5rem;color:var(--text-secondary);">Expected: <code>${escapeHtml(testCase?.expected || '<empty>')}</code><br/>Got: <code>${escapeHtml(result?.stdout || '<empty>')}</code></div>`}
+        </div>
+    `;
+}
+
+function normalizeText(value) {
+    return String(value || '').replace(/\r\n/g, '\n').trim();
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 }

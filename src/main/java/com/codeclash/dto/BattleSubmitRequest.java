@@ -10,4 +10,5 @@ import lombok.*;
 public class BattleSubmitRequest {
     private String code;
     private String language;
+    private String inputData;
 }
