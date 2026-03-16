@@ -113,6 +113,11 @@ const api = {
             body: JSON.stringify({ code, language })
         });
     },
+    cancelBattle(id) {
+        return this.request(`/battles/${id}/cancel`, {
+            method: 'POST'
+        });
+    },
     getBattle(id) { return this.request(`/battles/${id}`); },
     findBattle(difficulty) {
         return this.request('/battles/find', {

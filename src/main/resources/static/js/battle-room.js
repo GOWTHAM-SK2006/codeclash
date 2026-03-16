@@ -1,6 +1,7 @@
 // Battle Room logic
 let currentBattleId = null;
 let timerInterval = null;
+let statusPollInterval = null;
 let timeLeft = 900;
 
 (async function () {
@@ -24,7 +25,7 @@ async function loadBattleDetails() {
         const battle = data.battle;
         const participants = data.participants || [];
 
-        if (battle.status === 'FINISHED') {
+        if (battle.status === 'FINISHED' || battle.status === 'CANCELLED') {
             showResult(battle);
             return;
         }
@@ -45,10 +46,32 @@ async function loadBattleDetails() {
         document.getElementById('p2Name').textContent = participants[1]?.user?.displayName || 'Player 2';
 
         startTimer(battle.startedAt);
+        startStatusPolling();
     } catch (e) {
         alert('Error loading battle: ' + e.message);
         window.location.href = 'battle.html';
     }
+}
+
+function startStatusPolling() {
+    if (statusPollInterval) return;
+
+    statusPollInterval = setInterval(async () => {
+        if (!currentBattleId) return;
+        try {
+            const data = await api.getBattle(currentBattleId);
+            const battle = data.battle;
+            if (battle.status === 'FINISHED' || battle.status === 'CANCELLED') {
+                if (statusPollInterval) {
+                    clearInterval(statusPollInterval);
+                    statusPollInterval = null;
+                }
+                showResult(battle);
+            }
+        } catch (_e) {
+            // ignore transient poll errors
+        }
+    }, 5000);
 }
 
 function startTimer(startTimeStr) {
@@ -88,12 +111,59 @@ async function submitBattleSolution() {
     }
 }
 
+async function cancelMatch() {
+    if (!currentBattleId) return;
+    const ok = confirm('Are you sure you want to cancel this match? Opponent will get 2x coins.');
+    if (!ok) return;
+
+    try {
+        const result = await api.cancelBattle(currentBattleId);
+        showResult(result);
+    } catch (e) {
+        alert('Error: ' + e.message);
+    }
+}
+
 function showResult(result) {
     const resultEl = document.getElementById('battleResult');
     resultEl.style.display = 'block';
 
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    if (statusPollInterval) {
+        clearInterval(statusPollInterval);
+        statusPollInterval = null;
+    }
+
+    const submitBtn = document.querySelector('button[onclick="submitBattleSolution()"]');
+    const cancelBtn = document.querySelector('button[onclick="cancelMatch()"]');
+    const editor = document.getElementById('battleEditor');
+    if (submitBtn) submitBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+    if (editor) editor.disabled = true;
+
     const user = api.getUser();
-    if (result.winnerId === user?.userId) {
+    if (result.status === 'CANCELLED' && result.winnerId === user?.userId) {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">Match Cancelled</h2>
+                <p style="color:var(--text-secondary);">Opponent left the match. You received 2x battle coins! 🪙</p>
+                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+            </div>
+        `;
+    } else if (result.status === 'CANCELLED') {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">❌</span>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Match Cancelled</h2>
+                <p style="color:var(--text-secondary);">You left the match. Opponent received 2x battle coins.</p>
+                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+            </div>
+        `;
+    } else if (result.winnerId === user?.userId) {
         resultEl.innerHTML = `
             <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🎉</span>

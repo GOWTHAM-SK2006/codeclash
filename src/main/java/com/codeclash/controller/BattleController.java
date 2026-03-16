@@ -66,6 +66,16 @@ public class BattleController {
         return ResponseEntity.ok(battleService.submitBattleSolution(id, username, request));
     }
 
+    @PostMapping("/{id}/cancel")
+    public ResponseEntity<?> cancelBattle(@PathVariable Long id, Authentication auth) {
+        String username = auth.getName();
+        try {
+            return ResponseEntity.ok(battleService.cancelBattle(id, username));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", getSafeMessage(e)));
+        }
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getBattle(@PathVariable Long id) {
         return ResponseEntity.ok(Map.of(

@@ -272,6 +272,46 @@ public class BattleService {
                 return battle;
         }
 
+        @Transactional
+        public Battle cancelBattle(Long battleId, String username) {
+                Battle battle = battleRepository.findById(battleId)
+                                .orElseThrow(() -> new RuntimeException("Battle not found"));
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        throw new RuntimeException("Only active battles can be cancelled");
+                }
+
+                User cancellingUser = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                List<BattleParticipant> participants = participantRepository.findByBattleId(battleId);
+                if (participants.size() < 2) {
+                        throw new RuntimeException("Battle does not have enough participants");
+                }
+
+                BattleParticipant cancellingEntry = participants.stream()
+                                .filter(p -> p.getUser().getId().equals(cancellingUser.getId()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("Not a participant of this battle"));
+
+                BattleParticipant opponentEntry = participants.stream()
+                                .filter(p -> !p.getUser().getId().equals(cancellingEntry.getUser().getId()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("Opponent not found"));
+
+                User opponent = opponentEntry.getUser();
+                int reward = getEntryFeeByDifficulty(battle.getProblem().getDifficulty()) * 2;
+
+                battle.setStatus("CANCELLED");
+                battle.setWinnerId(opponent.getId());
+                battle.setEndedAt(LocalDateTime.now());
+                battleRepository.save(battle);
+
+                coinService.awardCoins(opponent, reward, "Battle cancel win reward (2x) #" + battleId);
+
+                return battle;
+        }
+
         public Battle getBattle(Long id) {
                 return battleRepository.findById(id)
                                 .orElseThrow(() -> new RuntimeException("Battle not found"));
