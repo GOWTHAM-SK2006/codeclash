@@ -160,7 +160,7 @@ public class DockerSandboxService {
             }
 
             String image = getImage(language);
-            String[] cmd = getRunCommand(language, fileName);
+            String[] cmd = getRunCommand(language, fileName, code);
 
             HostConfig hostConfig = HostConfig.newHostConfig()
                     .withMemory(128 * 1024 * 1024L) // 128MB
@@ -252,7 +252,7 @@ public class DockerSandboxService {
                 writer.write(code);
             }
 
-            String[] cmd = getRunCommand(language, fileName);
+            String[] cmd = getRunCommand(language, fileName, code);
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.directory(tempDir.toFile());
 
@@ -290,7 +290,7 @@ public class DockerSandboxService {
                     .timedOut(false)
                     .build();
         } catch (IOException ioException) {
-            String command = Arrays.toString(getRunCommand(language, getFileName(language)));
+            String command = Arrays.toString(getRunCommand(language, getFileName(language), code));
             return ExecutionResult.builder()
                     .stderr("Local runner unavailable for language " + language + ". Command: " + command
                             + "\nReason: " + ioException.getMessage())
@@ -342,10 +342,15 @@ public class DockerSandboxService {
         };
     }
 
-    private String[] getRunCommand(String language, String fileName) {
+    private String[] getRunCommand(String language, String fileName, String code) {
         return switch (language.toUpperCase()) {
             case "PYTHON" -> new String[] { "python3", fileName };
-            case "JAVA" -> new String[] { "sh", "-c", "javac " + fileName + " && java Solution" };
+            case "JAVA" -> {
+                String javaMainClass = (code != null && code.contains("class __CodeClashMain"))
+                        ? "__CodeClashMain"
+                        : "Solution";
+                yield new String[] { "sh", "-c", "javac " + fileName + " && java " + javaMainClass };
+            }
             case "JAVASCRIPT" -> new String[] { "node", fileName };
             default -> new String[] { "cat", fileName };
         };

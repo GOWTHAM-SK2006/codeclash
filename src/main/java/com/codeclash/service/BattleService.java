@@ -251,6 +251,8 @@ public class BattleService {
                 boolean correct;
                 if ("PYTHON".equals(language)) {
                         correct = evaluatePythonBattleSubmission(battle.getProblem(), request.getCode());
+                } else if ("JAVA".equals(language)) {
+                        correct = evaluateJavaBattleSubmission(battle.getProblem(), request.getCode());
                 } else {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
                         correct = false;
@@ -300,6 +302,8 @@ public class BattleService {
                 DockerSandboxService.ExecutionResult result;
                 if ("PYTHON".equals(language)) {
                         result = runPythonBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
+                } else if ("JAVA".equals(language)) {
+                        result = runJavaBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
                 } else {
                         result = dockerSandboxService.execute(request.getCode(), language);
                 }
@@ -427,6 +431,69 @@ public class BattleService {
                 return dockerSandboxService.execute(codeToRun, "PYTHON");
         }
 
+        private boolean evaluateJavaBattleSubmission(Problem problem, String userCode) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+
+                if (testCases.isEmpty()) {
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "JAVA");
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+                        return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
+                }
+
+                for (TestCaseData testCase : testCases) {
+                        String codeToRun = buildExecutableJavaCode(userCode, problem, testCase.input());
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "JAVA");
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+
+                        String actual = normalizeOutput(result.getStdout());
+                        String expected = normalizeOutput(testCase.expected());
+                        if (!actual.equals(expected)) {
+                                return false;
+                        }
+                }
+
+                return true;
+        }
+
+        private DockerSandboxService.ExecutionResult runJavaBattleCode(Problem problem, String userCode,
+                        String selectedInputData) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+
+                if (selectedInputData != null) {
+                        String codeToRun = buildExecutableJavaCode(userCode, problem, selectedInputData);
+                        return dockerSandboxService.execute(codeToRun, "JAVA");
+                }
+
+                if (testCases.isEmpty()) {
+                        return dockerSandboxService.execute(userCode, "JAVA");
+                }
+
+                TestCaseData firstCase = testCases.get(0);
+                String codeToRun = buildExecutableJavaCode(userCode, problem, firstCase.input());
+                return dockerSandboxService.execute(codeToRun, "JAVA");
+        }
+
+        private String buildExecutableJavaCode(String userCode, Problem problem, String rawInput) {
+                String wrapperConfigJson = problem != null ? safe(problem.getWrapperConfig()) : "";
+                if (!wrapperConfigJson.isBlank()) {
+                        try {
+                                JsonNode config = OBJECT_MAPPER.readTree(wrapperConfigJson);
+                                return buildJavaWrapper(userCode, config, rawInput);
+                        } catch (Exception ignored) {
+                        }
+                }
+
+                String functionName = extractFirstJavaMethodName(userCode);
+                if (functionName != null) {
+                        return buildJavaAutoWrapper(userCode, functionName, rawInput);
+                }
+                return userCode;
+        }
+
         /**
          * Chooses the right execution strategy:
          * 1. Problem has wrapperConfig  → LeetCode-style function wrapper (preferred)
@@ -502,7 +569,17 @@ public class BattleService {
 
                         List<TestCaseData> cases = new ArrayList<>();
                         for (JsonNode item : root) {
-                                String input = item.path("input").asText("");
+                                String input;
+                                JsonNode inputNode = item.path("input");
+                                if (inputNode.isArray()) {
+                                        List<String> lines = new ArrayList<>();
+                                        for (JsonNode line : inputNode) {
+                                                lines.add(line.asText(""));
+                                        }
+                                        input = String.join("\n", lines);
+                                } else {
+                                        input = inputNode.asText("");
+                                }
                                 String expected = item.path("expected").asText("");
                                 if (!expected.isBlank()) {
                                         cases.add(new TestCaseData(input, expected));
@@ -569,6 +646,11 @@ public class BattleService {
         private String buildLeetCodeWrapper(String userCode, JsonNode config, String rawInput) {
                 String functionName = config.path("functionName").asText("").trim();
                 JsonNode params = config.path("params");
+                JsonNode inputs = config.path("inputs");
+
+                if ((!params.isArray() || params.size() == 0) && inputs.isArray() && inputs.size() > 0) {
+                        params = mapInputsToParams(inputs);
+                }
 
                 if (functionName.isEmpty() || !params.isArray() || params.size() == 0) {
                         return buildPythonInputPatchedScript(userCode, rawInput);
@@ -604,6 +686,111 @@ public class BattleService {
                 return sb.toString();
         }
 
+        private String buildJavaWrapper(String userCode, JsonNode config, String rawInput) {
+                String functionName = config.path("functionName").asText("").trim();
+                JsonNode params = config.path("params");
+                JsonNode inputs = config.path("inputs");
+
+                if ((!params.isArray() || params.size() == 0) && inputs.isArray() && inputs.size() > 0) {
+                        params = mapInputsToParams(inputs);
+                }
+
+                if (functionName.isEmpty() || !params.isArray() || params.size() == 0) {
+                        return userCode;
+                }
+
+                String inputLiteral = toJavaStringLiteral(rawInput == null ? "" : rawInput);
+                StringBuilder sb = new StringBuilder();
+                sb.append("import java.util.*;\n");
+                sb.append(userCode).append("\n\n");
+                sb.append("class __CodeClashMain {\n");
+                sb.append("    private static int[] parseIntArray(String line) {\n");
+                sb.append("        String clean = line == null ? \"\" : line.trim();\n");
+                sb.append("        clean = clean.replaceAll(\"[\\\\[\\\\]\\\\s]\", \"\");\n");
+                sb.append("        if (clean.isEmpty()) return new int[0];\n");
+                sb.append("        String[] parts = clean.split(\",\");\n");
+                sb.append("        int[] nums = new int[parts.length];\n");
+                sb.append("        for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);\n");
+                sb.append("        return nums;\n");
+                sb.append("    }\n");
+                sb.append("    public static void main(String[] args) {\n");
+                sb.append("        String[] __lines = ").append(inputLiteral).append(".split(\\"\\n\\", -1);\n");
+
+                List<String> argVars = new ArrayList<>();
+                for (int i = 0; i < params.size(); i++) {
+                        JsonNode p = params.get(i);
+                        String name = p.path("name").asText("arg" + i);
+                        String type = p.path("type").asText("str").toLowerCase();
+                        String lineRef = "(__lines.length > " + i + " ? __lines[" + i + "] : \"\")";
+
+                        if ("int".equals(type) || "number".equals(type)) {
+                                sb.append("        int ").append(name).append(" = Integer.parseInt(").append(lineRef)
+                                                .append(".trim());\n");
+                        } else if ("float".equals(type)) {
+                                sb.append("        double ").append(name).append(" = Double.parseDouble(").append(lineRef)
+                                                .append(".trim());\n");
+                        } else if ("bool".equals(type) || "boolean".equals(type)) {
+                                sb.append("        boolean ").append(name).append(" = \"true\".equalsIgnoreCase(")
+                                                .append(lineRef).append(".trim());\n");
+                        } else if ("json".equals(type) || "array".equals(type) || "list".equals(type)) {
+                                sb.append("        int[] ").append(name).append(" = parseIntArray(").append(lineRef)
+                                                .append(");\n");
+                        } else {
+                                sb.append("        String ").append(name).append(" = ").append(lineRef).append(";\n");
+                        }
+                        argVars.add(name);
+                }
+
+                sb.append("        Solution __sol = new Solution();\n");
+                sb.append("        Object __result = __sol.").append(functionName).append("(")
+                                .append(String.join(", ", argVars)).append(");\n");
+                sb.append("        if (__result == null) return;\n");
+                sb.append("        if (__result instanceof int[]) {\n");
+                sb.append("            System.out.println(Arrays.toString((int[]) __result));\n");
+                sb.append("        } else if (__result instanceof long[]) {\n");
+                sb.append("            System.out.println(Arrays.toString((long[]) __result));\n");
+                sb.append("        } else if (__result instanceof Object[]) {\n");
+                sb.append("            System.out.println(Arrays.toString((Object[]) __result));\n");
+                sb.append("        } else {\n");
+                sb.append("            System.out.println(__result);\n");
+                sb.append("        }\n");
+                sb.append("    }\n");
+                sb.append("}\n");
+
+                return sb.toString();
+        }
+
+        private String buildJavaAutoWrapper(String userCode, String functionName, String rawInput) {
+                String config = "{\"functionName\":\"" + functionName
+                                + "\",\"params\":[{\"name\":\"arg0\",\"type\":\"array\"},{\"name\":\"arg1\",\"type\":\"int\"}]}";
+                try {
+                        JsonNode node = OBJECT_MAPPER.readTree(config);
+                        return buildJavaWrapper(userCode, node, rawInput);
+                } catch (Exception ignored) {
+                        return userCode;
+                }
+        }
+
+        private JsonNode mapInputsToParams(JsonNode inputs) {
+                try {
+                        List<Map<String, String>> params = new ArrayList<>();
+                        for (int i = 0; i < inputs.size(); i++) {
+                                String rawType = inputs.get(i).asText("str").toLowerCase();
+                                String mappedType = switch (rawType) {
+                                        case "array" -> "json";
+                                        case "number" -> "int";
+                                        case "string" -> "str";
+                                        case "boolean" -> "bool";
+                                        default -> rawType;
+                                };
+                                params.add(Map.of("name", "arg" + i, "type", mappedType));
+                        }
+                        return OBJECT_MAPPER.valueToTree(params);
+                } catch (Exception ignored) {
+                        return OBJECT_MAPPER.createArrayNode();
+                }
+        }
+
         /**
          * Fallback wrapper: auto-parses each stdin line as JSON → int → str,
          * then calls the detected function with those args.
@@ -635,6 +822,24 @@ public class BattleService {
                                 .replace("'", "\\'")
                                 .replace("\r", "\\r")
                                 .replace("\n", "\\n") + "'";
+        }
+
+        private String toJavaStringLiteral(String value) {
+                return "\"" + value
+                                .replace("\\", "\\\\")
+                                .replace("\"", "\\\"")
+                                .replace("\r", "\\r")
+                                .replace("\n", "\\n") + "\"";
+        }
+
+        private String extractFirstJavaMethodName(String code) {
+                if (code == null || code.isBlank()) {
+                        return null;
+                }
+                Matcher matcher = Pattern.compile(
+                                "(?m)^\\s*public\\s+(?:static\\s+)?(?:[a-zA-Z_][a-zA-Z0-9_<>\\[\\]]*\\s+)+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(")
+                                .matcher(code);
+                return matcher.find() ? matcher.group(1) : null;
         }
 
         private String stripQuotes(String value) {
