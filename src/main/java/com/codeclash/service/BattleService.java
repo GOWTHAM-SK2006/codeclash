@@ -714,7 +714,7 @@ public class BattleService {
                 sb.append("        return nums;\n");
                 sb.append("    }\n");
                 sb.append("    public static void main(String[] args) {\n");
-                sb.append("        String[] __lines = ").append(inputLiteral).append(".split(\\"\\n\\", -1);\n");
+                sb.append("        String[] __lines = ").append(inputLiteral).append(".split(\"\\n\", -1);\n");
 
                 List<String> argVars = new ArrayList<>();
                 for (int i = 0; i < params.size(); i++) {
