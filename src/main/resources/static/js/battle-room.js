@@ -49,40 +49,26 @@ function triggerFullscreenOnInteraction() {
     document.addEventListener('keydown', onUserInteract, { once: true });
 }
 
-let fullscreenWarningCountdownInterval = null;
+let fullscreenWarningTimeout = null;
 
-function showFullscreenWarning(onDone) {
+function showFullscreenWarning() {
     const overlay = document.getElementById('fullscreenWarning');
-    const countdownEl = document.getElementById('fullscreenCountdown');
-    if (!overlay || !countdownEl) { onDone(); return; }
-
-    let count = 3;
-    countdownEl.textContent = count;
+    if (!overlay) return;
     overlay.style.display = 'flex';
-
-    if (fullscreenWarningCountdownInterval) clearInterval(fullscreenWarningCountdownInterval);
-    fullscreenWarningCountdownInterval = setInterval(() => {
-        count--;
-        if (count <= 0) {
-            clearInterval(fullscreenWarningCountdownInterval);
-            fullscreenWarningCountdownInterval = null;
-            overlay.style.display = 'none';
-            onDone();
-        } else {
-            countdownEl.textContent = count;
-        }
-    }, 1000);
+    if (fullscreenWarningTimeout) clearTimeout(fullscreenWarningTimeout);
+    fullscreenWarningTimeout = setTimeout(() => {
+        overlay.style.display = 'none';
+        fullscreenWarningTimeout = null;
+    }, 1500);
 }
 
 function initFullscreenGuard() {
     const onFullscreenExit = () => {
         if (document.fullscreenElement || fullscreenRestoreInProgress) return;
         fullscreenRestoreInProgress = true;
-
-        showFullscreenWarning(() => {
-            requestBattleFullscreen();
-            setTimeout(() => { fullscreenRestoreInProgress = false; }, 150);
-        });
+        showFullscreenWarning();
+        requestBattleFullscreen();
+        setTimeout(() => { fullscreenRestoreInProgress = false; }, 300);
     };
 
     document.addEventListener('fullscreenchange', onFullscreenExit);
