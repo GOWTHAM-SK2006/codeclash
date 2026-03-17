@@ -99,11 +99,14 @@ function initFullscreenGuard() {
         if (!fullscreenGuardEnabled || fullscreenPenaltyApplied) return;
 
         const isFullscreenNow = !!document.fullscreenElement;
+        const wasFullscreenBefore = lastKnownFullscreenState;
+        lastKnownFullscreenState = isFullscreenNow;
+
         if (isFullscreenNow) {
             hasEnteredFullscreenAtLeastOnce = true;
         }
 
-        const exitedFullscreen = hasEnteredFullscreenAtLeastOnce && lastKnownFullscreenState && !isFullscreenNow;
+        const exitedFullscreen = hasEnteredFullscreenAtLeastOnce && wasFullscreenBefore && !isFullscreenNow;
         if (exitedFullscreen) {
             fullscreenViolationCount += 1;
 
@@ -114,8 +117,6 @@ function initFullscreenGuard() {
                 enforceFullscreenViolationPenalty();
             }
         }
-
-        lastKnownFullscreenState = isFullscreenNow;
     };
 
     document.addEventListener('fullscreenchange', evaluateFullscreenState);
