@@ -14,12 +14,14 @@ let fullscreenPollInterval = null;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
+let hasTriggeredFullscreen = false;
+
 (async function () {
     renderNav('battle');
     if (!requireAuth()) return;
 
-    requestBattleFullscreen();
     initFullscreenGuard();
+    triggerFullscreenOnInteraction();
 
     bindGlobalShortcuts();
 
@@ -33,6 +35,19 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
 
     loadBattleDetails();
 })();
+
+function triggerFullscreenOnInteraction() {
+    const onUserInteract = () => {
+        if (hasTriggeredFullscreen) return;
+        hasTriggeredFullscreen = true;
+        requestBattleFullscreen();
+        document.removeEventListener('click', onUserInteract);
+        document.removeEventListener('keydown', onUserInteract);
+    };
+
+    document.addEventListener('click', onUserInteract, { once: true });
+    document.addEventListener('keydown', onUserInteract, { once: true });
+}
 
 function initFullscreenGuard() {
     const attemptFullscreen = () => {
