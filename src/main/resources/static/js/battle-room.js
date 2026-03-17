@@ -17,8 +17,8 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
     renderNav('battle');
     if (!requireAuth()) return;
 
+    requestBattleFullscreen();
     initFullscreenGuard();
-    await requestBattleFullscreen();
 
     bindGlobalShortcuts();
 
@@ -34,37 +34,32 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
 })();
 
 function initFullscreenGuard() {
-    document.addEventListener('fullscreenchange', async () => {
+    document.addEventListener('fullscreenchange', () => {
         if (document.fullscreenElement) return;
         if (fullscreenRestoreInProgress) return;
 
         fullscreenRestoreInProgress = true;
-        alert('Warning: Battle mode must stay in fullscreen. Returning to fullscreen now.');
-        await requestBattleFullscreen();
-        fullscreenRestoreInProgress = false;
+        setTimeout(() => {
+            requestBattleFullscreen();
+            fullscreenRestoreInProgress = false;
+        }, 100);
     });
 
-    const retryOnInteraction = async () => {
+    window.addEventListener('click', () => {
         if (document.fullscreenElement) return;
-        await requestBattleFullscreen();
-    };
-
-    window.addEventListener('click', retryOnInteraction);
-    window.addEventListener('keydown', retryOnInteraction);
+        requestBattleFullscreen();
+    });
 }
 
-async function requestBattleFullscreen() {
-    if (document.fullscreenElement) return true;
+function requestBattleFullscreen() {
+    if (document.fullscreenElement) return;
 
     const root = document.documentElement;
-    if (!root?.requestFullscreen) return false;
+    if (!root?.requestFullscreen) return;
 
-    try {
-        await root.requestFullscreen();
-        return true;
-    } catch (_err) {
-        return false;
-    }
+    root.requestFullscreen().catch(() => {
+        setTimeout(() => root.requestFullscreen().catch(() => {}), 50);
+    });
 }
 
 async function loadBattleDetails() {
