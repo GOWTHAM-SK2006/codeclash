@@ -12,6 +12,7 @@ let monacoReadyPromise = null;
 let fullscreenPollInterval = null;
 let fullscreenViolationCount = 0;
 let fullscreenPenaltyApplied = false;
+let fullscreenForfeitTriggered = false;
 let hasEnteredFullscreenAtLeastOnce = false;
 let lastKnownFullscreenState = false;
 let fullscreenGuardEnabled = true;
@@ -69,6 +70,7 @@ function showFullscreenWarning() {
 async function enforceFullscreenViolationPenalty() {
     if (fullscreenPenaltyApplied || !currentBattleId) return;
     fullscreenPenaltyApplied = true;
+    fullscreenForfeitTriggered = true;
 
     const overlay = document.getElementById('fullscreenWarning');
     if (overlay) {
@@ -376,6 +378,15 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">Match Cancelled</h2>
                 <p style="color:var(--text-secondary);">Opponent left the match. You received 2x battle coins! 🪙</p>
+                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+            </div>
+        `;
+    } else if (result.status === 'CANCELLED' && fullscreenForfeitTriggered) {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
+                <p style="color:var(--text-secondary);">You exited fullscreen multiple times. Opponent wins this battle.</p>
                 <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
