@@ -9,7 +9,6 @@ let testcaseRunResults = [];
 let currentProblem = null;
 let monacoEditor = null;
 let monacoReadyPromise = null;
-let fullscreenRestoreInProgress = false;
 let fullscreenPollInterval = null;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
@@ -62,41 +61,36 @@ function showFullscreenWarning() {
     }, 1500);
 }
 
-function initFullscreenGuard() {
-    const onFullscreenExit = () => {
-        if (document.fullscreenElement || fullscreenRestoreInProgress) return;
-        fullscreenRestoreInProgress = true;
-        showFullscreenWarning();
-        requestBattleFullscreen();
-        setTimeout(() => { fullscreenRestoreInProgress = false; }, 300);
-    };
-
-    document.addEventListener('fullscreenchange', onFullscreenExit);
-    document.addEventListener('msfullscreenchange', onFullscreenExit);
-    document.addEventListener('webkitfullscreenchange', onFullscreenExit);
-    document.addEventListener('mozfullscreenchange', onFullscreenExit);
-
-    if (fullscreenPollInterval) clearInterval(fullscreenPollInterval);
-    fullscreenPollInterval = setInterval(() => {
-        if (!document.fullscreenElement && !fullscreenRestoreInProgress) {
-            onFullscreenExit();
-        }
-    }, 1000);
-}
-
 function requestBattleFullscreen() {
     if (document.fullscreenElement) return;
-
     const root = document.documentElement;
-    if (!root?.requestFullscreen) return;
+    if (root?.requestFullscreen) {
+        root.requestFullscreen().catch(() => {});
+    }
+}
 
-    const attemptFS = () => {
-        root.requestFullscreen().catch(() => {
-            setTimeout(attemptFS, 75);
-        });
+function initFullscreenGuard() {
+    // Immediately try to restore on every fullscreenchange
+    const onFSChange = () => {
+        if (!document.fullscreenElement) {
+            showFullscreenWarning();
+            requestBattleFullscreen();
+        }
     };
 
-    attemptFS();
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
+    document.addEventListener('msfullscreenchange', onFSChange);
+    document.addEventListener('mozfullscreenchange', onFSChange);
+
+    // Poll every 700ms as fallback — handles cases where event doesn't fire
+    if (fullscreenPollInterval) clearInterval(fullscreenPollInterval);
+    fullscreenPollInterval = setInterval(() => {
+        if (!document.fullscreenElement) {
+            showFullscreenWarning();
+            requestBattleFullscreen();
+        }
+    }, 700);
 }
 
 async function loadBattleDetails() {
