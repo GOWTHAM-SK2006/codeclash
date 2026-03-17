@@ -10,6 +10,11 @@ let currentProblem = null;
 let monacoEditor = null;
 let monacoReadyPromise = null;
 let fullscreenPollInterval = null;
+let fullscreenViolationCount = 0;
+let fullscreenPenaltyApplied = false;
+let hasEnteredFullscreenAtLeastOnce = false;
+let lastKnownFullscreenState = false;
+let fullscreenGuardEnabled = true;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
@@ -61,6 +66,24 @@ function showFullscreenWarning() {
     }, 1500);
 }
 
+async function enforceFullscreenViolationPenalty() {
+    if (fullscreenPenaltyApplied || !currentBattleId) return;
+    fullscreenPenaltyApplied = true;
+
+    const overlay = document.getElementById('fullscreenWarning');
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+
+    try {
+        const result = await api.cancelBattle(currentBattleId);
+        showResult(result);
+    } catch (e) {
+        alert('Match cancelled due to repeated fullscreen exits. Unable to sync result: ' + e.message);
+        window.location.href = 'battle.html';
+    }
+}
+
 function requestBattleFullscreen() {
     if (document.fullscreenElement) return;
     const root = document.documentElement;
@@ -70,26 +93,40 @@ function requestBattleFullscreen() {
 }
 
 function initFullscreenGuard() {
-    // Immediately try to restore on every fullscreenchange
-    const onFSChange = () => {
-        if (!document.fullscreenElement) {
-            showFullscreenWarning();
-            requestBattleFullscreen();
+    lastKnownFullscreenState = !!document.fullscreenElement;
+
+    const evaluateFullscreenState = () => {
+        if (!fullscreenGuardEnabled || fullscreenPenaltyApplied) return;
+
+        const isFullscreenNow = !!document.fullscreenElement;
+        if (isFullscreenNow) {
+            hasEnteredFullscreenAtLeastOnce = true;
         }
+
+        const exitedFullscreen = hasEnteredFullscreenAtLeastOnce && lastKnownFullscreenState && !isFullscreenNow;
+        if (exitedFullscreen) {
+            fullscreenViolationCount += 1;
+
+            if (fullscreenViolationCount === 1) {
+                showFullscreenWarning();
+                requestBattleFullscreen();
+            } else {
+                enforceFullscreenViolationPenalty();
+            }
+        }
+
+        lastKnownFullscreenState = isFullscreenNow;
     };
 
-    document.addEventListener('fullscreenchange', onFSChange);
-    document.addEventListener('webkitfullscreenchange', onFSChange);
-    document.addEventListener('msfullscreenchange', onFSChange);
-    document.addEventListener('mozfullscreenchange', onFSChange);
+    document.addEventListener('fullscreenchange', evaluateFullscreenState);
+    document.addEventListener('webkitfullscreenchange', evaluateFullscreenState);
+    document.addEventListener('msfullscreenchange', evaluateFullscreenState);
+    document.addEventListener('mozfullscreenchange', evaluateFullscreenState);
 
-    // Poll every 700ms as fallback — handles cases where event doesn't fire
+    // Poll fallback for browsers that skip some fullscreen change events
     if (fullscreenPollInterval) clearInterval(fullscreenPollInterval);
     fullscreenPollInterval = setInterval(() => {
-        if (!document.fullscreenElement) {
-            showFullscreenWarning();
-            requestBattleFullscreen();
-        }
+        evaluateFullscreenState();
     }, 700);
 }
 
@@ -292,6 +329,8 @@ async function cancelMatch() {
 }
 
 function showResult(result) {
+    fullscreenGuardEnabled = false;
+
     const resultEl = document.getElementById('battleResult');
     resultEl.style.display = 'block';
 
@@ -306,6 +345,15 @@ function showResult(result) {
     if (fullscreenPollInterval) {
         clearInterval(fullscreenPollInterval);
         fullscreenPollInterval = null;
+    }
+    if (fullscreenWarningTimeout) {
+        clearTimeout(fullscreenWarningTimeout);
+        fullscreenWarningTimeout = null;
+    }
+
+    const overlay = document.getElementById('fullscreenWarning');
+    if (overlay) {
+        overlay.style.display = 'none';
     }
 
     const submitBtn = document.querySelector('button[onclick="submitBattleSolution()"]');
