@@ -7,10 +7,16 @@ let battleTestcases = [];
 let selectedTestcaseIndex = 0;
 let testcaseRunResults = [];
 let currentProblem = null;
+let monacoEditor = null;
+let monacoReadyPromise = null;
+
+const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
 (async function () {
     renderNav('battle');
     if (!requireAuth()) return;
+
+    bindGlobalShortcuts();
 
     const urlParams = new URLSearchParams(window.location.search);
     currentBattleId = urlParams.get('battleId');
@@ -25,6 +31,8 @@ let currentProblem = null;
 
 async function loadBattleDetails() {
     try {
+        await ensureMonacoEditor();
+
         const data = await api.getBattle(currentBattleId);
         const battle = data.battle;
         const participants = data.participants || [];
@@ -45,7 +53,7 @@ async function loadBattleDetails() {
 
         const starterCode = getEditorStarterCode(currentProblem, getSelectedLanguage());
         if (starterCode) {
-            document.getElementById('battleEditor').value = starterCode;
+            setEditorCode(starterCode);
         }
 
         const languageSelect = document.getElementById('languageSelect');
@@ -115,7 +123,7 @@ function startTimer(startTimeStr) {
 
 async function submitBattleSolution() {
     if (!currentBattleId) return;
-    const code = document.getElementById('battleEditor').value;
+    const code = getEditorCode();
     const language = getSelectedLanguage();
 
     try {
@@ -130,7 +138,7 @@ async function submitBattleSolution() {
 async function runBattleCode() {
     if (!currentBattleId) return;
 
-    const code = document.getElementById('battleEditor').value;
+    const code = getEditorCode();
     const language = getSelectedLanguage();
     const testcases = battleTestcases.length ? battleTestcases : [{ input: '', expected: '' }];
 
@@ -236,13 +244,12 @@ function showResult(result) {
     const runBtn = document.querySelector('button[onclick="runBattleCode()"]');
     const cancelBtn = document.querySelector('button[onclick="cancelMatch()"]');
     const languageSelect = document.getElementById('languageSelect');
-    const editor = document.getElementById('battleEditor');
     const testcaseTabButtons = document.querySelectorAll('.testcase-tab-btn');
     if (submitBtn) submitBtn.disabled = true;
     if (runBtn) runBtn.disabled = true;
     if (cancelBtn) cancelBtn.disabled = true;
     if (languageSelect) languageSelect.disabled = true;
-    if (editor) editor.disabled = true;
+    if (monacoEditor) monacoEditor.updateOptions({ readOnly: true });
     testcaseTabButtons.forEach(btn => btn.disabled = true);
 
     const user = api.getUser();
@@ -303,13 +310,130 @@ function getSelectedLanguage() {
 }
 
 function onLanguageChanged() {
-    const editor = document.getElementById('battleEditor');
-    if (!editor) return;
-
+    setEditorLanguage(getSelectedLanguage());
     const starterCode = getEditorStarterCode(currentProblem, getSelectedLanguage());
     if (starterCode) {
-        editor.value = starterCode;
+        setEditorCode(starterCode);
     }
+}
+
+function bindGlobalShortcuts() {
+    window.addEventListener('keydown', (event) => {
+        const isCtrlOrCmd = event.ctrlKey || event.metaKey;
+        if (!isCtrlOrCmd) return;
+
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            runBattleCode();
+            return;
+        }
+
+        if (event.key.toLowerCase() === 's') {
+            event.preventDefault();
+            submitBattleSolution();
+        }
+    });
+}
+
+function ensureMonacoEditor() {
+    if (monacoEditor) return Promise.resolve(monacoEditor);
+    if (monacoReadyPromise) return monacoReadyPromise;
+
+    monacoReadyPromise = new Promise((resolve) => {
+        const container = document.getElementById('battleEditor');
+        if (!container) {
+            resolve(null);
+            return;
+        }
+
+        const createEditor = () => {
+            monaco.editor.defineTheme('codeclash-dark', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'keyword', foreground: 'FF7A18', fontStyle: 'bold' },
+                    { token: 'string', foreground: '00FF99' },
+                    { token: 'number', foreground: 'FFD54F' },
+                    { token: 'comment', foreground: '8A8A8A', fontStyle: 'italic' }
+                ],
+                colors: {
+                    'editor.background': '#0D0D0D',
+                    'editorLineNumber.foreground': '#7A7A7A',
+                    'editorLineNumber.activeForeground': '#FF7A18',
+                    'editor.lineHighlightBackground': '#1A1A1A',
+                    'editorCursor.foreground': '#FF7A18',
+                    'editor.selectionBackground': '#FF7A1833'
+                }
+            });
+
+            monacoEditor = monaco.editor.create(container, {
+                value: DEFAULT_STARTER_CODE,
+                language: 'python',
+                theme: 'codeclash-dark',
+                fontSize: 16,
+                minimap: { enabled: false },
+                automaticLayout: true,
+                lineNumbers: 'on',
+                renderLineHighlight: 'all',
+                autoClosingBrackets: 'always',
+                autoClosingQuotes: 'always',
+                autoIndent: 'full',
+                tabSize: 4,
+                insertSpaces: true,
+                quickSuggestions: true,
+                suggestOnTriggerCharacters: true,
+                formatOnType: true,
+                formatOnPaste: true,
+                scrollBeyondLastLine: false
+            });
+
+            monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => runBattleCode());
+            monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => submitBattleSolution());
+            resolve(monacoEditor);
+        };
+
+        if (window.monaco?.editor) {
+            createEditor();
+            return;
+        }
+
+        if (typeof window.require !== 'function') {
+            resolve(null);
+            return;
+        }
+
+        window.require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs' } });
+        window.require(['vs/editor/editor.main'], createEditor, () => resolve(null));
+    });
+
+    return monacoReadyPromise;
+}
+
+function setEditorLanguage(language) {
+    if (!monacoEditor || !monacoEditor.getModel()) return;
+    const normalized = language === 'java' ? 'java' : (language === 'javascript' ? 'javascript' : 'python');
+    monaco.editor.setModelLanguage(monacoEditor.getModel(), normalized);
+}
+
+function setEditorCode(value) {
+    const code = String(value || '');
+    if (monacoEditor) {
+        monacoEditor.setValue(code);
+        setEditorLanguage(getSelectedLanguage());
+        return;
+    }
+
+    const fallback = document.getElementById('battleEditor');
+    if (fallback) {
+        fallback.textContent = code;
+    }
+}
+
+function getEditorCode() {
+    if (monacoEditor) return monacoEditor.getValue();
+
+    const fallback = document.getElementById('battleEditor');
+    return String(fallback?.textContent || '').trim();
 }
 
 function getEditorStarterCode(problem, language = 'python') {
