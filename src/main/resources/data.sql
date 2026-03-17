@@ -28,37 +28,135 @@ INSERT INTO lessons (topic_id, title, content, code_example, exercise, order_ind
 (1, 'Numbers and Strings', 'Python supports integers, floats, and complex numbers. Strings are sequences of characters.', 'age = 25\npi = 3.14159\ngreeting = "Hello, World!"\nprint(type(age), type(pi), type(greeting))', 'Calculate the area of a circle with radius 7 and store it in a variable.', 2) ON CONFLICT DO NOTHING;
 
 -- Seed Problems
+-- INSERT first (for fresh DBs), then UPDATE to fix stale data in existing DBs.
+-- UPDATE always runs so old rows with wrong test_cases/starter_code are corrected.
+
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('Two Sum', 'Given an array of integers and a target, return indices of two numbers that add up to the target.', 'Easy',
-'def two_sum(nums, target):\n    # Your code here\n    pass', 'Input: nums=[2,7,11,15], target=9\nExpected: [0,1]', '[0, 1]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+('Two Sum', 'Given an array of integers and a target, return indices of two numbers that add up to the target.
+Read the array from input() on line 1 and the target on line 2.', 'Easy',
+'def two_sum(nums, target):
+    # Your code here
+    pass',
+'[{"input":"[2,7,11,15]\n9","expected":"[0, 1]"},{"input":"[3,2,4]\n6","expected":"[1, 2]"},{"input":"[3,3]\n6","expected":"[0, 1]"}]',
+'[0, 1]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+UPDATE problems SET
+    description = 'Given an array of integers and a target, return indices of two numbers that add up to the target.
+Read the array from input() on line 1 and the target on line 2.',
+    starter_code = 'def two_sum(nums, target):
+    # Your code here
+    pass',
+    test_cases = '[{"input":"[2,7,11,15]\n9","expected":"[0, 1]"},{"input":"[3,2,4]\n6","expected":"[1, 2]"},{"input":"[3,3]\n6","expected":"[0, 1]"}]',
+    expected_output = '[0, 1]'
+WHERE title = 'Two Sum';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
 ('Reverse String', 'Write a function that reverses a string.
-
 Read a string from input() and print its reverse.', 'Easy',
-'def reverse_string(s):
-    # Your code here
-    pass', '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]', 'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
+'s = input()
+print(s[::-1])',
+'[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
+'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+UPDATE problems SET
+    description = 'Write a function that reverses a string.
+Read a string from input() and print its reverse.',
+    starter_code = 's = input()
+print(s[::-1])',
+    test_cases = '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
+    expected_output = 'olleh'
+WHERE title = 'Reverse String';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('FizzBuzz', 'Print numbers 1 to n. For multiples of 3 print "Fizz", for 5 print "Buzz", for both print "FizzBuzz".
-
+('FizzBuzz', 'Print numbers 1 to n. For multiples of 3 print Fizz, for 5 print Buzz, for both print FizzBuzz.
 Read n from input().', 'Easy',
-'def fizzbuzz(n):
-    # Your code here
-    pass', '[{"input":"5","expected":"1\n2\nFizz\n4\nBuzz"},{"input":"15","expected":"1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"}]', 'FizzBuzz', 10, 'Logic') ON CONFLICT DO NOTHING;
+'n = int(input())
+for i in range(1, n + 1):
+    if i % 15 == 0:
+        print("FizzBuzz")
+    elif i % 3 == 0:
+        print("Fizz")
+    elif i % 5 == 0:
+        print("Buzz")
+    else:
+        print(i)',
+'[{"input":"5","expected":"1\n2\nFizz\n4\nBuzz"},{"input":"15","expected":"1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"}]',
+'FizzBuzz', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+UPDATE problems SET
+    description = 'Print numbers 1 to n. For multiples of 3 print Fizz, for 5 print Buzz, for both print FizzBuzz.
+Read n from input().',
+    starter_code = 'n = int(input())
+for i in range(1, n + 1):
+    if i % 15 == 0:
+        print("FizzBuzz")
+    elif i % 3 == 0:
+        print("Fizz")
+    elif i % 5 == 0:
+        print("Buzz")
+    else:
+        print(i)',
+    test_cases = '[{"input":"5","expected":"1\n2\nFizz\n4\nBuzz"},{"input":"15","expected":"1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"}]',
+    expected_output = 'FizzBuzz'
+WHERE title = 'FizzBuzz';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('Valid Parentheses', 'Given a string containing just the characters ''('', '')'', ''{'', ''}'', ''['' and '']'', determine if the input string is valid.
-
+('Valid Parentheses', 'Given a string of brackets, determine if the input string is valid.
 Read the string from input().', 'Medium',
-'def is_valid(s):
-    # Your code here
-    pass', '[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]', 'True', 20, 'Stack') ON CONFLICT DO NOTHING;
+'s = input()
+stack = []
+mapping = {")": "(", "}": "{", "]": "["}
+for char in s:
+    if char in mapping:
+        top = stack.pop() if stack else "#"
+        if mapping[char] != top:
+            print(False)
+            exit()
+    else:
+        stack.append(char)
+print(not stack)',
+'[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]',
+'True', 20, 'Stack') ON CONFLICT DO NOTHING;
+
+UPDATE problems SET
+    description = 'Given a string of brackets, determine if the input string is valid.
+Read the string from input().',
+    starter_code = 's = input()
+stack = []
+mapping = {")": "(", "}": "{", "]": "["}
+for char in s:
+    if char in mapping:
+        top = stack.pop() if stack else "#"
+        if mapping[char] != top:
+            print(False)
+            exit()
+    else:
+        stack.append(char)
+print(not stack)',
+    test_cases = '[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]',
+    expected_output = 'True'
+WHERE title = 'Valid Parentheses';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('Merge Sorted Arrays', 'Merge two sorted arrays into one sorted array.', 'Medium',
-'def merge(nums1, nums2):\n    # Your code here\n    pass', 'Input: [1,3,5], [2,4,6]\nExpected: [1,2,3,4,5,6]', '[1, 2, 3, 4, 5, 6]', 20, 'Arrays') ON CONFLICT DO NOTHING;
+('Merge Sorted Arrays', 'Merge two sorted arrays into one sorted array.
+Read array 1 on line 1 and array 2 on line 2.', 'Medium',
+'import ast
+a = ast.literal_eval(input())
+b = ast.literal_eval(input())
+print(sorted(a + b))',
+'[{"input":"[1,3,5]\n[2,4,6]","expected":"[1, 2, 3, 4, 5, 6]"},{"input":"[1,2]\n[3,4]","expected":"[1, 2, 3, 4]"}]',
+'[1, 2, 3, 4, 5, 6]', 20, 'Arrays') ON CONFLICT DO NOTHING;
+
+UPDATE problems SET
+    description = 'Merge two sorted arrays into one sorted array.
+Read array 1 on line 1 and array 2 on line 2.',
+    starter_code = 'import ast
+a = ast.literal_eval(input())
+b = ast.literal_eval(input())
+print(sorted(a + b))',
+    test_cases = '[{"input":"[1,3,5]\n[2,4,6]","expected":"[1, 2, 3, 4, 5, 6]"},{"input":"[1,2]\n[3,4]","expected":"[1, 2, 3, 4]"}]',
+    expected_output = '[1, 2, 3, 4, 5, 6]'
+WHERE title = 'Merge Sorted Arrays';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
 ('Binary Search', 'Implement binary search on a sorted array. Return the index of the target or -1.', 'Medium',
