@@ -10,6 +10,7 @@ let currentProblem = null;
 let monacoEditor = null;
 let monacoReadyPromise = null;
 let fullscreenRestoreInProgress = false;
+let fullscreenPollInterval = null;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
@@ -34,21 +35,28 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
 })();
 
 function initFullscreenGuard() {
-    document.addEventListener('fullscreenchange', () => {
-        if (document.fullscreenElement) return;
-        if (fullscreenRestoreInProgress) return;
-
+    const attemptFullscreen = () => {
+        if (document.fullscreenElement || fullscreenRestoreInProgress) return;
         fullscreenRestoreInProgress = true;
-        setTimeout(() => {
-            requestBattleFullscreen();
-            fullscreenRestoreInProgress = false;
-        }, 100);
-    });
-
-    window.addEventListener('click', () => {
-        if (document.fullscreenElement) return;
         requestBattleFullscreen();
-    });
+        setTimeout(() => { fullscreenRestoreInProgress = false; }, 150);
+    };
+
+    document.addEventListener('fullscreenchange', attemptFullscreen);
+    document.addEventListener('msfullscreenchange', attemptFullscreen);
+    document.addEventListener('webkitfullscreenchange', attemptFullscreen);
+    document.addEventListener('mozfullscreenchange', attemptFullscreen);
+
+    window.addEventListener('blur', attemptFullscreen);
+    window.addEventListener('click', attemptFullscreen);
+    window.addEventListener('keydown', attemptFullscreen);
+
+    if (fullscreenPollInterval) clearInterval(fullscreenPollInterval);
+    fullscreenPollInterval = setInterval(() => {
+        if (!document.fullscreenElement && !fullscreenRestoreInProgress) {
+            attemptFullscreen();
+        }
+    }, 500);
 }
 
 function requestBattleFullscreen() {
@@ -57,9 +65,13 @@ function requestBattleFullscreen() {
     const root = document.documentElement;
     if (!root?.requestFullscreen) return;
 
-    root.requestFullscreen().catch(() => {
-        setTimeout(() => root.requestFullscreen().catch(() => {}), 50);
-    });
+    const attemptFS = () => {
+        root.requestFullscreen().catch(() => {
+            setTimeout(attemptFS, 75);
+        });
+    };
+
+    attemptFS();
 }
 
 async function loadBattleDetails() {
@@ -271,6 +283,10 @@ function showResult(result) {
     if (statusPollInterval) {
         clearInterval(statusPollInterval);
         statusPollInterval = null;
+    }
+    if (fullscreenPollInterval) {
+        clearInterval(fullscreenPollInterval);
+        fullscreenPollInterval = null;
     }
 
     const submitBtn = document.querySelector('button[onclick="submitBattleSolution()"]');
