@@ -211,6 +211,40 @@ body {
 
 .form-input::placeholder { color: var(--text-muted); }
 
+.input {
+    width: 100%;
+    padding: 0.625rem 0.75rem;
+    background: #0D0D0D;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+.input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+#languageSelect {
+    background: #000;
+    color: var(--accent);
+    border-color: rgba(255, 107, 0, 0.55);
+    font-weight: 600;
+}
+
+#languageSelect:hover {
+    border-color: var(--accent);
+}
+
+#languageSelect option {
+    background: #000;
+    color: var(--text-primary);
+}
+
 /* Layout */
 .container {
     max-width: 1200px;

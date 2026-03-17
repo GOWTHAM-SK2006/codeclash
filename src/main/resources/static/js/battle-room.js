@@ -6,6 +6,7 @@ let timeLeft = 900;
 let battleTestcases = [];
 let selectedTestcaseIndex = 0;
 let testcaseRunResults = [];
+let currentProblem = null;
 
 (async function () {
     renderNav('battle');
@@ -35,15 +36,21 @@ async function loadBattleDetails() {
 
         document.getElementById('battleProblemTitle').textContent = battle.problem?.title || 'Problem';
         document.getElementById('battleProblemDesc').textContent = battle.problem?.description || '';
+        currentProblem = battle.problem || null;
         if (battle.problem?.difficulty) {
             const badge = document.getElementById('difficultyBadge');
             badge.textContent = battle.problem.difficulty;
             badge.className = `badge badge-${battle.problem.difficulty.toLowerCase()}`;
         }
 
-        const starterCode = getEditorStarterCode(battle.problem);
+        const starterCode = getEditorStarterCode(currentProblem, getSelectedLanguage());
         if (starterCode) {
             document.getElementById('battleEditor').value = starterCode;
+        }
+
+        const languageSelect = document.getElementById('languageSelect');
+        if (languageSelect) {
+            languageSelect.onchange = onLanguageChanged;
         }
 
         battleTestcases = parseBattleTestcases(battle.problem);
@@ -295,19 +302,29 @@ function getSelectedLanguage() {
     return 'python';
 }
 
-function getEditorStarterCode(problem) {
+function onLanguageChanged() {
+    const editor = document.getElementById('battleEditor');
+    if (!editor) return;
+
+    const starterCode = getEditorStarterCode(currentProblem, getSelectedLanguage());
+    if (starterCode) {
+        editor.value = starterCode;
+    }
+}
+
+function getEditorStarterCode(problem, language = 'python') {
     const raw = String(problem?.starterCode || '').trim();
 
-    const fromWrapper = buildStarterFromWrapper(problem?.wrapperConfig);
+    const fromWrapper = buildStarterFromWrapper(problem?.wrapperConfig, language);
     if (fromWrapper) return fromWrapper;
 
-    const inferred = inferStarterByTitle(problem?.title);
+    const inferred = inferStarterByTitle(problem?.title, language);
     if (inferred) return inferred;
 
     return raw || '# Write your code here';
 }
 
-function buildStarterFromWrapper(wrapperConfig) {
+function buildStarterFromWrapper(wrapperConfig, language = 'python') {
     if (!wrapperConfig) return '';
 
     try {
@@ -319,31 +336,80 @@ function buildStarterFromWrapper(wrapperConfig) {
         const paramNames = params
             .map(p => String(p?.name || '').trim())
             .filter(Boolean)
-            .join(', ');
+            ;
 
-        return `def ${functionName}(${paramNames}):\n    # Your code here\n    pass`;
+        if (language === 'java') {
+            const javaParams = params
+                .map((p, index) => {
+                    const name = String(p?.name || `arg${index + 1}`).trim();
+                    const type = String(p?.type || 'str').toLowerCase();
+                    const mapped = (type === 'int') ? 'int'
+                        : (type === 'float') ? 'double'
+                            : (type === 'bool') ? 'boolean'
+                                : (type === 'str') ? 'String'
+                                    : 'Object';
+                    return `${mapped} ${name}`;
+                })
+                .join(', ');
+
+            return `class Solution {\n    public Object ${functionName}(${javaParams}) {\n        // Your code here\n        return null;\n    }\n}`;
+        }
+
+        if (language === 'javascript') {
+            const jsParams = paramNames.join(', ');
+            return `function ${functionName}(${jsParams}) {\n  // Your code here\n}`;
+        }
+
+        const pyParams = paramNames.join(', ');
+        return `def ${functionName}(${pyParams}):\n    # Your code here\n    pass`;
     } catch (_e) {
         return '';
     }
 }
 
-function inferStarterByTitle(title) {
+function inferStarterByTitle(title, language = 'python') {
     const text = String(title || '').toLowerCase();
 
+    const mk = (py, js, java) => {
+        if (language === 'javascript') return js;
+        if (language === 'java') return java;
+        return py;
+    };
+
     if (text === 'two sum') {
-        return 'def twoSum(nums, target):\n    # Your code here\n    pass';
+        return mk(
+            'def twoSum(nums, target):\n    # Your code here\n    pass',
+            'function twoSum(nums, target) {\n  // Your code here\n}',
+            'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Your code here\n        return new int[]{};\n    }\n}'
+        );
     }
     if (text === 'reverse string') {
-        return 'def reverseString(s):\n    # Your code here\n    pass';
+        return mk(
+            'def reverseString(s):\n    # Your code here\n    pass',
+            'function reverseString(s) {\n  // Your code here\n}',
+            'class Solution {\n    public String reverseString(String s) {\n        // Your code here\n        return \"\";\n    }\n}'
+        );
     }
     if (text === 'fizzbuzz') {
-        return 'def fizzBuzz(n):\n    result = []\n    # Your code here\n    return result';
+        return mk(
+            'def fizzBuzz(n):\n    result = []\n    # Your code here\n    return result',
+            'function fizzBuzz(n) {\n  const result = [];\n  // Your code here\n  return result;\n}',
+            'import java.util.*;\n\nclass Solution {\n    public List<String> fizzBuzz(int n) {\n        List<String> result = new ArrayList<>();\n        // Your code here\n        return result;\n    }\n}'
+        );
     }
     if (text === 'valid parentheses') {
-        return 'def isValid(s):\n    # Your code here\n    pass';
+        return mk(
+            'def isValid(s):\n    # Your code here\n    pass',
+            'function isValid(s) {\n  // Your code here\n}',
+            'class Solution {\n    public boolean isValid(String s) {\n        // Your code here\n        return false;\n    }\n}'
+        );
     }
     if (text === 'merge sorted arrays') {
-        return 'def merge(nums1, nums2):\n    # Your code here\n    pass';
+        return mk(
+            'def merge(nums1, nums2):\n    # Your code here\n    pass',
+            'function merge(nums1, nums2) {\n  // Your code here\n}',
+            'import java.util.*;\n\nclass Solution {\n    public List<Integer> merge(List<Integer> nums1, List<Integer> nums2) {\n        // Your code here\n        return new ArrayList<>();\n    }\n}'
+        );
     }
 
     return '';
