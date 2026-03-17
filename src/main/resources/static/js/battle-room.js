@@ -13,9 +13,12 @@ let fullscreenPollInterval = null;
 let fullscreenViolationCount = 0;
 let fullscreenPenaltyApplied = false;
 let fullscreenForfeitTriggered = false;
+let tabSwitchForfeitTriggered = false;
+let pageLeavePenaltyApplied = false;
 let hasEnteredFullscreenAtLeastOnce = false;
 let lastKnownFullscreenState = false;
 let fullscreenGuardEnabled = true;
+let pageExitGuardEnabled = true;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
@@ -26,6 +29,7 @@ let hasTriggeredFullscreen = false;
     if (!requireAuth()) return;
 
     initFullscreenGuard();
+    initPageExitGuard();
     triggerFullscreenOnInteraction();
 
     bindGlobalShortcuts();
@@ -84,6 +88,51 @@ async function enforceFullscreenViolationPenalty() {
         alert('Match cancelled due to repeated fullscreen exits. Unable to sync result: ' + e.message);
         window.location.href = 'battle.html';
     }
+}
+
+async function enforcePageLeavePenalty() {
+    if (pageLeavePenaltyApplied || !currentBattleId || !pageExitGuardEnabled) return;
+    pageLeavePenaltyApplied = true;
+    tabSwitchForfeitTriggered = true;
+
+    const token = api.getToken();
+    if (!token) return;
+
+    try {
+        await fetch(`/api/battles/${currentBattleId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            keepalive: true
+        });
+    } catch (_e) {
+        // best-effort during tab/page exit
+    }
+}
+
+function initPageExitGuard() {
+    const handleVisibilityPenalty = () => {
+        if (!pageExitGuardEnabled || pageLeavePenaltyApplied) return;
+        if (document.visibilityState === 'hidden') {
+            enforcePageLeavePenalty();
+        }
+    };
+
+    const handlePageHidePenalty = () => {
+        if (!pageExitGuardEnabled || pageLeavePenaltyApplied) return;
+        enforcePageLeavePenalty();
+    };
+
+    const handleBeforeUnloadPenalty = () => {
+        if (!pageExitGuardEnabled || pageLeavePenaltyApplied) return;
+        enforcePageLeavePenalty();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityPenalty);
+    window.addEventListener('pagehide', handlePageHidePenalty);
+    window.addEventListener('beforeunload', handleBeforeUnloadPenalty);
 }
 
 function requestBattleFullscreen() {
@@ -333,6 +382,7 @@ async function cancelMatch() {
 
 function showResult(result) {
     fullscreenGuardEnabled = false;
+    pageExitGuardEnabled = false;
 
     const resultEl = document.getElementById('battleResult');
     resultEl.style.display = 'block';
@@ -378,6 +428,15 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">Match Cancelled</h2>
                 <p style="color:var(--text-secondary);">Opponent left the match. You received 2x battle coins! 🪙</p>
+                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+            </div>
+        `;
+    } else if (result.status === 'CANCELLED' && tabSwitchForfeitTriggered) {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
+                <p style="color:var(--text-secondary);">You left the battle tab/page. Opponent wins this battle.</p>
                 <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
