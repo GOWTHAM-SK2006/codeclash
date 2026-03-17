@@ -9,12 +9,16 @@ let testcaseRunResults = [];
 let currentProblem = null;
 let monacoEditor = null;
 let monacoReadyPromise = null;
+let fullscreenRestoreInProgress = false;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
 (async function () {
     renderNav('battle');
     if (!requireAuth()) return;
+
+    initFullscreenGuard();
+    await requestBattleFullscreen();
 
     bindGlobalShortcuts();
 
@@ -28,6 +32,40 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
 
     loadBattleDetails();
 })();
+
+function initFullscreenGuard() {
+    document.addEventListener('fullscreenchange', async () => {
+        if (document.fullscreenElement) return;
+        if (fullscreenRestoreInProgress) return;
+
+        fullscreenRestoreInProgress = true;
+        alert('Warning: Battle mode must stay in fullscreen. Returning to fullscreen now.');
+        await requestBattleFullscreen();
+        fullscreenRestoreInProgress = false;
+    });
+
+    const retryOnInteraction = async () => {
+        if (document.fullscreenElement) return;
+        await requestBattleFullscreen();
+    };
+
+    window.addEventListener('click', retryOnInteraction);
+    window.addEventListener('keydown', retryOnInteraction);
+}
+
+async function requestBattleFullscreen() {
+    if (document.fullscreenElement) return true;
+
+    const root = document.documentElement;
+    if (!root?.requestFullscreen) return false;
+
+    try {
+        await root.requestFullscreen();
+        return true;
+    } catch (_err) {
+        return false;
+    }
+}
 
 async function loadBattleDetails() {
     try {
