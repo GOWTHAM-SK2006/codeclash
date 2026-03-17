@@ -96,6 +96,39 @@
         </div>
     </main>
 
+    <!-- Fullscreen Warning Overlay -->
+    <div id="fullscreenWarning" style="
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        background:rgba(0,0,0,0.92);
+        backdrop-filter:blur(6px);
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:1.2rem;
+    ">
+        <div style="font-size:3.5rem;">⚠️</div>
+        <h2 style="color:#FF6B00;font-size:1.8rem;font-weight:800;margin:0;">Fullscreen Exit Detected!</h2>
+        <p style="color:#ccc;font-size:1.1rem;max-width:480px;margin:0;">You must stay in fullscreen during a battle. Returning to fullscreen automatically...</p>
+        <div id="fullscreenCountdown" style="
+            font-size:3rem;
+            font-weight:900;
+            color:#FF6B00;
+            background:rgba(255,107,0,0.1);
+            border:3px solid #FF6B00;
+            border-radius:50%;
+            width:80px;
+            height:80px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        ">3</div>
+        <p style="color:#888;font-size:0.9rem;">This is an anti-cheat measure to ensure fair play.</p>
+    </div>
+
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.52.2/min/vs/loader.min.js"></script>

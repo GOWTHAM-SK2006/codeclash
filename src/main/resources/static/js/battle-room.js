@@ -49,29 +49,53 @@ function triggerFullscreenOnInteraction() {
     document.addEventListener('keydown', onUserInteract, { once: true });
 }
 
+let fullscreenWarningCountdownInterval = null;
+
+function showFullscreenWarning(onDone) {
+    const overlay = document.getElementById('fullscreenWarning');
+    const countdownEl = document.getElementById('fullscreenCountdown');
+    if (!overlay || !countdownEl) { onDone(); return; }
+
+    let count = 3;
+    countdownEl.textContent = count;
+    overlay.style.display = 'flex';
+
+    if (fullscreenWarningCountdownInterval) clearInterval(fullscreenWarningCountdownInterval);
+    fullscreenWarningCountdownInterval = setInterval(() => {
+        count--;
+        if (count <= 0) {
+            clearInterval(fullscreenWarningCountdownInterval);
+            fullscreenWarningCountdownInterval = null;
+            overlay.style.display = 'none';
+            onDone();
+        } else {
+            countdownEl.textContent = count;
+        }
+    }, 1000);
+}
+
 function initFullscreenGuard() {
-    const attemptFullscreen = () => {
+    const onFullscreenExit = () => {
         if (document.fullscreenElement || fullscreenRestoreInProgress) return;
         fullscreenRestoreInProgress = true;
-        requestBattleFullscreen();
-        setTimeout(() => { fullscreenRestoreInProgress = false; }, 150);
+
+        showFullscreenWarning(() => {
+            requestBattleFullscreen();
+            setTimeout(() => { fullscreenRestoreInProgress = false; }, 150);
+        });
     };
 
-    document.addEventListener('fullscreenchange', attemptFullscreen);
-    document.addEventListener('msfullscreenchange', attemptFullscreen);
-    document.addEventListener('webkitfullscreenchange', attemptFullscreen);
-    document.addEventListener('mozfullscreenchange', attemptFullscreen);
-
-    window.addEventListener('blur', attemptFullscreen);
-    window.addEventListener('click', attemptFullscreen);
-    window.addEventListener('keydown', attemptFullscreen);
+    document.addEventListener('fullscreenchange', onFullscreenExit);
+    document.addEventListener('msfullscreenchange', onFullscreenExit);
+    document.addEventListener('webkitfullscreenchange', onFullscreenExit);
+    document.addEventListener('mozfullscreenchange', onFullscreenExit);
 
     if (fullscreenPollInterval) clearInterval(fullscreenPollInterval);
     fullscreenPollInterval = setInterval(() => {
         if (!document.fullscreenElement && !fullscreenRestoreInProgress) {
-            attemptFullscreen();
+            onFullscreenExit();
         }
-    }, 500);
+    }, 1000);
 }
 
 function requestBattleFullscreen() {
