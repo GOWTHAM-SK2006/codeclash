@@ -42,4 +42,11 @@ public class Problem {
 
     @Column(length = 100)
     private String category;
+
+    // JSON config for LeetCode-style wrapper generation.
+    // Format: {"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}
+    // Supported param types: json (list/dict), int, float, str, bool
+    // If null/blank, falls back to stdin input() patching.
+    @Column(columnDefinition = "TEXT")
+    private String wrapperConfig;
 }

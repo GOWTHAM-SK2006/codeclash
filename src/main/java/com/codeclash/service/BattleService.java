@@ -383,7 +383,6 @@ public class BattleService {
 
         private boolean evaluatePythonBattleSubmission(Problem problem, String userCode) {
                 List<TestCaseData> testCases = parseTestCases(problem);
-                String functionName = extractFirstPythonFunctionName(userCode);
 
                 if (testCases.isEmpty()) {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "PYTHON");
@@ -394,7 +393,7 @@ public class BattleService {
                 }
 
                 for (TestCaseData testCase : testCases) {
-                        String codeToRun = buildExecutablePythonCode(userCode, functionName, testCase.input());
+                        String codeToRun = buildExecutablePythonCode(userCode, problem, testCase.input());
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "PYTHON");
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
@@ -413,10 +412,9 @@ public class BattleService {
         private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode,
                         String selectedInputData) {
                 List<TestCaseData> testCases = parseTestCases(problem);
-                String functionName = extractFirstPythonFunctionName(userCode);
 
                 if (selectedInputData != null) {
-                        String codeToRun = buildExecutablePythonCode(userCode, functionName, selectedInputData);
+                        String codeToRun = buildExecutablePythonCode(userCode, problem, selectedInputData);
                         return dockerSandboxService.execute(codeToRun, "PYTHON");
                 }
 
@@ -425,15 +423,34 @@ public class BattleService {
                 }
 
                 TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildExecutablePythonCode(userCode, functionName, firstCase.input());
+                String codeToRun = buildExecutablePythonCode(userCode, problem, firstCase.input());
                 return dockerSandboxService.execute(codeToRun, "PYTHON");
         }
 
-        private String buildExecutablePythonCode(String userCode, String functionName, String rawInput) {
+        /**
+         * Chooses the right execution strategy:
+         * 1. Problem has wrapperConfig  → LeetCode-style function wrapper (preferred)
+         * 2. User code calls input()    → patch builtins.input with stdin lines
+         * 3. Auto-detect function name  → generic JSON-parsing wrapper
+         * 4. Plain script               → pipe stdin as-is
+         */
+        private String buildExecutablePythonCode(String userCode, Problem problem, String rawInput) {
+                String wrapperConfigJson = problem != null ? safe(problem.getWrapperConfig()) : "";
+                if (!wrapperConfigJson.isBlank()) {
+                        try {
+                                JsonNode config = OBJECT_MAPPER.readTree(wrapperConfigJson);
+                                return buildLeetCodeWrapper(userCode, config, rawInput);
+                        } catch (Exception ignored) {
+                        }
+                }
                 if (usesInputFunction(userCode)) {
                         return buildPythonInputPatchedScript(userCode, rawInput);
                 }
-                return buildPythonExecutionScript(userCode, functionName, rawInput);
+                String functionName = extractFirstPythonFunctionName(userCode);
+                if (functionName != null) {
+                        return buildAutoFunctionWrapper(userCode, functionName, rawInput);
+                }
+                return buildPythonInputPatchedScript(userCode, rawInput);
         }
 
         private boolean usesInputFunction(String userCode) {
@@ -540,56 +557,76 @@ public class BattleService {
                 return matcher.find() ? matcher.group(1) : null;
         }
 
-        private String buildPythonExecutionScript(String userCode, String functionName, String rawInput) {
-                if (functionName == null || functionName.isBlank()) {
-                        return userCode;
+        /**
+         * LeetCode-style wrapper: reads each parameter from a separate stdin line,
+         * converts to the declared type, calls the user's function, prints the result.
+         *
+         * wrapperConfig JSON example:
+         *   {"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}
+         *
+         * Supported param types: json (list/dict/any), int, float, bool, str
+         */
+        private String buildLeetCodeWrapper(String userCode, JsonNode config, String rawInput) {
+                String functionName = config.path("functionName").asText("").trim();
+                JsonNode params = config.path("params");
+
+                if (functionName.isEmpty() || !params.isArray() || params.size() == 0) {
+                        return buildPythonInputPatchedScript(userCode, rawInput);
                 }
 
+                StringBuilder sb = new StringBuilder();
+                sb.append(userCode).append("\n\n");
+                sb.append("import sys\n");
+                sb.append("import json\n\n");
+                sb.append("if __name__ == '__main__':\n");
+                sb.append("    _lines = sys.stdin.read().strip().split('\\n')\n");
+
+                List<String> argNames = new ArrayList<>();
+                for (int i = 0; i < params.size(); i++) {
+                        JsonNode p = params.get(i);
+                        String name = p.path("name").asText("_arg" + i);
+                        String type = p.path("type").asText("str").toLowerCase();
+                        argNames.add(name);
+                        String parse = switch (type) {
+                                case "json", "list", "array", "dict" -> "json.loads(_lines[" + i + "])";
+                                case "int" -> "int(_lines[" + i + "].strip())";
+                                case "float" -> "float(_lines[" + i + "].strip())";
+                                case "bool" -> "_lines[" + i + "].strip() == 'True'";
+                                default -> "str(_lines[" + i + "])";
+                        };
+                        sb.append("    ").append(name).append(" = ").append(parse).append("\n");
+                }
+
+                sb.append("    _result = ").append(functionName).append("(").append(String.join(", ", argNames)).append(")\n");
+                sb.append("    if _result is not None:\n");
+                sb.append("        print(_result)\n");
+
+                return sb.toString();
+        }
+
+        /**
+         * Fallback wrapper: auto-parses each stdin line as JSON → int → str,
+         * then calls the detected function with those args.
+         */
+        private String buildAutoFunctionWrapper(String userCode, String functionName, String rawInput) {
                 String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
                 return userCode + "\n\n"
-                                + "import ast\n"
-                                + "def __cc_parse(raw):\n"
-                                + "    raw = (raw or '').strip()\n"
-                                + "    if raw == '':\n"
-                                + "        return (), {}\n"
-                                + "    if '=' in raw and not raw.lstrip().startswith('[') and not raw.lstrip().startswith('{') and not raw.lstrip().startswith('('):\n"
-                                + "        parts = []\n"
-                                + "        token = ''\n"
-                                + "        depth = 0\n"
-                                + "        for ch in raw:\n"
-                                + "            if ch == ',' and depth == 0:\n"
-                                + "                if token.strip():\n"
-                                + "                    parts.append(token.strip())\n"
-                                + "                token = ''\n"
-                                + "                continue\n"
-                                + "            token += ch\n"
-                                + "            if ch in '[{(':\n"
-                                + "                depth += 1\n"
-                                + "            elif ch in ']})':\n"
-                                + "                depth -= 1\n"
-                                + "        if token.strip():\n"
-                                + "            parts.append(token.strip())\n"
-                                + "        kwargs = {}\n"
-                                + "        for part in parts:\n"
-                                + "            if '=' in part:\n"
-                                + "                key, value = part.split('=', 1)\n"
-                                + "                kwargs[key.strip()] = ast.literal_eval(value.strip())\n"
-                                + "        return (), kwargs\n"
-                                + "    try:\n"
-                                + "        parsed = ast.literal_eval(raw)\n"
-                                + "    except Exception:\n"
-                                + "        parsed = raw\n"
-                                + "    if isinstance(parsed, tuple):\n"
-                                + "        return parsed, {}\n"
-                                + "    if isinstance(parsed, list):\n"
-                                + "        return tuple(parsed), {}\n"
-                                + "    return (parsed,), {}\n"
-                                + "\n"
+                                + "import sys, json\n\n"
                                 + "if __name__ == '__main__':\n"
-                                + "    args, kwargs = __cc_parse(" + inputLiteral + ")\n"
-                                + "    result = " + functionName + "(*args, **kwargs)\n"
-                                + "    if result is not None:\n"
-                                + "        print(result)\n";
+                                + "    _raw = " + inputLiteral + "\n"
+                                + "    _lines = [l for l in _raw.strip().split('\\n') if l.strip()]\n"
+                                + "    _args = []\n"
+                                + "    for _l in _lines:\n"
+                                + "        try:\n"
+                                + "            _args.append(json.loads(_l))\n"
+                                + "        except Exception:\n"
+                                + "            try:\n"
+                                + "                _args.append(int(_l.strip()))\n"
+                                + "            except Exception:\n"
+                                + "                _args.append(_l)\n"
+                                + "    _result = " + functionName + "(*_args)\n"
+                                + "    if _result is not None:\n"
+                                + "        print(_result)\n";
         }
 
         private String toPythonStringLiteral(String value) {

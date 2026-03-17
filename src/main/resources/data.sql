@@ -42,12 +42,13 @@ Read the array from input() on line 1 and the target on line 2.', 'Easy',
 
 UPDATE problems SET
     description = 'Given an array of integers and a target, return indices of two numbers that add up to the target.
-Read the array from input() on line 1 and the target on line 2.',
-    starter_code = 'def two_sum(nums, target):
+Write a function twoSum(nums, target) that returns the answer.',
+    starter_code = 'def twoSum(nums, target):
     # Your code here
     pass',
     test_cases = '[{"input":"[2,7,11,15]\n9","expected":"[0, 1]"},{"input":"[3,2,4]\n6","expected":"[1, 2]"},{"input":"[3,3]\n6","expected":"[0, 1]"}]',
-    expected_output = '[0, 1]'
+    expected_output = '[0, 1]',
+    wrapper_config = '{"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}'
 WHERE title = 'Two Sum';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -59,12 +60,13 @@ print(s[::-1])',
 'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
 
 UPDATE problems SET
-    description = 'Write a function that reverses a string.
-Read a string from input() and print its reverse.',
-    starter_code = 's = input()
-print(s[::-1])',
+    description = 'Write a function reverseString(s) that reverses a string and returns it.',
+    starter_code = 'def reverseString(s):
+    # Your code here
+    pass',
     test_cases = '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
-    expected_output = 'olleh'
+    expected_output = 'olleh',
+    wrapper_config = '{"functionName":"reverseString","params":[{"name":"s","type":"str"}]}'
 WHERE title = 'Reverse String';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -84,20 +86,14 @@ for i in range(1, n + 1):
 'FizzBuzz', 10, 'Logic') ON CONFLICT DO NOTHING;
 
 UPDATE problems SET
-    description = 'Print numbers 1 to n. For multiples of 3 print Fizz, for 5 print Buzz, for both print FizzBuzz.
-Read n from input().',
-    starter_code = 'n = int(input())
-for i in range(1, n + 1):
-    if i % 15 == 0:
-        print("FizzBuzz")
-    elif i % 3 == 0:
-        print("Fizz")
-    elif i % 5 == 0:
-        print("Buzz")
-    else:
-        print(i)',
-    test_cases = '[{"input":"5","expected":"1\n2\nFizz\n4\nBuzz"},{"input":"15","expected":"1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"}]',
-    expected_output = 'FizzBuzz'
+    description = 'Write a function fizzBuzz(n) that returns a list of strings for numbers 1 to n. Multiples of 3 → "Fizz", multiples of 5 → "Buzz", both → "FizzBuzz", otherwise the number as a string.',
+    starter_code = 'def fizzBuzz(n):
+    result = []
+    # Your code here
+    return result',
+    test_cases = '[{"input":"5","expected":"[''1'', ''2'', ''Fizz'', ''4'', ''Buzz'']"}]',
+    expected_output = '[''1'', ''2'', ''Fizz'', ''4'', ''Buzz'']',
+    wrapper_config = '{"functionName":"fizzBuzz","params":[{"name":"n","type":"int"}]}'
 WHERE title = 'FizzBuzz';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -119,22 +115,13 @@ print(not stack)',
 'True', 20, 'Stack') ON CONFLICT DO NOTHING;
 
 UPDATE problems SET
-    description = 'Given a string of brackets, determine if the input string is valid.
-Read the string from input().',
-    starter_code = 's = input()
-stack = []
-mapping = {")": "(", "}": "{", "]": "["}
-for char in s:
-    if char in mapping:
-        top = stack.pop() if stack else "#"
-        if mapping[char] != top:
-            print(False)
-            exit()
-    else:
-        stack.append(char)
-print(not stack)',
+    description = 'Write a function isValid(s) that returns True if the bracket string is valid, False otherwise.',
+    starter_code = 'def isValid(s):
+    # Your code here
+    pass',
     test_cases = '[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]',
-    expected_output = 'True'
+    expected_output = 'True',
+    wrapper_config = '{"functionName":"isValid","params":[{"name":"s","type":"str"}]}'
 WHERE title = 'Valid Parentheses';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -148,14 +135,13 @@ print(sorted(a + b))',
 '[1, 2, 3, 4, 5, 6]', 20, 'Arrays') ON CONFLICT DO NOTHING;
 
 UPDATE problems SET
-    description = 'Merge two sorted arrays into one sorted array.
-Read array 1 on line 1 and array 2 on line 2.',
-    starter_code = 'import ast
-a = ast.literal_eval(input())
-b = ast.literal_eval(input())
-print(sorted(a + b))',
+    description = 'Write a function merge(nums1, nums2) that merges two sorted arrays and returns a single sorted array.',
+    starter_code = 'def merge(nums1, nums2):
+    # Your code here
+    pass',
     test_cases = '[{"input":"[1,3,5]\n[2,4,6]","expected":"[1, 2, 3, 4, 5, 6]"},{"input":"[1,2]\n[3,4]","expected":"[1, 2, 3, 4]"}]',
-    expected_output = '[1, 2, 3, 4, 5, 6]'
+    expected_output = '[1, 2, 3, 4, 5, 6]',
+    wrapper_config = '{"functionName":"merge","params":[{"name":"nums1","type":"json"},{"name":"nums2","type":"json"}]}'
 WHERE title = 'Merge Sorted Arrays';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
