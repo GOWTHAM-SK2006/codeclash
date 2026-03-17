@@ -41,8 +41,9 @@ async function loadBattleDetails() {
             badge.className = `badge badge-${battle.problem.difficulty.toLowerCase()}`;
         }
 
-        if (battle.problem?.starterCode) {
-            document.getElementById('battleEditor').value = battle.problem.starterCode;
+        const starterCode = getEditorStarterCode(battle.problem);
+        if (starterCode) {
+            document.getElementById('battleEditor').value = starterCode;
         }
 
         battleTestcases = parseBattleTestcases(battle.problem);
@@ -292,6 +293,60 @@ function getSelectedLanguage() {
     if (selected === 'java') return 'java';
     if (selected === 'javascript') return 'javascript';
     return 'python';
+}
+
+function getEditorStarterCode(problem) {
+    const raw = String(problem?.starterCode || '').trim();
+
+    const fromWrapper = buildStarterFromWrapper(problem?.wrapperConfig);
+    if (fromWrapper) return fromWrapper;
+
+    const inferred = inferStarterByTitle(problem?.title);
+    if (inferred) return inferred;
+
+    return raw || '# Write your code here';
+}
+
+function buildStarterFromWrapper(wrapperConfig) {
+    if (!wrapperConfig) return '';
+
+    try {
+        const cfg = typeof wrapperConfig === 'string' ? JSON.parse(wrapperConfig) : wrapperConfig;
+        const functionName = String(cfg?.functionName || '').trim();
+        const params = Array.isArray(cfg?.params) ? cfg.params : [];
+        if (!functionName) return '';
+
+        const paramNames = params
+            .map(p => String(p?.name || '').trim())
+            .filter(Boolean)
+            .join(', ');
+
+        return `def ${functionName}(${paramNames}):\n    # Your code here\n    pass`;
+    } catch (_e) {
+        return '';
+    }
+}
+
+function inferStarterByTitle(title) {
+    const text = String(title || '').toLowerCase();
+
+    if (text === 'two sum') {
+        return 'def twoSum(nums, target):\n    # Your code here\n    pass';
+    }
+    if (text === 'reverse string') {
+        return 'def reverseString(s):\n    # Your code here\n    pass';
+    }
+    if (text === 'fizzbuzz') {
+        return 'def fizzBuzz(n):\n    result = []\n    # Your code here\n    return result';
+    }
+    if (text === 'valid parentheses') {
+        return 'def isValid(s):\n    # Your code here\n    pass';
+    }
+    if (text === 'merge sorted arrays') {
+        return 'def merge(nums1, nums2):\n    # Your code here\n    pass';
+    }
+
+    return '';
 }
 
 function parseBattleTestcases(problem) {
