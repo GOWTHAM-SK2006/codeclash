@@ -445,11 +445,11 @@ public class BattleService {
 
         private String buildPythonInputPatchedScript(String userCode, String rawInput) {
                 String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
-                return "import builtins\\n"
-                                + "__cc_raw = " + inputLiteral + "\\n"
-                                + "__cc_lines = __cc_raw.splitlines()\\n"
-                                + "__cc_iter = iter(__cc_lines)\\n"
-                                + "builtins.input = lambda: next(__cc_iter, '')\\n\\n"
+                return "import builtins\n"
+                                + "__cc_raw = " + inputLiteral + "\n"
+                                + "__cc_lines = __cc_raw.splitlines()\n"
+                                + "__cc_iter = iter(__cc_lines)\n"
+                                + "builtins.input = lambda: next(__cc_iter, '')\n\n"
                                 + userCode;
         }
 

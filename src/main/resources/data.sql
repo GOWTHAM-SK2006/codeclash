@@ -33,16 +33,28 @@ INSERT INTO problems (title, description, difficulty, starter_code, test_cases, 
 'def two_sum(nums, target):\n    # Your code here\n    pass', 'Input: nums=[2,7,11,15], target=9\nExpected: [0,1]', '[0, 1]', 10, 'Arrays') ON CONFLICT DO NOTHING;
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('Reverse String', 'Write a function that reverses a string.', 'Easy',
-'def reverse_string(s):\n    # Your code here\n    pass', 'Input: "hello"\nExpected: "olleh"', 'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
+('Reverse String', 'Write a function that reverses a string.
+
+Read a string from input() and print its reverse.', 'Easy',
+'def reverse_string(s):
+    # Your code here
+    pass', '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]', 'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('FizzBuzz', 'Print numbers 1 to n. For multiples of 3 print "Fizz", for 5 print "Buzz", for both print "FizzBuzz".', 'Easy',
-'def fizzbuzz(n):\n    # Your code here\n    pass', 'Input: n=15\nExpected: 1,2,Fizz,4,Buzz,...,FizzBuzz', 'FizzBuzz', 10, 'Logic') ON CONFLICT DO NOTHING;
+('FizzBuzz', 'Print numbers 1 to n. For multiples of 3 print "Fizz", for 5 print "Buzz", for both print "FizzBuzz".
+
+Read n from input().', 'Easy',
+'def fizzbuzz(n):
+    # Your code here
+    pass', '[{"input":"5","expected":"1\n2\nFizz\n4\nBuzz"},{"input":"15","expected":"1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz"}]', 'FizzBuzz', 10, 'Logic') ON CONFLICT DO NOTHING;
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
-('Valid Parentheses', 'Given a string containing just the characters ''('', '')'', ''{'', ''}'', ''['' and '']'', determine if the input string is valid.', 'Medium',
-'def is_valid(s):\n    # Your code here\n    pass', 'Input: "()[]{}"\nExpected: True', 'True', 20, 'Stack') ON CONFLICT DO NOTHING;
+('Valid Parentheses', 'Given a string containing just the characters ''('', '')'', ''{'', ''}'', ''['' and '']'', determine if the input string is valid.
+
+Read the string from input().', 'Medium',
+'def is_valid(s):
+    # Your code here
+    pass', '[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]', 'True', 20, 'Stack') ON CONFLICT DO NOTHING;
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
 ('Merge Sorted Arrays', 'Merge two sorted arrays into one sorted array.', 'Medium',
