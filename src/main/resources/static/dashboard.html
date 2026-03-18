@@ -9,59 +9,58 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
-<body>
+<body class="dashboard-page">
     <nav class="navbar" id="navbar"></nav>
 
     <main class="page-content">
         <div class="container">
-            <div class="page-header">
+            <div class="page-header dashboard-header">
                 <h1>Dashboard</h1>
-                <p>Welcome back, <span id="userName" style="color:var(--accent);font-weight:600;"></span></p>
+                <p>Welcome back, <span id="userName" class="username-highlight"></span></p>
             </div>
 
             <div class="stats-grid" id="statsGrid">
-                <div class="stat-card">
+                <div class="stat-card stat-card-coins">
                     <div class="stat-value" id="totalCoins">—</div>
                     <div class="stat-label">🪙 Total Coins</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-solved">
                     <div class="stat-value" id="problemsSolved">—</div>
                     <div class="stat-label">✅ Problems Solved</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-rank">
                     <div class="stat-value" id="userRank">—</div>
                     <div class="stat-label">🏆 Your Rank</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-users">
                     <div class="stat-value" id="totalUsers">—</div>
                     <div class="stat-label">👥 Total Users</div>
                 </div>
             </div>
 
-            <div
-                style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.25rem; margin-top:2rem;">
-                <a href="learn.html" class="card card-glow" style="text-decoration:none;">
-                    <span style="font-size:2rem;display:block;margin-bottom:0.75rem;">📚</span>
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;">Continue Learning</h3>
-                    <p style="color:var(--text-secondary);font-size:0.875rem;">Pick up where you left off with
+            <div class="dashboard-actions">
+                <a href="learn.html" class="card card-glow action-card action-card-learn">
+                    <span class="action-icon">📚</span>
+                    <h3>Continue Learning</h3>
+                    <p>Pick up where you left off with
                         interactive programming lessons.</p>
                 </a>
-                <a href="problems.html" class="card card-glow" style="text-decoration:none;">
-                    <span style="font-size:2rem;display:block;margin-bottom:0.75rem;">💻</span>
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;">Solve Problems</h3>
-                    <p style="color:var(--text-secondary);font-size:0.875rem;">Challenge yourself with coding problems
+                <a href="problems.html" class="card card-glow action-card action-card-problems">
+                    <span class="action-icon">💻</span>
+                    <h3>Solve Problems</h3>
+                    <p>Challenge yourself with coding problems
                         and earn coins.</p>
                 </a>
-                <a href="battle.html" class="card card-glow" style="text-decoration:none;">
-                    <span style="font-size:2rem;display:block;margin-bottom:0.75rem;">⚔️</span>
-                    <h3 style="font-weight:700;margin-bottom:0.5rem;">Start a Battle</h3>
-                    <p style="color:var(--text-secondary);font-size:0.875rem;">Challenge another coder to a real-time
+                <a href="battle.html" class="card card-glow action-card action-card-battle">
+                    <span class="action-icon">⚔️</span>
+                    <h3>Start a Battle</h3>
+                    <p>Challenge another coder to a real-time
                         1v1 coding duel.</p>
                 </a>
             </div>
 
-            <div style="margin-top:2rem;">
-                <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:1rem;">Recent Submissions</h2>
+            <div class="dashboard-submissions">
+                <h2>Recent Submissions</h2>
                 <div id="recentSubmissions">
                     <div class="spinner"></div>
                 </div>

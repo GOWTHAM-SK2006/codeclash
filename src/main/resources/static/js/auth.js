@@ -15,6 +15,13 @@ function requireAuth() {
 function renderNav(activePage) {
     const user = api.getUser();
     const isLoggedIn = api.isLoggedIn();
+    const fullName = (user?.displayName || user?.username || 'User').trim();
+    const initials = fullName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(part => part[0].toUpperCase())
+        .join('') || 'U';
 
     const nav = document.getElementById('navbar');
     if (!nav) return;
@@ -30,8 +37,11 @@ function renderNav(activePage) {
         </ul>
         <div class="nav-auth">
             ${isLoggedIn
-            ? `<a href="profile.html" class="btn btn-ghost">Profile</a>
-                   <button onclick="api.logout()" class="btn btn-secondary btn-sm">Logout</button>`
+             ? `<a href="profile.html" class="profile-chip">
+                  <span class="profile-avatar">${initials}</span>
+                  <span>Profile</span>
+             </a>
+             <button onclick="api.logout()" class="icon-logout-btn" aria-label="Logout" title="Logout">⏻</button>`
             : `<a href="login.html" class="btn btn-ghost">Log in</a>
                    <a href="register.html" class="btn btn-primary btn-sm">Sign up</a>`
         }
