@@ -124,6 +124,11 @@ const api = {
             method: 'POST'
         });
     },
+    timeoutBattle(id) {
+        return this.request(`/battles/${id}/timeout`, {
+            method: 'POST'
+        });
+    },
     getBattle(id) { return this.request(`/battles/${id}`); },
     findBattle(difficulty) {
         return this.request('/battles/find', {

@@ -19,6 +19,8 @@ let hasEnteredFullscreenAtLeastOnce = false;
 let lastKnownFullscreenState = false;
 let fullscreenGuardEnabled = true;
 let pageExitGuardEnabled = true;
+let battleDurationSeconds = 900;
+let battleTimeoutTriggered = false;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
@@ -236,12 +238,25 @@ async function loadBattleDetails() {
         document.getElementById('p1Name').textContent = participants[0]?.user?.displayName || 'Player 1';
         document.getElementById('p2Name').textContent = participants[1]?.user?.displayName || 'Player 2';
 
-        startTimer(battle.startedAt);
+        battleDurationSeconds = resolveBattleDurationSeconds(battle);
+        startTimer(battle.startedAt, battleDurationSeconds);
         startStatusPolling();
     } catch (e) {
         alert('Error loading battle: ' + e.message);
         window.location.href = 'battle.html';
     }
+}
+
+function resolveBattleDurationSeconds(battle) {
+    const fromBattle = Number(battle?.timeLimitSeconds);
+    if (Number.isFinite(fromBattle) && fromBattle > 0) {
+        return fromBattle;
+    }
+
+    const difficulty = String(battle?.problem?.difficulty || '').toLowerCase();
+    if (difficulty === 'hard') return 1800;
+    if (difficulty === 'medium') return 1200;
+    return 600;
 }
 
 function startStatusPolling() {
@@ -265,9 +280,9 @@ function startStatusPolling() {
     }, 5000);
 }
 
-function startTimer(startTimeStr) {
+function startTimer(startTimeStr, durationSeconds = 900) {
     const startTime = new Date(startTimeStr).getTime();
-    const duration = 900 * 1000;
+    const duration = Math.max(1, Number(durationSeconds)) * 1000;
 
     if (timerInterval) clearInterval(timerInterval);
 
@@ -279,7 +294,7 @@ function startTimer(startTimeStr) {
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             document.getElementById('timer').textContent = '00:00';
-            // Optionally auto-submit or end battle
+            handleBattleTimerExpired();
             return;
         }
 
@@ -287,6 +302,26 @@ function startTimer(startTimeStr) {
         const s = (timeLeft % 60).toString().padStart(2, '0');
         document.getElementById('timer').textContent = `${m}:${s}`;
     }, 1000);
+}
+
+async function handleBattleTimerExpired() {
+    if (battleTimeoutTriggered || !currentBattleId) return;
+    battleTimeoutTriggered = true;
+
+    fullscreenGuardEnabled = false;
+    pageExitGuardEnabled = false;
+
+    try {
+        const result = await api.timeoutBattle(currentBattleId);
+        showResult(result);
+    } catch (_e) {
+        try {
+            const data = await api.getBattle(currentBattleId);
+            showResult(data?.battle || {});
+        } catch (__e) {
+            window.location.href = 'battle.html';
+        }
+    }
 }
 
 async function submitBattleSolution() {
@@ -464,6 +499,19 @@ function showResult(result) {
                 <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
+    } else if (result.status === 'CANCELLED' && !result.winnerId) {
+        resultEl.innerHTML = `
+            <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">⏱️</span>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:0.5rem;">Time Up - Match Draw</h2>
+                <p style="color:var(--text-secondary);">Battle time is over. Match ended with no winner.</p>
+                <p style="color:var(--text-secondary);margin-top:0.4rem;">Returning to lobby...</p>
+                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+            </div>
+        `;
+        setTimeout(() => {
+            window.location.href = 'battle.html';
+        }, 2200);
     } else if (result.status === 'CANCELLED') {
         resultEl.innerHTML = `
             <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -127,6 +128,7 @@ public class BattleService {
                 battle.setProblem(randomProblem);
                 battle.setStatus("ACTIVE");
                 battle.setStartedAt(LocalDateTime.now());
+                battle.setTimeLimitSeconds(getBattleDurationSecondsByDifficulty(randomProblem.getDifficulty()));
                 battleRepository.save(battle);
 
                 // Add both participants
@@ -193,6 +195,7 @@ public class BattleService {
                 Battle battle = new Battle();
                 battle.setProblem(problem);
                 battle.setStatus("WAITING");
+                battle.setTimeLimitSeconds(getBattleDurationSecondsByDifficulty(problem.getDifficulty()));
                 battleRepository.save(battle);
 
                 BattleParticipant participant = new BattleParticipant();
@@ -225,6 +228,9 @@ public class BattleService {
 
                 battle.setStatus("ACTIVE");
                 battle.setStartedAt(LocalDateTime.now());
+                if (battle.getTimeLimitSeconds() == null || battle.getTimeLimitSeconds() <= 0) {
+                        battle.setTimeLimitSeconds(getBattleDurationSecondsByDifficulty(battle.getProblem().getDifficulty()));
+                }
                 battleRepository.save(battle);
 
                 return battle;
@@ -236,6 +242,14 @@ public class BattleService {
                                 .orElseThrow(() -> new RuntimeException("Battle not found"));
                 User user = userRepository.findByUsername(username)
                                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+                if (isBattleTimeExpired(battle)) {
+                        return concludeBattleAsDraw(battle);
+                }
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        throw new RuntimeException("Battle is not active");
+                }
 
                 List<BattleParticipant> participants = participantRepository.findByBattleId(battleId);
                 BattleParticipant myEntry = participants.stream()
@@ -275,6 +289,11 @@ public class BattleService {
         public Map<String, Object> runBattleCode(Long battleId, String username, BattleSubmitRequest request) {
                 Battle battle = battleRepository.findById(battleId)
                                 .orElseThrow(() -> new RuntimeException("Battle not found"));
+
+                if (isBattleTimeExpired(battle)) {
+                        concludeBattleAsDraw(battle);
+                        throw new RuntimeException("Battle time expired. Match ended in a draw");
+                }
 
                 if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
                         throw new RuntimeException("Battle is not active");
@@ -318,6 +337,10 @@ public class BattleService {
                 Battle battle = battleRepository.findById(battleId)
                                 .orElseThrow(() -> new RuntimeException("Battle not found"));
 
+                if (isBattleTimeExpired(battle)) {
+                        return concludeBattleAsDraw(battle);
+                }
+
                 if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
                         throw new RuntimeException("Only active battles can be cancelled");
                 }
@@ -353,9 +376,35 @@ public class BattleService {
                 return battle;
         }
 
-        public Battle getBattle(Long id) {
-                return battleRepository.findById(id)
+        @Transactional
+        public Battle timeoutBattle(Long battleId, String username) {
+                Battle battle = battleRepository.findById(battleId)
                                 .orElseThrow(() -> new RuntimeException("Battle not found"));
+
+                User user = userRepository.findByUsername(username)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                participantRepository.findByBattleId(battleId).stream()
+                                .filter(p -> p.getUser().getId().equals(user.getId()))
+                                .findFirst()
+                                .orElseThrow(() -> new RuntimeException("Not a participant"));
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        return battle;
+                }
+
+                return concludeBattleAsDraw(battle);
+        }
+
+        public Battle getBattle(Long id) {
+                Battle battle = battleRepository.findById(id)
+                                .orElseThrow(() -> new RuntimeException("Battle not found"));
+
+                if (isBattleTimeExpired(battle)) {
+                        return concludeBattleAsDraw(battle);
+                }
+
+                return battle;
         }
 
         public List<Battle> getAvailableBattles() {
@@ -380,6 +429,47 @@ public class BattleService {
                         case "cpp", "c++" -> "CPP";
                         default -> "PYTHON";
                 };
+        }
+
+        private int getBattleDurationSecondsByDifficulty(String difficultyInput) {
+                if (difficultyInput == null || difficultyInput.isBlank()) {
+                        return 600;
+                }
+
+                return switch (difficultyInput.trim().toLowerCase()) {
+                        case "easy" -> 600;
+                        case "medium" -> 1200;
+                        case "hard" -> 1800;
+                        default -> 600;
+                };
+        }
+
+        private boolean isBattleTimeExpired(Battle battle) {
+                if (battle == null || battle.getStartedAt() == null) {
+                        return false;
+                }
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        return false;
+                }
+
+                int timeLimitSeconds = battle.getTimeLimitSeconds() != null && battle.getTimeLimitSeconds() > 0
+                                ? battle.getTimeLimitSeconds()
+                                : getBattleDurationSecondsByDifficulty(battle.getProblem() != null ? battle.getProblem().getDifficulty() : null);
+
+                long elapsedSeconds = Duration.between(battle.getStartedAt(), LocalDateTime.now()).getSeconds();
+                return elapsedSeconds >= timeLimitSeconds;
+        }
+
+        private Battle concludeBattleAsDraw(Battle battle) {
+                if (battle == null || !"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        return battle;
+                }
+
+                battle.setStatus("CANCELLED");
+                battle.setWinnerId(null);
+                battle.setEndedAt(LocalDateTime.now());
+                return battleRepository.save(battle);
         }
 
         private boolean evaluateGenericBattleSubmission(Problem problem, String userCode, String language) {
