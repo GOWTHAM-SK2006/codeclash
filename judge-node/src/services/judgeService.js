@@ -1,7 +1,10 @@
 import { executePython } from "./executor.js";
 
-function normalize(s) {
-  return String(s ?? "").replace(/\r\n/g, "\n").trim();
+function normalizeOutput(value) {
+  return String(value ?? "")
+    .replace(/\r\n/g, "\n")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 export async function runCode({ code }) {
@@ -15,73 +18,124 @@ export async function runCode({ code }) {
   };
 }
 
-export async function judgeSubmission({ code, problem, timeoutMs = 2000 }) {
+function getVisibleTestcases(problem) {
+  const testcases = Array.isArray(problem?.testcases) ? problem.testcases : [];
+  return testcases.filter((tc) => tc?.visible === true);
+}
+
+function getAllTestcases(problem) {
+  return Array.isArray(problem?.testcases) ? problem.testcases : [];
+}
+
+async function executeAgainstTestcase({ code, testcase, timeoutMs }) {
+  const exec = await executePython({ code, stdin: testcase.input, timeoutMs });
+
+  if (exec.timedOut) {
+    return {
+      status: "TLE",
+      output: normalizeOutput(exec.stdout),
+      expected: normalizeOutput(testcase.expected),
+      error: "Time Limit Exceeded"
+    };
+  }
+
+  if (exec.exitCode !== 0) {
+    return {
+      status: "RUNTIME_ERROR",
+      output: normalizeOutput(exec.stdout),
+      expected: normalizeOutput(testcase.expected),
+      error: String(exec.stderr || "Runtime Error").trim()
+    };
+  }
+
+  const output = normalizeOutput(exec.stdout);
+  const expected = normalizeOutput(testcase.expected);
+  if (output !== expected) {
+    return {
+      status: "WRONG_ANSWER",
+      output,
+      expected,
+      error: ""
+    };
+  }
+
+  return {
+    status: "PASSED",
+    output,
+    expected,
+    error: ""
+  };
+}
+
+export async function runVisibleTestcases({ code, problem, timeoutMs = 2000 }) {
+  const visible = getVisibleTestcases(problem);
   const rows = [];
+
+  for (let i = 0; i < visible.length; i++) {
+    const tc = visible[i];
+    const result = await executeAgainstTestcase({ code, testcase: tc, timeoutMs });
+    rows.push({
+      index: i + 1,
+      input: String(tc.input ?? ""),
+      expected: normalizeOutput(tc.expected),
+      output: result.output,
+      verdict: result.status,
+      error: result.error || undefined
+    });
+  }
+
+  return {
+    verdict: rows.every((r) => r.verdict === "PASSED") ? "Accepted" : "Completed",
+    total: visible.length,
+    results: rows
+  };
+}
+
+export async function judgeSubmission({ code, problem, timeoutMs = 2000 }) {
+  const testcases = getAllTestcases(problem);
   let passed = 0;
-  let failed = 0;
-  let runtimeError = null;
-  const startedAt = Date.now();
 
-  for (let i = 0; i < problem.testcases.length; i++) {
-    const tc = problem.testcases[i];
-    const exec = await executePython({ code, stdin: tc.input, timeoutMs });
+  for (let i = 0; i < testcases.length; i++) {
+    const tc = testcases[i];
+    const result = await executeAgainstTestcase({ code, testcase: tc, timeoutMs });
 
-    if (exec.timedOut) {
-      rows.push({
-        index: i + 1,
-        status: "TLE",
-        expected: tc.expected,
-        got: "",
-        stderr: "Time Limit Exceeded"
-      });
-      failed++;
+    if (result.status === "PASSED") {
+      passed += 1;
       continue;
     }
 
-    if (exec.exitCode !== 0) {
-      rows.push({
-        index: i + 1,
-        status: "RUNTIME_ERROR",
-        expected: tc.expected,
-        got: normalize(exec.stdout),
-        stderr: exec.stderr
-      });
-      failed++;
-      runtimeError = exec.stderr || "Runtime Error";
-      break;
+    if (result.status === "RUNTIME_ERROR") {
+      return {
+        verdict: "Runtime Error",
+        error: result.error || "Runtime Error",
+        passed,
+        total: testcases.length
+      };
     }
 
-    const got = normalize(exec.stdout);
-    const expected = normalize(tc.expected);
-    if (got === expected) {
-      rows.push({ index: i + 1, status: "PASSED", expected, got, stderr: "" });
-      passed++;
-    } else {
-      rows.push({ index: i + 1, status: "FAILED", expected, got, stderr: "" });
-      failed++;
+    if (result.status === "TLE") {
+      return {
+        verdict: "Time Limit Exceeded",
+        passed,
+        total: testcases.length
+      };
     }
+
+    return {
+      verdict: "Wrong Answer",
+      failedTestcase: {
+        input: String(tc.input ?? ""),
+        expected: normalizeOutput(tc.expected),
+        output: result.output
+      },
+      passed,
+      total: testcases.length
+    };
   }
 
-  const allPassed = failed === 0 && passed === problem.testcases.length;
-  const finishedAt = Date.now();
-
-  const summaryLines = rows.map((r) => {
-    if (r.status === "PASSED") return `Testcase ${r.index}: Passed`;
-    if (r.status === "FAILED") {
-      return `Testcase ${r.index}: Failed\nExpected: ${r.expected}\nGot: ${r.got || "<empty>"}`;
-    }
-    if (r.status === "TLE") return `Testcase ${r.index}: Time Limit Exceeded`;
-    return `Testcase ${r.index}: Runtime Error\n${r.stderr || ""}`;
-  });
-
   return {
-    status: allPassed ? "ACCEPTED" : runtimeError ? "RUNTIME_ERROR" : "WRONG_ANSWER",
+    verdict: "Accepted ✅",
     passed,
-    failed,
-    total: problem.testcases.length,
-    testcaseResults: rows,
-    message: summaryLines.join("\n\n"),
-    durationMs: finishedAt - startedAt,
-    completedAt: finishedAt
+    total: testcases.length
   };
 }
