@@ -316,3 +316,243 @@ INSERT INTO problems (title, description, difficulty, starter_code, test_cases, 
     pass',
 '[{"input":"3 5","expected":"5 3"},{"input":"10 20","expected":"20 10"},{"input":"1 1","expected":"1 1"}]',
 '5 3', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Positive or Negative', 'Check if number is positive or negative.', 'Easy',
+'def checkSign(n):
+    # Your code here
+    pass',
+'[{"input":"-5","expected":"Negative"},{"input":"10","expected":"Positive"},{"input":"0","expected":"Zero"}]',
+'Negative', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Sum of First N Numbers', 'Return sum of first N natural numbers.', 'Easy',
+'def sumFirstN(n):
+    # Your code here
+    pass',
+'[{"input":"5","expected":"15"},{"input":"10","expected":"55"},{"input":"1","expected":"1"}]',
+'15', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Multiplication Table', 'Print multiplication table of N up to 10.', 'Easy',
+'def multiplicationTable(n):
+    # Your code here
+    pass',
+'[{"input":"3","expected":"3 6 9 12 15 18 21 24 27 30"},{"input":"2","expected":"2 4 6 8 10 12 14 16 18 20"}]',
+'3 6 9 12 15 18 21 24 27 30', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Even Numbers in Array', 'Count even numbers in array.', 'Easy',
+'def countEven(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4,6]","expected":"3"},{"input":"[1,3,5]","expected":"0"},{"input":"[2,4]","expected":"2"}]',
+'3', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Odd Numbers', 'Count odd numbers in array.', 'Easy',
+'def countOdd(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4,5]","expected":"3"},{"input":"[2,4]","expected":"0"},{"input":"[1,3,5]","expected":"3"}]',
+'3', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Square of Numbers', 'Return array of squares.', 'Easy',
+'def squareArray(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3]","expected":"[1,4,9]"},{"input":"[2,3,4]","expected":"[4,9,16]"}]',
+'[1,4,9]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Cube of Numbers', 'Return array of cubes.', 'Easy',
+'def cubeArray(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3]","expected":"[1,8,27]"},{"input":"[2,3]","expected":"[8,27]"}]',
+'[1,8,27]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Armstrong Number', 'Check if number is Armstrong number.', 'Easy',
+'def isArmstrong(n):
+    # Your code here
+    pass',
+'[{"input":"153","expected":"True"},{"input":"370","expected":"True"},{"input":"123","expected":"False"}]',
+'True', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Reverse Number', 'Reverse a number.', 'Easy',
+'def reverseNum(n):
+    # Your code here
+    pass',
+'[{"input":"123","expected":"321"},{"input":"1000","expected":"1"},{"input":"456","expected":"654"}]',
+'321', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Sum of Even Numbers', 'Sum of even numbers in array.', 'Easy',
+'def sumEven(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4]","expected":"6"},{"input":"[2,4,6]","expected":"12"},{"input":"[1,3,5]","expected":"0"}]',
+'6', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Sum of Odd Numbers', 'Sum of odd numbers in array.', 'Easy',
+'def sumOdd(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4,5]","expected":"9"},{"input":"[1,3,5]","expected":"9"},{"input":"[2,4]","expected":"0"}]',
+'9', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Find Second Largest', 'Find second largest element.', 'Easy',
+'def secondLargest(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,5,3,9,2]","expected":"5"},{"input":"[10,20,15]","expected":"15"},{"input":"[1,2]","expected":"1"}]',
+'5', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Sorted Array', 'Check if array is sorted.', 'Easy',
+'def isSorted(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4]","expected":"True"},{"input":"[4,3,2,1]","expected":"False"},{"input":"[1,1,1]","expected":"True"}]',
+'True', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Spaces in String', 'Count spaces in string.', 'Easy',
+'def countSpaces(s):
+    # Your code here
+    pass',
+'[{"input":"hello world","expected":"1"},{"input":"hello  world","expected":"2"},{"input":"nospaces","expected":"0"}]',
+'1', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Remove Spaces', 'Remove spaces from string.', 'Easy',
+'def removeSpaces(s):
+    # Your code here
+    pass',
+'[{"input":"hello world","expected":"helloworld"},{"input":"h e l l o","expected":"hello"},{"input":"nosp","expected":"nosp"}]',
+'helloworld', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Replace Character', 'Replace all occurrences of character.', 'Easy',
+'def replaceChar(s, old, new):
+    # Your code here
+    pass',
+'[{"input":"hello l x","expected":"hexxo"},{"input":"aaa a b","expected":"bbb"}]',
+'hexxo', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Character Frequency', 'Count frequency of each character.', 'Easy',
+'def charFrequency(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"h:1 e:1 l:2 o:1"},{"input":"aabbcc","expected":"a:2 b:2 c:2"}]',
+'h:1 e:1 l:2 o:1', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Anagram', 'Check if two strings are anagrams.', 'Easy',
+'def isAnagram(s1, s2):
+    # Your code here
+    pass',
+'[{"input":"listen silent","expected":"True"},{"input":"hello world","expected":"False"}]',
+'True', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Merge Two Arrays', 'Merge two arrays.', 'Easy',
+'def mergeArrays(a, b):
+    # Your code here
+    pass',
+'[{"input":"[1,2] [3,4]","expected":"[1,2,3,4]"},{"input":"[1] [2]","expected":"[1,2]"}]',
+'[1,2,3,4]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Remove Duplicates', 'Remove duplicate elements.', 'Easy',
+'def removeDuplicates(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,2,3,3]","expected":"[1,2,3]"},{"input":"[1,1,1]","expected":"[1]"}]',
+'[1,2,3]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Find Index of Element', 'Find index of element in array.', 'Easy',
+'def findIndex(nums, target):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4] 3","expected":"2"},{"input":"[5,10,15] 10","expected":"1"}]',
+'2', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Occurrences', 'Count occurrences of element.', 'Easy',
+'def countOccurrences(nums, target):
+    # Your code here
+    pass',
+'[{"input":"[1,2,2,3] 2","expected":"2"},{"input":"[1,1,1,1] 1","expected":"4"}]',
+'2', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Substring', 'Check if substring exists in string.', 'Easy',
+'def isSubstring(s, sub):
+    # Your code here
+    pass',
+'[{"input":"hello ll","expected":"True"},{"input":"world ol","expected":"True"},{"input":"test xyz","expected":"False"}]',
+'True', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Remove Character', 'Remove all occurrences of character.', 'Easy',
+'def removeChar(s, ch):
+    # Your code here
+    pass',
+'[{"input":"hello l","expected":"heo"},{"input":"aabbaa a","expected":"bb"}]',
+'heo', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Multiply All Elements', 'Multiply all elements in array.', 'Easy',
+'def multiplyAll(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4]","expected":"24"},{"input":"[2,3]","expected":"6"},{"input":"[5]","expected":"5"}]',
+'24', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Find Average', 'Find average of array elements.', 'Easy',
+'def findAverage(nums):
+    # Your code here
+    pass',
+'[{"input":"[2,4,6,8]","expected":"5"},{"input":"[1,2,3]","expected":"2"},{"input":"[10]","expected":"10"}]',
+'5', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Leap Year', 'Check if year is leap year.', 'Easy',
+'def isLeapYear(year):
+    # Your code here
+    pass',
+'[{"input":"2024","expected":"True"},{"input":"2000","expected":"True"},{"input":"1900","expected":"False"}]',
+'True', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Power of Number', 'Calculate power of number.', 'Easy',
+'def powerOf(base, exp):
+    # Your code here
+    pass',
+'[{"input":"2 3","expected":"8"},{"input":"3 2","expected":"9"},{"input":"5 0","expected":"1"}]',
+'8', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('GCD of Two Numbers', 'Find GCD of two numbers.', 'Easy',
+'def findGCD(a, b):
+    # Your code here
+    pass',
+'[{"input":"12 18","expected":"6"},{"input":"10 20","expected":"10"},{"input":"7 11","expected":"1"}]',
+'6', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('LCM of Two Numbers', 'Find LCM of two numbers.', 'Easy',
+'def findLCM(a, b):
+    # Your code here
+    pass',
+'[{"input":"12 18","expected":"36"},{"input":"5 10","expected":"10"},{"input":"7 11","expected":"77"}]',
+'36', 10, 'Math') ON CONFLICT DO NOTHING;
