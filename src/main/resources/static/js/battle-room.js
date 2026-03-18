@@ -720,20 +720,77 @@ function getEditorCode() {
 function getEditorStarterCode(problem, language = 'python') {
     const raw = String(problem?.starterCode || '').trim();
 
-    const fromWrapper = buildStarterFromWrapper(problem?.wrapperConfig, language);
+    const fromWrapper = buildStarterFromWrapper(problem, language);
     if (fromWrapper) return fromWrapper;
 
     const inferred = inferStarterByTitle(problem?.title, language);
     if (inferred) return inferred;
 
-    const fromRaw = buildStarterFromRaw(raw, language);
+    const fromRaw = buildStarterFromRaw(problem, language);
     if (fromRaw) return fromRaw;
 
     return getDefaultStarterCode(language);
 }
 
-function buildStarterFromRaw(rawStarter, language = 'python') {
-    const raw = String(rawStarter || '').trim();
+function normalizeJavaTypeByHint(typeHint, paramName = '') {
+    const type = String(typeHint || '').trim().toLowerCase();
+    const name = String(paramName || '').trim().toLowerCase();
+
+    if (['int[]', 'integer[]'].includes(type)) return 'int[]';
+    if (['double[]', 'float[]'].includes(type)) return 'double[]';
+    if (['boolean[]', 'bool[]'].includes(type)) return 'boolean[]';
+    if (['string[]', 'str[]'].includes(type)) return 'String[]';
+
+    if (['int', 'integer', 'long', 'short'].includes(type)) return 'int';
+    if (['float', 'double', 'decimal'].includes(type)) return 'double';
+    if (['bool', 'boolean'].includes(type)) return 'boolean';
+    if (['str', 'string', 'char'].includes(type)) return 'String';
+
+    if (['json', 'array', 'list'].includes(type)) {
+        if (/(word|text|char|name|token|string|str)/.test(name)) return 'String[]';
+        if (/(flag|bool)/.test(name)) return 'boolean[]';
+        if (/(price|rate|score|avg|decimal|float|double)/.test(name)) return 'double[]';
+        return 'int[]';
+    }
+
+    if (/(nums|arr|array|list|values)/.test(name)) return 'int[]';
+    if (/(word|text|char|name|token|string|str)/.test(name)) return 'String';
+    if (/(flag|bool)/.test(name)) return 'boolean';
+    if (/(price|rate|score|avg|decimal|float|double)/.test(name)) return 'double';
+    return 'int';
+}
+
+function inferJavaReturnType(problem, fallback = 'int') {
+    const sample = String(problem?.expectedOutput || '').trim();
+    if (!sample) return fallback;
+
+    if (/^(true|false)$/i.test(sample)) return 'boolean';
+    if (/^-?\d+$/.test(sample)) return 'int';
+    if (/^-?\d*\.\d+$/.test(sample)) return 'double';
+
+    if (sample.startsWith('[') && sample.endsWith(']')) {
+        const content = sample.slice(1, -1).trim();
+        if (!content) return 'int[]';
+        if (/['"]/.test(content)) return 'String[]';
+        const tokens = content.split(',').map(t => t.trim()).filter(Boolean);
+        if (tokens.length && tokens.every(t => /^(true|false)$/i.test(t))) return 'boolean[]';
+        if (tokens.length && tokens.every(t => /^-?\d+$/.test(t))) return 'int[]';
+        if (tokens.length && tokens.every(t => /^-?\d*\.\d+$/.test(t) || /^-?\d+$/.test(t))) return 'double[]';
+        return 'String[]';
+    }
+
+    return 'String';
+}
+
+function sanitizeJavaIdentifier(name, fallback = 'arg') {
+    const cleaned = String(name || '').trim().replace(/[^A-Za-z0-9_]/g, '');
+    if (!cleaned) return fallback;
+    if (/^[0-9]/.test(cleaned)) return `${fallback}${cleaned}`;
+    return cleaned;
+}
+
+function buildStarterFromRaw(problem, language = 'python') {
+    const raw = String(problem?.starterCode || '').trim();
     if (!raw) return '';
 
     if (language === 'python') {
@@ -762,8 +819,22 @@ function buildStarterFromRaw(rawStarter, language = 'python') {
     }
 
     if (language === 'java') {
-        const javaParams = params.map(name => `Object ${name}`).join(', ');
-        return `class Solution {\n    public Object ${functionName}(${javaParams}) {\n        // Your code here\n        return null;\n    }\n}`;
+        const javaParams = params
+            .map((name, index) => {
+                const typedName = sanitizeJavaIdentifier(name, `arg${index + 1}`);
+                return `${normalizeJavaTypeByHint('', typedName)} ${typedName}`;
+            })
+            .join(', ');
+        const returnType = inferJavaReturnType(problem, 'int');
+        const returnStub = returnType === 'boolean'
+            ? 'false'
+            : (returnType === 'double'
+                ? '0.0'
+                : (returnType.endsWith('[]')
+                    ? `new ${returnType.replace('[]', '')}[] {}`
+                    : (returnType === 'String' ? '""' : '0')));
+
+        return `class Solution {\n    public ${returnType} ${functionName}(${javaParams}) {\n        // Your code here\n        return ${returnStub};\n    }\n}`;
     }
 
     if (language === 'c') {
@@ -781,10 +852,10 @@ function buildStarterFromRaw(rawStarter, language = 'python') {
 
 function getDefaultStarterCode(language = 'python') {
     if (language === 'java') {
-        return 'class Solution {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}';
+        return 'class Solution {\n    public int solve(int n) {\n        // Your code here\n        return 0;\n    }\n}';
     }
     if (language === 'javascript') {
-        return 'function solve() {\n  // Your code here\n}\n\nsolve();';
+        return 'function solve(input) {\n  // Your code here\n}';
     }
     if (language === 'c') {
         return '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}';
@@ -792,10 +863,11 @@ function getDefaultStarterCode(language = 'python') {
     if (language === 'cpp') {
         return '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}';
     }
-    return 'def solve():\n    # Your code here\n    pass\n\nsolve()';
+    return 'def solve(n):\n    # Your code here\n    pass';
 }
 
-function buildStarterFromWrapper(wrapperConfig, language = 'python') {
+function buildStarterFromWrapper(problem, language = 'python') {
+    const wrapperConfig = problem?.wrapperConfig;
     if (!wrapperConfig) return '';
 
     try {
@@ -812,18 +884,24 @@ function buildStarterFromWrapper(wrapperConfig, language = 'python') {
         if (language === 'java') {
             const javaParams = params
                 .map((p, index) => {
-                    const name = String(p?.name || `arg${index + 1}`).trim();
-                    const type = String(p?.type || 'str').toLowerCase();
-                    const mapped = (type === 'int') ? 'int'
-                        : (type === 'float') ? 'double'
-                            : (type === 'bool') ? 'boolean'
-                                : (type === 'str') ? 'String'
-                                    : 'Object';
+                    const name = sanitizeJavaIdentifier(String(p?.name || `arg${index + 1}`), `arg${index + 1}`);
+                    const type = String(p?.type || '').toLowerCase();
+                    const mapped = normalizeJavaTypeByHint(type, name);
                     return `${mapped} ${name}`;
                 })
                 .join(', ');
 
-            return `class Solution {\n    public Object ${functionName}(${javaParams}) {\n        // Your code here\n        return null;\n    }\n}`;
+            const declaredReturnType = normalizeJavaTypeByHint(String(cfg?.returnType || '').toLowerCase(), 'result');
+            const returnType = (cfg?.returnType ? declaredReturnType : inferJavaReturnType(problem, 'int'));
+            const returnStub = returnType === 'boolean'
+                ? 'false'
+                : (returnType === 'double'
+                    ? '0.0'
+                    : (returnType.endsWith('[]')
+                        ? `new ${returnType.replace('[]', '')}[] {}`
+                        : (returnType === 'String' ? '""' : '0')));
+
+            return `class Solution {\n    public ${returnType} ${functionName}(${javaParams}) {\n        // Your code here\n        return ${returnStub};\n    }\n}`;
         }
 
         if (language === 'c') {
