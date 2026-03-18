@@ -32,6 +32,10 @@
             </form>
 
             <p class="auth-footer">Don't have an account? <a href="register.html">Sign up</a></p>
+            <button id="adminLoginBtn" type="button" class="btn btn-secondary btn-lg" style="width:100%;margin-top:0.65rem;">Admin Login</button>
+            <p style="text-align:center;color:var(--text-secondary);font-size:0.82rem;margin-top:0.55rem;">
+                Admin credentials: <strong>admin</strong> / <strong>admin@123</strong>
+            </p>
         </div>
     </main>
 
@@ -51,6 +55,30 @@
                 window.location.href = 'dashboard.html';
             } catch (err) {
                 showAlert('alert', err.message);
+            }
+        });
+
+        document.getElementById('adminLoginBtn').addEventListener('click', async () => {
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: 'admin', password: 'admin@123' })
+                });
+
+                const payload = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    showAlert('alert', payload?.message || payload?.error || 'Admin login failed');
+                    return;
+                }
+
+                if (payload?.token) {
+                    localStorage.setItem('cc_admin_session', payload.token);
+                }
+
+                window.location.href = payload?.redirect || 'admin-dashboard.html';
+            } catch (_err) {
+                showAlert('alert', 'Admin access is disabled in development');
             }
         });
     </script>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard — CodeClash</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .admin-layout { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
+        .admin-sidebar { background: var(--bg-card); border-right: 1px solid var(--border); padding: 1rem; }
+        .admin-content { padding: 1.2rem; }
+        .admin-nav-btn { width: 100%; text-align: left; padding: 0.6rem 0.7rem; border-radius: 8px; border: 1px solid transparent; color: var(--text-secondary); background: transparent; cursor: pointer; }
+        .admin-nav-btn.active { background: var(--accent-subtle); color: var(--accent); border-color: rgba(255,107,0,.35); }
+        .admin-grid { display: grid; gap: .9rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: .8rem; }
+        .admin-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+        .admin-table th,.admin-table td { border-bottom: 1px solid var(--border); padding: .55rem; text-align: left; white-space: nowrap; }
+        .admin-scroll { overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+        .filters { display:flex; gap:.5rem; flex-wrap:wrap; margin-bottom:.6rem; }
+        .filters input,.filters select { background:#0d0d0d; border:1px solid var(--border); color:var(--text-primary); border-radius:8px; padding:.45rem .55rem; }
+        .status-live { color: var(--success); font-weight: 700; }
+        .status-sub { color: var(--accent); font-weight: 700; }
+    </style>
+</head>
+<body>
+<div class="admin-layout">
+    <aside class="admin-sidebar">
+        <h2 style="font-size:1.2rem;font-weight:800;">CodeClash <span style="color:var(--accent)">Admin</span></h2>
+        <p style="color:var(--text-secondary);font-size:.82rem;margin:.3rem 0 1rem;">Control Center</p>
+        <div id="adminNav" class="admin-grid"></div>
+        <button id="adminLogoutBtn" class="btn btn-secondary" style="width:100%;margin-top:1rem;">Logout</button>
+    </aside>
+    <main class="admin-content">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;">
+            <h1 id="sectionTitle" style="font-size:1.35rem;font-weight:800;">Dashboard</h1>
+            <span id="liveCounter" class="badge badge-easy">LIVE: 0</span>
+        </div>
+        <div id="adminAlert" class="alert alert-error" style="display:none;margin-top:.8rem;"></div>
+        <div id="sectionRoot" style="margin-top:.9rem;"></div>
+    </main>
+</div>
+
+<script src="js/admin-dashboard.js"></script>
+</body>
+</html>

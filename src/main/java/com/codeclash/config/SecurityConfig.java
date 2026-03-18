@@ -39,7 +39,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/*.html", "/css/**", "/js/**", "/assets/**").permitAll()
+                        .requestMatchers("/admin-dashboard.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/admin/**").permitAll()
                         .requestMatchers("/api/languages/**").permitAll()
                         .requestMatchers("/api/topics/**").permitAll()
                         .requestMatchers("/api/lessons/**").permitAll()

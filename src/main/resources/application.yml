@@ -31,6 +31,11 @@ app:
     expiration-ms: 86400000
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:8080,http://127.0.0.1:8080,http://localhost:3000,http://127.0.0.1:5500}
+  admin:
+    username: ${ADMIN_USERNAME:admin}
+    password: ${ADMIN_PASSWORD:admin@123}
+    dashboard-url: ${ADMIN_DASHBOARD_URL:/admin-dashboard.html}
+    access-token-ttl-minutes: ${ADMIN_ACCESS_TOKEN_TTL_MINUTES:720}
 
 ---
 
