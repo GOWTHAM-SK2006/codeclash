@@ -446,7 +446,19 @@ function showResult(result) {
     pageExitGuardEnabled = false;
 
     const resultEl = document.getElementById('battleResult');
-    resultEl.style.display = 'block';
+    resultEl.style.display = 'flex';
+    resultEl.style.position = 'fixed';
+    resultEl.style.inset = '0';
+    resultEl.style.zIndex = '100001';
+    resultEl.style.marginTop = '0';
+    resultEl.style.padding = '1rem';
+    resultEl.style.background = 'rgba(0,0,0,0.9)';
+    resultEl.style.backdropFilter = 'blur(4px)';
+    resultEl.style.alignItems = 'flex-start';
+    resultEl.style.justifyContent = 'center';
+    resultEl.style.overflowY = 'auto';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     if (timerInterval) {
         clearInterval(timerInterval);
@@ -485,7 +497,7 @@ function showResult(result) {
     const user = api.getUser();
     if (result.status === 'CANCELLED' && result.winnerId === user?.userId) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">Match Cancelled</h2>
                 <p style="color:var(--text-secondary);">Opponent left the match. You received 2x battle coins! 🪙</p>
@@ -494,7 +506,7 @@ function showResult(result) {
         `;
     } else if (result.status === 'CANCELLED' && tabSwitchForfeitTriggered) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">You left the battle tab/page. Opponent wins this battle.</p>
@@ -503,7 +515,7 @@ function showResult(result) {
         `;
     } else if (result.status === 'CANCELLED' && fullscreenForfeitTriggered) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">You exited fullscreen. Opponent wins this battle.</p>
@@ -512,7 +524,7 @@ function showResult(result) {
         `;
     } else if (result.status === 'CANCELLED' && !result.winnerId) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">⏱️</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:0.5rem;">Time Up - Match Draw</h2>
                 <p style="color:var(--text-secondary);">Battle time is over. Match ended with no winner.</p>
@@ -525,7 +537,7 @@ function showResult(result) {
         }, 2200);
     } else if (result.status === 'CANCELLED') {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">❌</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Match Cancelled</h2>
                 <p style="color:var(--text-secondary);">You left the match. Opponent received 2x battle coins.</p>
@@ -534,7 +546,7 @@ function showResult(result) {
         `;
     } else if (result.winnerId === user?.userId) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🎉</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">You Won!</h2>
                 <p style="color:var(--text-secondary);">+50 coins earned! 🪙</p>
@@ -543,7 +555,7 @@ function showResult(result) {
         `;
     } else if (result.winnerId) {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">Better luck next time!</p>
@@ -552,7 +564,7 @@ function showResult(result) {
         `;
     } else {
         resultEl.innerHTML = `
-            <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;">
+            <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">⏳</span>
                 <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;">Solution Submitted</h2>
                 <p style="color:var(--text-secondary);">Waiting for opponent...</p>
