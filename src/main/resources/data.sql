@@ -155,3 +155,164 @@ INSERT INTO problems (title, description, difficulty, starter_code, test_cases, 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
 ('Median of Two Sorted Arrays', 'Find the median of two sorted arrays with O(log(m+n)) time complexity.', 'Hard',
 'def find_median(nums1, nums2):\n    # Your code here\n    pass', 'Input: [1,3], [2]\nExpected: 2.0', '2.0', 30, 'Binary Search') ON CONFLICT DO NOTHING;
+
+-- Easy Problems (20 problems)
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Reverse String', 'Reverse the given string.', 'Easy',
+'def reverseString(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abc","expected":"cba"}]',
+'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Find Maximum Number', 'Return the maximum number in an array.', 'Easy',
+'def findMax(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,5,3,9,2]","expected":"9"},{"input":"[10,20,5]","expected":"20"},{"input":"[1]","expected":"1"}]',
+'9', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Sum of Array', 'Return sum of all elements.', 'Easy',
+'def sumArray(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3,4]","expected":"10"},{"input":"[5,5,5]","expected":"15"},{"input":"[0]","expected":"0"}]',
+'10', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Even or Odd', 'Check if number is even or odd.', 'Easy',
+'def checkEvenOdd(n):
+    # Your code here
+    pass',
+'[{"input":"7","expected":"Odd"},{"input":"4","expected":"Even"},{"input":"0","expected":"Even"}]',
+'Odd', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Vowels', 'Count vowels in string.', 'Easy',
+'def countVowels(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"2"},{"input":"aeiou","expected":"5"},{"input":"bcdfg","expected":"0"}]',
+'2', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Palindrome String', 'Check if string is palindrome.', 'Easy',
+'def isPalindrome(s):
+    # Your code here
+    pass',
+'[{"input":"madam","expected":"True"},{"input":"hello","expected":"False"},{"input":"a","expected":"True"}]',
+'True', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Find Minimum', 'Return minimum element.', 'Easy',
+'def findMin(nums):
+    # Your code here
+    pass',
+'[{"input":"[4,2,7,1]","expected":"1"},{"input":"[10,5,15]","expected":"5"},{"input":"[5]","expected":"5"}]',
+'1', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Factorial', 'Return factorial of n.', 'Easy',
+'def factorial(n):
+    # Your code here
+    pass',
+'[{"input":"5","expected":"120"},{"input":"0","expected":"1"},{"input":"3","expected":"6"}]',
+'120', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Fibonacci Nth', 'Return nth Fibonacci number.', 'Easy',
+'def fibonacci(n):
+    # Your code here
+    pass',
+'[{"input":"6","expected":"8"},{"input":"1","expected":"1"},{"input":"5","expected":"5"}]',
+'8', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Reverse Array', 'Reverse array.', 'Easy',
+'def reverseArray(nums):
+    # Your code here
+    pass',
+'[{"input":"[1,2,3]","expected":"[3,2,1]"},{"input":"[10,20]","expected":"[20,10]"},{"input":"[5]","expected":"[5]"}]',
+'[3,2,1]', 10, 'Arrays') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Count Digits', 'Count number of digits.', 'Easy',
+'def countDigits(n):
+    # Your code here
+    pass',
+'[{"input":"12345","expected":"5"},{"input":"100","expected":"3"},{"input":"9","expected":"1"}]',
+'5', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Sum of Digits', 'Return sum of digits.', 'Easy',
+'def sumOfDigits(n):
+    # Your code here
+    pass',
+'[{"input":"123","expected":"6"},{"input":"100","expected":"1"},{"input":"555","expected":"15"}]',
+'6', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Check Prime', 'Check if number is prime.', 'Easy',
+'def isPrime(n):
+    # Your code here
+    pass',
+'[{"input":"7","expected":"True"},{"input":"4","expected":"False"},{"input":"2","expected":"True"}]',
+'True', 10, 'Math') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Largest of Three', 'Return largest of three numbers.', 'Easy',
+'def largestOfThree(a, b, c):
+    # Your code here
+    pass',
+'[{"input":"3 7 5","expected":"7"},{"input":"10 5 15","expected":"15"},{"input":"1 1 1","expected":"1"}]',
+'7', 10, 'Logic') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('String Length', 'Return length of string.', 'Easy',
+'def stringLength(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"5"},{"input":"world","expected":"5"},{"input":"a","expected":"1"}]',
+'5', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Uppercase String', 'Convert string to uppercase.', 'Easy',
+'def toUppercase(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"HELLO"},{"input":"World","expected":"WORLD"},{"input":"HeLLo","expected":"HELLO"}]',
+'HELLO', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Lowercase String', 'Convert string to lowercase.', 'Easy',
+'def toLowercase(s):
+    # Your code here
+    pass',
+'[{"input":"HELLO","expected":"hello"},{"input":"World","expected":"world"},{"input":"HeLLo","expected":"hello"}]',
+'hello', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('First Character', 'Return first character of string.', 'Easy',
+'def firstChar(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"h"},{"input":"world","expected":"w"},{"input":"a","expected":"a"}]',
+'h', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Last Character', 'Return last character of string.', 'Easy',
+'def lastChar(s):
+    # Your code here
+    pass',
+'[{"input":"hello","expected":"o"},{"input":"world","expected":"d"},{"input":"a","expected":"a"}]',
+'o', 10, 'Strings') ON CONFLICT DO NOTHING;
+
+INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
+('Swap Two Numbers', 'Swap two numbers and return them.', 'Easy',
+'def swapNumbers(a, b):
+    # Your code here
+    pass',
+'[{"input":"3 5","expected":"5 3"},{"input":"10 20","expected":"20 10"},{"input":"1 1","expected":"1 1"}]',
+'5 3', 10, 'Logic') ON CONFLICT DO NOTHING;
