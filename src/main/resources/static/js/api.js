@@ -84,6 +84,20 @@ const api = {
     getProfile() { return this.request('/users/me'); },
     getDashboard() { return this.request('/users/dashboard'); },
 
+    // Friends
+    getFriendsOverview() { return this.request('/friends/overview'); },
+    sendFriendRequest(targetUserId) {
+        return this.request(`/friends/requests/${targetUserId}`, {
+            method: 'POST'
+        });
+    },
+    acceptFriendRequest(requestId) {
+        return this.request(`/friends/requests/${requestId}/accept`, {
+            method: 'POST'
+        });
+    },
+    getFriendNotifications() { return this.request('/friends/notifications'); },
+
     // Problems
     getProblems(difficulty) {
         const q = difficulty ? `?difficulty=${difficulty}` : '';
