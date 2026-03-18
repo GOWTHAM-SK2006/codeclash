@@ -34,7 +34,7 @@ const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    p
     currentBattleId = urlParams.get('battleId');
 
     if (!currentBattleId) {
-        window.location.href = 'battle.html';
+        window.location.href = 'battle-mode.html';
         return;
     }
 
@@ -103,7 +103,7 @@ async function enforceFullscreenViolationPenalty() {
         showResult(result);
     } catch (e) {
         alert('Match cancelled due to fullscreen violation. Unable to sync result: ' + e.message);
-        window.location.href = 'battle.html';
+        window.location.href = 'battle-mode.html';
     }
 }
 
@@ -244,7 +244,7 @@ async function loadBattleDetails() {
         startStatusPolling();
     } catch (e) {
         alert('Error loading battle: ' + e.message);
-        window.location.href = 'battle.html';
+        window.location.href = 'battle-mode.html';
     }
 }
 
@@ -330,7 +330,7 @@ async function handleBattleTimerExpired() {
             const data = await api.getBattle(currentBattleId);
             showResult(data?.battle || {});
         } catch (__e) {
-            window.location.href = 'battle.html';
+            window.location.href = 'battle-mode.html';
         }
     }
 }
@@ -501,7 +501,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">You Won!</h2>
                 <p style="color:var(--text-secondary);">Opponent violated battle rules. You won this battle and received 2x coins! 🪙</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else if (result.status === 'CANCELLED' && tabSwitchForfeitTriggered) {
@@ -510,7 +510,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">You left the battle tab/page. Opponent wins this battle.</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else if (result.status === 'CANCELLED' && fullscreenForfeitTriggered) {
@@ -519,7 +519,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">You exited fullscreen. Opponent wins this battle.</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else if (result.status === 'CANCELLED' && !result.winnerId) {
@@ -529,11 +529,11 @@ function showResult(result) {
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:0.5rem;">Time Up - Match Draw</h2>
                 <p style="color:var(--text-secondary);">Battle time is over. Match ended with no winner.</p>
                 <p style="color:var(--text-secondary);margin-top:0.4rem;">Returning to lobby...</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
         setTimeout(() => {
-            window.location.href = 'battle.html';
+            window.location.href = 'battle-mode.html';
         }, 2200);
     } else if (result.status === 'CANCELLED') {
         resultEl.innerHTML = `
@@ -541,7 +541,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">❌</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Match Cancelled</h2>
                 <p style="color:var(--text-secondary);">You left the match. Opponent received 2x battle coins.</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else if (result.winnerId === user?.userId) {
@@ -550,7 +550,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🎉</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">You Won!</h2>
                 <p style="color:var(--text-secondary);">+50 coins earned! 🪙</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else if (result.winnerId) {
@@ -559,7 +559,7 @@ function showResult(result) {
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
                 <p style="color:var(--text-secondary);">Better luck next time!</p>
-                <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
+                <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
     } else {

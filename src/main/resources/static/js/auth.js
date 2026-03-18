@@ -32,7 +32,7 @@ function renderNav(activePage) {
             <li><a href="dashboard.html" class="${activePage === 'dashboard' ? 'active' : ''}">Dashboard</a></li>
             <li><a href="learn.html" class="${activePage === 'learn' ? 'active' : ''}">Learn</a></li>
             <li><a href="problems.html" class="${activePage === 'problems' ? 'active' : ''}">Problems</a></li>
-            <li><a href="battle.html" class="${activePage === 'battle' ? 'active' : ''}">Battle</a></li>
+            <li><a href="battle-mode.html" class="${activePage === 'battle' ? 'active' : ''}">Battle</a></li>
             <li><a href="leaderboard.html" class="${activePage === 'leaderboard' ? 'active' : ''}">Leaderboard</a></li>
         </ul>
         <div class="nav-auth">

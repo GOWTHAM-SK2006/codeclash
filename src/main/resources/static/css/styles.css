@@ -770,6 +770,74 @@ tr:hover td { background: var(--bg-tertiary); }
     line-height: 1;
 }
 
+/* Battle mode selection */
+.battle-mode-header {
+    margin-bottom: 1.5rem;
+}
+
+.battle-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    max-width: 760px;
+}
+
+.battle-mode-card {
+    text-decoration: none;
+    color: var(--text-primary);
+    display: block;
+    text-align: left;
+    padding: 1.6rem;
+}
+
+.battle-mode-card h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    margin-bottom: 0.55rem;
+}
+
+.battle-mode-card p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 1rem;
+}
+
+.battle-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    margin-bottom: 0.9rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    background: rgba(0, 200, 83, 0.15);
+    color: #7EDB9E;
+}
+
+.battle-mode-badge-soon {
+    background: rgba(255, 179, 0, 0.15);
+    color: #FFC34D;
+}
+
+.battle-mode-cta {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.battle-mode-card-active:hover .battle-mode-cta {
+    color: var(--accent-hover);
+}
+
+.battle-mode-card-disabled {
+    cursor: pointer;
+    border-style: dashed;
+    opacity: 0.92;
+}
+
 /* Language Cards */
 .languages-grid {
     display: grid;
