@@ -99,9 +99,11 @@ public class BattleController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBattle(@PathVariable Long id) {
+        var battle = battleService.getBattle(id);
         return ResponseEntity.ok(Map.of(
-                "battle", battleService.getBattle(id),
-                "participants", battleService.getBattleParticipants(id)));
+            "battle", battle,
+            "participants", battleService.getBattleParticipants(id),
+            "remainingSeconds", battleService.getBattleRemainingSeconds(battle)));
     }
 
     @GetMapping("/available")

@@ -407,6 +407,20 @@ public class BattleService {
                 return battle;
         }
 
+        public long getBattleRemainingSeconds(Battle battle) {
+                if (battle == null || battle.getStartedAt() == null) {
+                        return resolveBattleTimeLimitSeconds(battle);
+                }
+
+                if (!"ACTIVE".equalsIgnoreCase(battle.getStatus())) {
+                        return 0;
+                }
+
+                int timeLimitSeconds = resolveBattleTimeLimitSeconds(battle);
+                long elapsedSeconds = Duration.between(battle.getStartedAt(), LocalDateTime.now()).getSeconds();
+                return Math.max(0, timeLimitSeconds - Math.max(0, elapsedSeconds));
+        }
+
         public List<Battle> getAvailableBattles() {
                 return battleRepository.findByStatus("WAITING");
         }
@@ -453,12 +467,23 @@ public class BattleService {
                         return false;
                 }
 
-                int timeLimitSeconds = battle.getTimeLimitSeconds() != null && battle.getTimeLimitSeconds() > 0
-                                ? battle.getTimeLimitSeconds()
-                                : getBattleDurationSecondsByDifficulty(battle.getProblem() != null ? battle.getProblem().getDifficulty() : null);
+                int timeLimitSeconds = resolveBattleTimeLimitSeconds(battle);
 
                 long elapsedSeconds = Duration.between(battle.getStartedAt(), LocalDateTime.now()).getSeconds();
                 return elapsedSeconds >= timeLimitSeconds;
+        }
+
+        private int resolveBattleTimeLimitSeconds(Battle battle) {
+                if (battle == null) {
+                        return 600;
+                }
+
+                if (battle.getTimeLimitSeconds() != null && battle.getTimeLimitSeconds() > 0) {
+                        return battle.getTimeLimitSeconds();
+                }
+
+                return getBattleDurationSecondsByDifficulty(
+                                battle.getProblem() != null ? battle.getProblem().getDifficulty() : null);
         }
 
         private Battle concludeBattleAsDraw(Battle battle) {

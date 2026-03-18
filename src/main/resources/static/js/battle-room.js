@@ -239,7 +239,8 @@ async function loadBattleDetails() {
         document.getElementById('p2Name').textContent = participants[1]?.user?.displayName || 'Player 2';
 
         battleDurationSeconds = resolveBattleDurationSeconds(battle);
-        startTimer(battle.startedAt, battleDurationSeconds);
+        const remainingSeconds = Number(data?.remainingSeconds);
+        startTimer(Number.isFinite(remainingSeconds) ? remainingSeconds : battleDurationSeconds);
         startStatusPolling();
     } catch (e) {
         alert('Error loading battle: ' + e.message);
@@ -273,6 +274,13 @@ function startStatusPolling() {
                     statusPollInterval = null;
                 }
                 showResult(battle);
+                return;
+            }
+
+            const serverRemaining = Number(data?.remainingSeconds);
+            if (Number.isFinite(serverRemaining)) {
+                timeLeft = Math.max(0, Math.min(timeLeft, serverRemaining));
+                renderTimer();
             }
         } catch (_e) {
             // ignore transient poll errors
@@ -280,16 +288,21 @@ function startStatusPolling() {
     }, 5000);
 }
 
-function startTimer(startTimeStr, durationSeconds = 900) {
-    const startTime = new Date(startTimeStr).getTime();
-    const duration = Math.max(1, Number(durationSeconds)) * 1000;
+function renderTimer() {
+    const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+    const s = (timeLeft % 60).toString().padStart(2, '0');
+    document.getElementById('timer').textContent = `${m}:${s}`;
+}
+
+function startTimer(initialRemainingSeconds = 900) {
+    const initial = Number(initialRemainingSeconds);
+    timeLeft = Number.isFinite(initial) ? Math.max(0, Math.floor(initial)) : 900;
+    renderTimer();
 
     if (timerInterval) clearInterval(timerInterval);
 
     timerInterval = setInterval(() => {
-        const now = new Date().getTime();
-        const elapsed = now - startTime;
-        timeLeft = Math.max(0, Math.floor((duration - elapsed) / 1000));
+        timeLeft = Math.max(0, timeLeft - 1);
 
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
@@ -298,9 +311,7 @@ function startTimer(startTimeStr, durationSeconds = 900) {
             return;
         }
 
-        const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-        const s = (timeLeft % 60).toString().padStart(2, '0');
-        document.getElementById('timer').textContent = `${m}:${s}`;
+        renderTimer();
     }, 1000);
 }
 
