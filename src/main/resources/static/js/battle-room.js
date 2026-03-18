@@ -160,13 +160,7 @@ function initFullscreenGuard() {
         const exitedFullscreen = hasEnteredFullscreenAtLeastOnce && wasFullscreenBefore && !isFullscreenNow;
         if (exitedFullscreen) {
             fullscreenViolationCount += 1;
-
-            if (fullscreenViolationCount === 1) {
-                showFullscreenWarning();
-                requestBattleFullscreen();
-            } else {
-                enforceFullscreenViolationPenalty();
-            }
+            enforceFullscreenViolationPenalty();
         }
     };
 
@@ -445,7 +439,7 @@ function showResult(result) {
             <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
                 <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
-                <p style="color:var(--text-secondary);">You exited fullscreen multiple times. Opponent wins this battle.</p>
+                <p style="color:var(--text-secondary);">You exited fullscreen. Opponent wins this battle.</p>
                 <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
