@@ -714,7 +714,57 @@ function getEditorStarterCode(problem, language = 'python') {
     const inferred = inferStarterByTitle(problem?.title, language);
     if (inferred) return inferred;
 
-    return raw || getDefaultStarterCode(language);
+    const fromRaw = buildStarterFromRaw(raw, language);
+    if (fromRaw) return fromRaw;
+
+    return getDefaultStarterCode(language);
+}
+
+function buildStarterFromRaw(rawStarter, language = 'python') {
+    const raw = String(rawStarter || '').trim();
+    if (!raw) return '';
+
+    if (language === 'python') {
+        return raw;
+    }
+
+    const match = raw.match(/def\s+([A-Za-z_]\w*)\s*\(([^)]*)\)\s*:/m);
+    if (!match) {
+        return '';
+    }
+
+    const functionName = match[1];
+    const paramsRaw = String(match[2] || '').trim();
+    const params = paramsRaw
+        ? paramsRaw
+            .split(',')
+            .map(p => p.trim())
+            .filter(Boolean)
+            .map(p => p.split('=')[0].trim())
+            .map(p => p.includes(':') ? p.split(':')[0].trim() : p)
+            .filter(Boolean)
+        : [];
+
+    if (language === 'javascript') {
+        return `function ${functionName}(${params.join(', ')}) {\n  // Your code here\n}`;
+    }
+
+    if (language === 'java') {
+        const javaParams = params.map(name => `Object ${name}`).join(', ');
+        return `class Solution {\n    public Object ${functionName}(${javaParams}) {\n        // Your code here\n        return null;\n    }\n}`;
+    }
+
+    if (language === 'c') {
+        const cParams = params.length ? params.map(name => `int ${name}`).join(', ') : 'void';
+        return `#include <stdio.h>\n\nint ${functionName}(${cParams}) {\n    // Your code here\n    return 0;\n}`;
+    }
+
+    if (language === 'cpp') {
+        const cppParams = params.length ? params.map(name => `int ${name}`).join(', ') : 'void';
+        return `#include <bits/stdc++.h>\nusing namespace std;\n\nint ${functionName}(${cppParams}) {\n    // Your code here\n    return 0;\n}`;
+    }
+
+    return '';
 }
 
 function getDefaultStarterCode(language = 'python') {
