@@ -508,6 +508,8 @@ function getSelectedLanguage() {
     const selected = document.getElementById('languageSelect')?.value || 'python';
     if (selected === 'java') return 'java';
     if (selected === 'javascript') return 'javascript';
+    if (selected === 'c') return 'c';
+    if (selected === 'cpp') return 'cpp';
     return 'python';
 }
 
@@ -613,7 +615,13 @@ function ensureMonacoEditor() {
 
 function setEditorLanguage(language) {
     if (!monacoEditor || !monacoEditor.getModel()) return;
-    const normalized = language === 'java' ? 'java' : (language === 'javascript' ? 'javascript' : 'python');
+    const normalized = language === 'java'
+        ? 'java'
+        : (language === 'javascript'
+            ? 'javascript'
+            : (language === 'c'
+                ? 'c'
+                : (language === 'cpp' ? 'cpp' : 'python')));
     monaco.editor.setModelLanguage(monacoEditor.getModel(), normalized);
 }
 
@@ -647,7 +655,23 @@ function getEditorStarterCode(problem, language = 'python') {
     const inferred = inferStarterByTitle(problem?.title, language);
     if (inferred) return inferred;
 
-    return raw || '# Write your code here';
+    return raw || getDefaultStarterCode(language);
+}
+
+function getDefaultStarterCode(language = 'python') {
+    if (language === 'java') {
+        return 'class Solution {\n    public static void main(String[] args) {\n        // Your code here\n    }\n}';
+    }
+    if (language === 'javascript') {
+        return 'function solve() {\n  // Your code here\n}\n\nsolve();';
+    }
+    if (language === 'c') {
+        return '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}';
+    }
+    if (language === 'cpp') {
+        return '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}';
+    }
+    return 'def solve():\n    # Your code here\n    pass\n\nsolve()';
 }
 
 function buildStarterFromWrapper(wrapperConfig, language = 'python') {
@@ -681,6 +705,38 @@ function buildStarterFromWrapper(wrapperConfig, language = 'python') {
             return `class Solution {\n    public Object ${functionName}(${javaParams}) {\n        // Your code here\n        return null;\n    }\n}`;
         }
 
+        if (language === 'c') {
+            const cParams = params
+                .map((p, index) => {
+                    const name = String(p?.name || `arg${index + 1}`).trim();
+                    const type = String(p?.type || 'str').toLowerCase();
+                    const mapped = (type === 'int') ? 'int'
+                        : (type === 'float') ? 'double'
+                            : (type === 'bool') ? 'int'
+                                : 'char*';
+                    return `${mapped} ${name}`;
+                })
+                .join(', ');
+
+            return `#include <stdio.h>\n\nint ${functionName}(${cParams || 'void'}) {\n    // Your code here\n    return 0;\n}`;
+        }
+
+        if (language === 'cpp') {
+            const cppParams = params
+                .map((p, index) => {
+                    const name = String(p?.name || `arg${index + 1}`).trim();
+                    const type = String(p?.type || 'str').toLowerCase();
+                    const mapped = (type === 'int') ? 'int'
+                        : (type === 'float') ? 'double'
+                            : (type === 'bool') ? 'bool'
+                                : 'string';
+                    return `${mapped} ${name}`;
+                })
+                .join(', ');
+
+            return `#include <bits/stdc++.h>\nusing namespace std;\n\nint ${functionName}(${cppParams || 'void'}) {\n    // Your code here\n    return 0;\n}`;
+        }
+
         if (language === 'javascript') {
             const jsParams = paramNames.join(', ');
             return `function ${functionName}(${jsParams}) {\n  // Your code here\n}`;
@@ -695,8 +751,12 @@ function buildStarterFromWrapper(wrapperConfig, language = 'python') {
 
 function inferStarterByTitle(title, language = 'python') {
     const text = String(title || '').toLowerCase();
+    const cFallback = '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}';
+    const cppFallback = '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}';
 
     const mk = (py, js, java) => {
+        if (language === 'cpp') return cppFallback;
+        if (language === 'c') return cFallback;
         if (language === 'javascript') return js;
         if (language === 'java') return java;
         return py;

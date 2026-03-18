@@ -254,13 +254,7 @@ public class BattleService {
                 } else if ("JAVA".equals(language)) {
                         correct = evaluateJavaBattleSubmission(battle.getProblem(), request.getCode());
                 } else {
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(), language);
-                        correct = false;
-                        if (!result.isTimedOut() && result.getExitCode() == 0) {
-                                String output = normalizeOutput(result.getStdout());
-                                String expected = normalizeOutput(battle.getProblem().getExpectedOutput());
-                                correct = output.equals(expected);
-                        }
+                        correct = evaluateGenericBattleSubmission(battle.getProblem(), request.getCode(), language);
                 }
 
                 myEntry.setIsCorrect(correct);
@@ -305,7 +299,8 @@ public class BattleService {
                 } else if ("JAVA".equals(language)) {
                         result = runJavaBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
                 } else {
-                        result = dockerSandboxService.execute(request.getCode(), language);
+                        result = runGenericBattleCode(battle.getProblem(), request.getCode(), language,
+                                        request.getInputData());
                 }
 
                 String cleanedStderr = cleanRunnerWarning(result.getStderr());
@@ -381,8 +376,54 @@ public class BattleService {
                         case "python", "py" -> "PYTHON";
                         case "javascript", "js", "node" -> "JAVASCRIPT";
                         case "java" -> "JAVA";
+                        case "c" -> "C";
+                        case "cpp", "c++" -> "CPP";
                         default -> "PYTHON";
                 };
+        }
+
+        private boolean evaluateGenericBattleSubmission(Problem problem, String userCode, String language) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+
+                if (testCases.isEmpty()) {
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language, "");
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+                        return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
+                }
+
+                for (TestCaseData testCase : testCases) {
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language,
+                                        testCase.input());
+                        if (result.isTimedOut() || result.getExitCode() != 0) {
+                                return false;
+                        }
+
+                        String actual = normalizeOutput(result.getStdout());
+                        String expected = normalizeOutput(testCase.expected());
+                        if (!actual.equals(expected)) {
+                                return false;
+                        }
+                }
+
+                return true;
+        }
+
+        private DockerSandboxService.ExecutionResult runGenericBattleCode(Problem problem, String userCode, String language,
+                        String selectedInputData) {
+                List<TestCaseData> testCases = parseTestCases(problem);
+
+                if (selectedInputData != null) {
+                        return dockerSandboxService.execute(userCode, language, selectedInputData);
+                }
+
+                if (testCases.isEmpty()) {
+                        return dockerSandboxService.execute(userCode, language, "");
+                }
+
+                TestCaseData firstCase = testCases.get(0);
+                return dockerSandboxService.execute(userCode, language, firstCase.input());
         }
 
         private boolean evaluatePythonBattleSubmission(Problem problem, String userCode) {

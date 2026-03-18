@@ -122,6 +122,7 @@ public class DockerSandboxService {
                 pullImage("python:3.11-slim");
                 pullImage("openjdk:17-slim");
                 pullImage("node:20-slim");
+                pullImage("gcc:13");
             }).start();
         } catch (Exception e) {
             isAvailable = false;
@@ -145,8 +146,12 @@ public class DockerSandboxService {
     }
 
     public ExecutionResult execute(String code, String language) {
+        return execute(code, language, null);
+    }
+
+    public ExecutionResult execute(String code, String language, String inputData) {
         if (!isAvailable) {
-            return executeWithoutDocker(code, language);
+            return executeWithoutDocker(code, language, inputData);
         }
 
         String containerId = null;
@@ -157,6 +162,11 @@ public class DockerSandboxService {
             File codeFile = new File(tempDir.toFile(), fileName);
             try (FileWriter writer = new FileWriter(codeFile)) {
                 writer.write(code);
+            }
+
+            File inputFile = new File(tempDir.toFile(), "input.txt");
+            try (FileWriter writer = new FileWriter(inputFile)) {
+                writer.write(inputData == null ? "" : inputData);
             }
 
             String image = getImage(language);
@@ -242,7 +252,7 @@ public class DockerSandboxService {
         }
     }
 
-    private ExecutionResult executeWithoutDocker(String code, String language) {
+    private ExecutionResult executeWithoutDocker(String code, String language, String inputData) {
         Path tempDir = null;
         try {
             tempDir = Files.createTempDirectory("codeclash-local-exec-" + UUID.randomUUID());
@@ -250,6 +260,11 @@ public class DockerSandboxService {
             File codeFile = new File(tempDir.toFile(), fileName);
             try (FileWriter writer = new FileWriter(codeFile)) {
                 writer.write(code);
+            }
+
+            File inputFile = new File(tempDir.toFile(), "input.txt");
+            try (FileWriter writer = new FileWriter(inputFile)) {
+                writer.write(inputData == null ? "" : inputData);
             }
 
             String[] cmd = getRunCommand(language, fileName, code);
@@ -329,6 +344,8 @@ public class DockerSandboxService {
             case "PYTHON" -> "solution.py";
             case "JAVA" -> "Solution.java";
             case "JAVASCRIPT" -> "solution.js";
+            case "C" -> "solution.c";
+            case "CPP" -> "solution.cpp";
             default -> "solution.txt";
         };
     }
@@ -338,20 +355,23 @@ public class DockerSandboxService {
             case "PYTHON" -> "python:3.11-slim";
             case "JAVA" -> "openjdk:17-slim";
             case "JAVASCRIPT" -> "node:20-slim";
+            case "C", "CPP" -> "gcc:13";
             default -> "python:3.11-slim";
         };
     }
 
     private String[] getRunCommand(String language, String fileName, String code) {
         return switch (language.toUpperCase()) {
-            case "PYTHON" -> new String[] { "python3", fileName };
+            case "PYTHON" -> new String[] { "sh", "-c", "python3 " + fileName + " < input.txt" };
             case "JAVA" -> {
                 String javaMainClass = (code != null && code.contains("class __CodeClashMain"))
                         ? "__CodeClashMain"
                         : "Solution";
-                yield new String[] { "sh", "-c", "javac " + fileName + " && java " + javaMainClass };
+                yield new String[] { "sh", "-c", "javac " + fileName + " && java " + javaMainClass + " < input.txt" };
             }
-            case "JAVASCRIPT" -> new String[] { "node", fileName };
+            case "JAVASCRIPT" -> new String[] { "sh", "-c", "node " + fileName + " < input.txt" };
+            case "C" -> new String[] { "sh", "-c", "gcc -O2 -std=c11 " + fileName + " -o solution && ./solution < input.txt" };
+            case "CPP" -> new String[] { "sh", "-c", "g++ -O2 -std=c++17 " + fileName + " -o solution && ./solution < input.txt" };
             default -> new String[] { "cat", fileName };
         };
     }
