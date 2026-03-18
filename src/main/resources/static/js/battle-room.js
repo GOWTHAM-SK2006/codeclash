@@ -22,15 +22,9 @@ let pageExitGuardEnabled = true;
 
 const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
 
-let hasTriggeredFullscreen = false;
-
 (async function () {
     renderNav('battle');
     if (!requireAuth()) return;
-
-    initFullscreenGuard();
-    initPageExitGuard();
-    triggerFullscreenOnInteraction();
 
     bindGlobalShortcuts();
 
@@ -42,20 +36,41 @@ let hasTriggeredFullscreen = false;
         return;
     }
 
-    loadBattleDetails();
+    await startBattleAfterTermsAccepted();
 })();
 
-function triggerFullscreenOnInteraction() {
-    const onUserInteract = () => {
-        if (hasTriggeredFullscreen) return;
-        hasTriggeredFullscreen = true;
-        requestBattleFullscreen();
-        document.removeEventListener('click', onUserInteract);
-        document.removeEventListener('keydown', onUserInteract);
-    };
+async function startBattleAfterTermsAccepted() {
+    const termsModal = document.getElementById('battleTermsModal');
+    const agreeBtn = document.getElementById('agreeTermsBtn');
 
-    document.addEventListener('click', onUserInteract, { once: true });
-    document.addEventListener('keydown', onUserInteract, { once: true });
+    if (!termsModal || !agreeBtn) {
+        initFullscreenGuard();
+        initPageExitGuard();
+        await loadBattleDetails();
+        await requestBattleFullscreen();
+        return;
+    }
+
+    termsModal.style.display = 'flex';
+
+    await new Promise((resolve) => {
+        agreeBtn.addEventListener('click', () => resolve(), { once: true });
+    });
+
+    agreeBtn.disabled = true;
+    agreeBtn.textContent = 'Starting Battle...';
+
+    const enteredFullscreen = await requestBattleFullscreen();
+    termsModal.style.display = 'none';
+
+    initFullscreenGuard();
+    initPageExitGuard();
+    await loadBattleDetails();
+
+    if (!enteredFullscreen) {
+        alert('Fullscreen is required for this battle. Please allow fullscreen to continue.');
+        await requestBattleFullscreen();
+    }
 }
 
 let fullscreenWarningTimeout = null;
@@ -85,7 +100,7 @@ async function enforceFullscreenViolationPenalty() {
         const result = await api.cancelBattle(currentBattleId);
         showResult(result);
     } catch (e) {
-        alert('Match cancelled due to repeated fullscreen exits. Unable to sync result: ' + e.message);
+        alert('Match cancelled due to fullscreen violation. Unable to sync result: ' + e.message);
         window.location.href = 'battle.html';
     }
 }
@@ -135,12 +150,18 @@ function initPageExitGuard() {
     window.addEventListener('beforeunload', handleBeforeUnloadPenalty);
 }
 
-function requestBattleFullscreen() {
-    if (document.fullscreenElement) return;
+async function requestBattleFullscreen() {
+    if (document.fullscreenElement) return true;
     const root = document.documentElement;
     if (root?.requestFullscreen) {
-        root.requestFullscreen().catch(() => {});
+        try {
+            await root.requestFullscreen();
+            return true;
+        } catch (_e) {
+            return false;
+        }
     }
+    return false;
 }
 
 function initFullscreenGuard() {

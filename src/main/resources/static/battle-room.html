@@ -96,6 +96,35 @@
         </div>
     </main>
 
+    <!-- Battle Terms Overlay -->
+    <div id="battleTermsModal" style="
+        display:none;
+        position:fixed;
+        inset:0;
+        z-index:100000;
+        background:rgba(0,0,0,0.94);
+        backdrop-filter:blur(6px);
+        align-items:center;
+        justify-content:center;
+        padding:1rem;
+    ">
+        <div class="card" style="max-width:620px;width:100%;padding:1.5rem 1.3rem;text-align:left;border:1px solid var(--border);">
+            <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:0.75rem;color:var(--text-primary);">Battle Terms & Conditions</h2>
+            <p style="color:var(--text-secondary);margin-bottom:0.8rem;line-height:1.6;">
+                To ensure fair play, this battle is monitored in fullscreen mode.
+            </p>
+            <ul style="color:var(--text-secondary);margin:0 0 1rem 1rem;line-height:1.7;">
+                <li>Fullscreen is mandatory throughout the battle.</li>
+                <li>Exiting fullscreen is treated as a rule violation.</li>
+                <li>On violation, you are disqualified and your opponent is declared winner.</li>
+            </ul>
+            <p style="color:var(--text-secondary);margin-bottom:1rem;line-height:1.6;">
+                Click <strong>Agree & Start Battle</strong> to continue. Fullscreen will launch automatically.
+            </p>
+            <button id="agreeTermsBtn" class="btn btn-primary btn-lg" style="width:100%;">Agree & Start Battle</button>
+        </div>
+    </div>
+
     <!-- Fullscreen Warning Overlay -->
     <div id="fullscreenWarning" style="
         display:none;
