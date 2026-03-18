@@ -454,7 +454,7 @@ function showResult(result) {
     resultEl.style.padding = '1rem';
     resultEl.style.background = 'rgba(0,0,0,0.9)';
     resultEl.style.backdropFilter = 'blur(4px)';
-    resultEl.style.alignItems = 'flex-start';
+    resultEl.style.alignItems = 'center';
     resultEl.style.justifyContent = 'center';
     resultEl.style.overflowY = 'auto';
 
@@ -499,8 +499,8 @@ function showResult(result) {
         resultEl.innerHTML = `
             <div class="card" style="border-color:var(--success);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">🏆</span>
-                <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">Match Cancelled</h2>
-                <p style="color:var(--text-secondary);">Opponent left the match. You received 2x battle coins! 🪙</p>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--success);margin-bottom:0.5rem;">You Won!</h2>
+                <p style="color:var(--text-secondary);">Opponent violated battle rules. You won this battle and received 2x coins! 🪙</p>
                 <button onclick="window.location.href='battle.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
