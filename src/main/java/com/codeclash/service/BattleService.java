@@ -31,6 +31,7 @@ public class BattleService {
         private final CoinService coinService;
         private final DockerSandboxService dockerSandboxService;
         private final TemplateValidationService templateValidationService;
+        private final ProblemService problemService;
 
         public BattleService(BattleRepository battleRepository,
                         BattleParticipantRepository participantRepository,
@@ -39,7 +40,8 @@ public class BattleService {
                         BattleQueueRepository queueRepository,
                         CoinService coinService,
                         DockerSandboxService dockerSandboxService,
-                        TemplateValidationService templateValidationService) {
+                        TemplateValidationService templateValidationService,
+                        ProblemService problemService) {
                 this.battleRepository = battleRepository;
                 this.participantRepository = participantRepository;
                 this.problemRepository = problemRepository;
@@ -48,6 +50,7 @@ public class BattleService {
                 this.coinService = coinService;
                 this.dockerSandboxService = dockerSandboxService;
                 this.templateValidationService = templateValidationService;
+                this.problemService = problemService;
         }
 
         @Transactional
@@ -505,7 +508,7 @@ public class BattleService {
         }
 
         private boolean evaluateGenericBattleSubmission(Problem problem, String userCode, String language) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (testCases.isEmpty()) {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language,
@@ -516,7 +519,7 @@ public class BattleService {
                         return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
                 }
 
-                for (TestCaseData testCase : testCases) {
+                for (ProblemService.TestCaseData testCase : testCases) {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language,
                                         testCase.input());
                         if (result.isTimedOut() || result.getExitCode() != 0) {
@@ -536,7 +539,7 @@ public class BattleService {
         private DockerSandboxService.ExecutionResult runGenericBattleCode(Problem problem, String userCode,
                         String language,
                         String selectedInputData) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (selectedInputData != null) {
                         return dockerSandboxService.execute(userCode, language, selectedInputData);
@@ -546,12 +549,12 @@ public class BattleService {
                         return dockerSandboxService.execute(userCode, language, "");
                 }
 
-                TestCaseData firstCase = testCases.get(0);
+                ProblemService.TestCaseData firstCase = testCases.get(0);
                 return dockerSandboxService.execute(userCode, language, firstCase.input());
         }
 
         private boolean evaluatePythonBattleSubmission(Problem problem, String userCode) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (testCases.isEmpty()) {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "PYTHON");
@@ -561,8 +564,8 @@ public class BattleService {
                         return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
                 }
 
-                for (TestCaseData testCase : testCases) {
-                        String codeToRun = buildExecutablePythonCode(userCode, problem, testCase.input());
+                for (ProblemService.TestCaseData testCase : testCases) {
+                        String codeToRun = buildExecutablePythonCode(problem, userCode, testCase.input());
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "PYTHON");
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
@@ -580,10 +583,10 @@ public class BattleService {
 
         private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode,
                         String selectedInputData) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (selectedInputData != null) {
-                        String codeToRun = buildExecutablePythonCode(userCode, problem, selectedInputData);
+                        String codeToRun = buildExecutablePythonCode(problem, userCode, selectedInputData);
                         return dockerSandboxService.execute(codeToRun, "PYTHON");
                 }
 
@@ -591,13 +594,13 @@ public class BattleService {
                         return dockerSandboxService.execute(userCode, "PYTHON");
                 }
 
-                TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildExecutablePythonCode(userCode, problem, firstCase.input());
+                ProblemService.TestCaseData firstCase = testCases.get(0);
+                String codeToRun = buildExecutablePythonCode(problem, userCode, firstCase.input());
                 return dockerSandboxService.execute(codeToRun, "PYTHON");
         }
 
         private boolean evaluateJavaBattleSubmission(Problem problem, String userCode) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (testCases.isEmpty()) {
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "JAVA");
@@ -607,8 +610,8 @@ public class BattleService {
                         return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
                 }
 
-                for (TestCaseData testCase : testCases) {
-                        String codeToRun = buildExecutableJavaCode(userCode, problem, testCase.input());
+                for (ProblemService.TestCaseData testCase : testCases) {
+                        String codeToRun = buildExecutableJavaCode(problem, userCode, testCase.input());
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "JAVA");
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
@@ -626,10 +629,10 @@ public class BattleService {
 
         private DockerSandboxService.ExecutionResult runJavaBattleCode(Problem problem, String userCode,
                         String selectedInputData) {
-                List<TestCaseData> testCases = parseTestCases(problem);
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (selectedInputData != null) {
-                        String codeToRun = buildExecutableJavaCode(userCode, problem, selectedInputData);
+                        String codeToRun = buildExecutableJavaCode(problem, userCode, selectedInputData);
                         return dockerSandboxService.execute(codeToRun, "JAVA");
                 }
 
@@ -637,19 +640,15 @@ public class BattleService {
                         return dockerSandboxService.execute(userCode, "JAVA");
                 }
 
-                TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildExecutableJavaCode(userCode, problem, firstCase.input());
+                ProblemService.TestCaseData firstCase = testCases.get(0);
+                String codeToRun = buildExecutableJavaCode(problem, userCode, firstCase.input());
                 return dockerSandboxService.execute(codeToRun, "JAVA");
         }
 
-        private String buildExecutableJavaCode(String userCode, Problem problem, String rawInput) {
-                String wrapperConfigJson = problem != null ? safe(problem.getWrapperConfig()) : "";
-                if (!wrapperConfigJson.isBlank()) {
-                        try {
-                                JsonNode config = OBJECT_MAPPER.readTree(wrapperConfigJson);
-                                return buildJavaWrapper(userCode, config, rawInput);
-                        } catch (Exception ignored) {
-                        }
+        private String buildExecutableJavaCode(Problem problem, String userCode, String rawInput) {
+                JsonNode config = problemService.resolveWrapperConfig(problem, userCode);
+                if (config != null) {
+                        return buildJavaWrapper(userCode, config, rawInput);
                 }
 
                 String functionName = extractFirstJavaMethodName(userCode);
@@ -666,19 +665,16 @@ public class BattleService {
          * 3. Auto-detect function name → generic JSON-parsing wrapper
          * 4. Plain script → pipe stdin as-is
          */
-        private String buildExecutablePythonCode(String userCode, Problem problem, String rawInput) {
-                String wrapperConfigJson = problem != null ? safe(problem.getWrapperConfig()) : "";
-                if (!wrapperConfigJson.isBlank()) {
-                        try {
-                                JsonNode config = OBJECT_MAPPER.readTree(wrapperConfigJson);
-                                return buildLeetCodeWrapper(userCode, config, rawInput);
-                        } catch (Exception ignored) {
-                        }
+        private String buildExecutablePythonCode(Problem problem, String userCode, String rawInput) {
+                JsonNode config = problemService.resolveWrapperConfig(problem, userCode);
+                if (config != null) {
+                        return buildLeetCodeWrapper(userCode, config, rawInput);
                 }
                 if (usesInputFunction(userCode)) {
                         return buildPythonInputPatchedScript(userCode, rawInput);
                 }
-                String functionName = extractFirstPythonFunctionName(userCode);
+                String functionName = problemService.resolveWrapperConfig(problem, userCode).path("functionName")
+                                .asText(null);
                 if (functionName != null) {
                         return buildAutoFunctionWrapper(userCode, functionName, rawInput);
                 }
@@ -700,103 +696,6 @@ public class BattleService {
                                 + "__cc_iter = iter(__cc_lines)\n"
                                 + "builtins.input = lambda: next(__cc_iter, '')\n\n"
                                 + userCode;
-        }
-
-        private List<TestCaseData> parseTestCases(Problem problem) {
-                List<TestCaseData> jsonCases = parseJsonTestCases(problem.getTestCases());
-                if (!jsonCases.isEmpty()) {
-                        return jsonCases;
-                }
-
-                List<TestCaseData> legacyCases = parseLegacyTextCases(problem.getTestCases());
-                if (!legacyCases.isEmpty()) {
-                        return legacyCases;
-                }
-
-                String expected = safe(problem.getExpectedOutput()).trim();
-                if (!expected.isBlank()) {
-                        return List.of(new TestCaseData("", expected));
-                }
-
-                return List.of();
-        }
-
-        private List<TestCaseData> parseJsonTestCases(String raw) {
-                if (raw == null || raw.isBlank() || !raw.trim().startsWith("[")) {
-                        return List.of();
-                }
-
-                try {
-                        JsonNode root = OBJECT_MAPPER.readTree(raw);
-                        if (!root.isArray()) {
-                                return List.of();
-                        }
-
-                        List<TestCaseData> cases = new ArrayList<>();
-                        for (JsonNode item : root) {
-                                String input;
-                                JsonNode inputNode = item.path("input");
-                                if (inputNode.isArray()) {
-                                        List<String> lines = new ArrayList<>();
-                                        for (JsonNode line : inputNode) {
-                                                lines.add(line.asText(""));
-                                        }
-                                        input = String.join("\n", lines);
-                                } else {
-                                        input = inputNode.asText("");
-                                }
-                                String expected = item.path("expected").asText("");
-                                if (!expected.isBlank()) {
-                                        cases.add(new TestCaseData(input, expected));
-                                }
-                        }
-                        return cases;
-                } catch (Exception ignored) {
-                        return List.of();
-                }
-        }
-
-        private List<TestCaseData> parseLegacyTextCases(String raw) {
-                if (raw == null || raw.isBlank()) {
-                        return List.of();
-                }
-
-                List<TestCaseData> cases = new ArrayList<>();
-                Pattern pattern = Pattern.compile("Input:\\s*(.*?)\\s*Expected:\\s*(.*?)(?:\\r?\\n\\r?\\n|$)",
-                                Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-                Matcher matcher = pattern.matcher(raw);
-                while (matcher.find()) {
-                        String input = stripQuotes(safe(matcher.group(1)).trim());
-                        String expected = stripQuotes(safe(matcher.group(2)).trim());
-                        if (!expected.isBlank()) {
-                                cases.add(new TestCaseData(input, expected));
-                        }
-                }
-
-                if (!cases.isEmpty()) {
-                        return cases;
-                }
-
-                Matcher inputMatcher = Pattern.compile("Input:\\s*(.*)", Pattern.CASE_INSENSITIVE).matcher(raw);
-                Matcher expectedMatcher = Pattern.compile("Expected:\\s*(.*)", Pattern.CASE_INSENSITIVE).matcher(raw);
-                String input = inputMatcher.find() ? stripQuotes(safe(inputMatcher.group(1)).trim()) : "";
-                if (expectedMatcher.find()) {
-                        String expected = stripQuotes(safe(expectedMatcher.group(1)).trim());
-                        if (!expected.isBlank()) {
-                                return List.of(new TestCaseData(input, expected));
-                        }
-                }
-
-                return List.of();
-        }
-
-        private String extractFirstPythonFunctionName(String code) {
-                if (code == null || code.isBlank()) {
-                        return null;
-                }
-
-                Matcher matcher = Pattern.compile("(?m)^\\s*def\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(").matcher(code);
-                return matcher.find() ? matcher.group(1) : null;
         }
 
         /**
@@ -1009,17 +908,6 @@ public class BattleService {
                 return matcher.find() ? matcher.group(1) : null;
         }
 
-        private String stripQuotes(String value) {
-                if (value == null || value.length() < 2) {
-                        return safe(value);
-                }
-                if ((value.startsWith("\"") && value.endsWith("\""))
-                                || (value.startsWith("'") && value.endsWith("'"))) {
-                        return value.substring(1, value.length() - 1);
-                }
-                return value;
-        }
-
         private String normalizeOutput(String value) {
                 return safe(value).replace("\r\n", "\n").trim();
         }
@@ -1037,6 +925,4 @@ public class BattleService {
                 return text;
         }
 
-        private record TestCaseData(String input, String expected) {
-        }
 }

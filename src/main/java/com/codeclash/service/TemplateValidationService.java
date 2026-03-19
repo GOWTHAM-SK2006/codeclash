@@ -3,7 +3,6 @@ package com.codeclash.service;
 import com.codeclash.entity.Problem;
 import com.codeclash.repository.ProblemRepository;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,32 +18,26 @@ public class TemplateValidationService {
 
     private final ProblemRepository problemRepository;
     private final DockerSandboxService dockerSandboxService;
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ProblemService problemService;
 
     public void autoFixIfNeeded(Problem problem) {
         String starterCode = problem.getStarterCode();
-        String wrapperConfig = problem.getWrapperConfig();
+        JsonNode config = problemService.resolveWrapperConfig(problem, starterCode);
 
-        if (wrapperConfig == null || wrapperConfig.isBlank()) {
+        if (config == null) {
             return;
         }
 
-        boolean pythonValid = isTemplateValid(starterCode, wrapperConfig, "PYTHON");
-        boolean javaValid = isTemplateValid(starterCode, wrapperConfig, "JAVA");
+        boolean pythonValid = isTemplateValid(starterCode, config, "PYTHON");
+        boolean javaValid = isTemplateValid(starterCode, config, "JAVA");
 
-        // If either is invalid (for simplicity we check the current starter code which
-        // is usually language-agnostic in the DB or specifically one language)
-        // In this platform, starterCode is often stored once and shared. Let's ensure
-        // it's at least valid for the common patterns.
         if (!pythonValid && !javaValid) {
             log.info("Auto-fixing template for problem: {}", problem.getTitle());
-            // Default to Python template as it's the most common starter code format in
-            // data.sql
             problem.setStarterCode(generateDefaultTemplate(problem, "PYTHON"));
             problemRepository.save(problem);
 
             // Re-validate after fix
-            if (!isTemplateValid(problem.getStarterCode(), wrapperConfig, "PYTHON")) {
+            if (!isTemplateValid(problem.getStarterCode(), config, "PYTHON")) {
                 throw new RuntimeException("Could not fix problem template: " + problem.getTitle());
             }
         }
@@ -58,7 +51,6 @@ public class TemplateValidationService {
         // Since we mainly support Python for the quick battles, check Python syntax
         // For Java it's more complex as it needs the wrapper, but let's do a basic
         // check
-        String executable = code;
         // Note: Full syntax check requires joining with wrapper, but we check the core
         // logic
         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute("print('Syntax OK')\n" + code,
@@ -69,13 +61,12 @@ public class TemplateValidationService {
         }
     }
 
-    public boolean isTemplateValid(String code, String wrapperConfigJson, String language) {
-        if (code == null || code.isBlank() || wrapperConfigJson == null || wrapperConfigJson.isBlank()) {
+    public boolean isTemplateValid(String code, JsonNode config, String language) {
+        if (code == null || code.isBlank() || config == null) {
             return false;
         }
 
         try {
-            JsonNode config = OBJECT_MAPPER.readTree(wrapperConfigJson);
             String functionName = config.path("functionName").asText("").trim();
             if (functionName.isEmpty())
                 return true; // Nothing to validate against
@@ -102,16 +93,15 @@ public class TemplateValidationService {
     }
 
     public String generateDefaultTemplate(Problem problem, String language) {
-        String wrapperConfig = problem.getWrapperConfig();
-        if (wrapperConfig == null || wrapperConfig.isBlank()) {
+        JsonNode config = problemService.resolveWrapperConfig(problem, problem.getStarterCode());
+        if (config == null) {
             return "# Your code here";
         }
 
         try {
-            JsonNode config = OBJECT_MAPPER.readTree(wrapperConfig);
             String functionName = config.path("functionName").asText("solution");
             JsonNode params = config.path("params");
-
+            // ... (rest of logic) ...
             if ("PYTHON".equalsIgnoreCase(language)) {
                 return generatePythonTemplate(functionName, params);
             } else if ("JAVA".equalsIgnoreCase(language)) {
