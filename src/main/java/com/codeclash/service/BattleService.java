@@ -30,6 +30,7 @@ public class BattleService {
         private final BattleQueueRepository queueRepository;
         private final CoinService coinService;
         private final DockerSandboxService dockerSandboxService;
+        private final TemplateValidationService templateValidationService;
 
         public BattleService(BattleRepository battleRepository,
                         BattleParticipantRepository participantRepository,
@@ -37,7 +38,8 @@ public class BattleService {
                         UserRepository userRepository,
                         BattleQueueRepository queueRepository,
                         CoinService coinService,
-                        DockerSandboxService dockerSandboxService) {
+                        DockerSandboxService dockerSandboxService,
+                        TemplateValidationService templateValidationService) {
                 this.battleRepository = battleRepository;
                 this.participantRepository = participantRepository;
                 this.problemRepository = problemRepository;
@@ -45,6 +47,7 @@ public class BattleService {
                 this.queueRepository = queueRepository;
                 this.coinService = coinService;
                 this.dockerSandboxService = dockerSandboxService;
+                this.templateValidationService = templateValidationService;
         }
 
         @Transactional
@@ -123,6 +126,9 @@ public class BattleService {
                 }
 
                 Problem randomProblem = problems.get(new java.util.Random().nextInt(problems.size()));
+
+                // Pre-battle check: Validate and auto-fix template if needed
+                templateValidationService.autoFixIfNeeded(randomProblem);
 
                 Battle battle = new Battle();
                 battle.setProblem(randomProblem);
@@ -229,7 +235,8 @@ public class BattleService {
                 battle.setStatus("ACTIVE");
                 battle.setStartedAt(LocalDateTime.now());
                 if (battle.getTimeLimitSeconds() == null || battle.getTimeLimitSeconds() <= 0) {
-                        battle.setTimeLimitSeconds(getBattleDurationSecondsByDifficulty(battle.getProblem().getDifficulty()));
+                        battle.setTimeLimitSeconds(
+                                        getBattleDurationSecondsByDifficulty(battle.getProblem().getDifficulty()));
                 }
                 battleRepository.save(battle);
 
@@ -501,7 +508,8 @@ public class BattleService {
                 List<TestCaseData> testCases = parseTestCases(problem);
 
                 if (testCases.isEmpty()) {
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language, "");
+                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language,
+                                        "");
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
                         }
@@ -525,7 +533,8 @@ public class BattleService {
                 return true;
         }
 
-        private DockerSandboxService.ExecutionResult runGenericBattleCode(Problem problem, String userCode, String language,
+        private DockerSandboxService.ExecutionResult runGenericBattleCode(Problem problem, String userCode,
+                        String language,
                         String selectedInputData) {
                 List<TestCaseData> testCases = parseTestCases(problem);
 
@@ -652,10 +661,10 @@ public class BattleService {
 
         /**
          * Chooses the right execution strategy:
-         * 1. Problem has wrapperConfig  → LeetCode-style function wrapper (preferred)
-         * 2. User code calls input()    → patch builtins.input with stdin lines
-         * 3. Auto-detect function name  → generic JSON-parsing wrapper
-         * 4. Plain script               → pipe stdin as-is
+         * 1. Problem has wrapperConfig → LeetCode-style function wrapper (preferred)
+         * 2. User code calls input() → patch builtins.input with stdin lines
+         * 3. Auto-detect function name → generic JSON-parsing wrapper
+         * 4. Plain script → pipe stdin as-is
          */
         private String buildExecutablePythonCode(String userCode, Problem problem, String rawInput) {
                 String wrapperConfigJson = problem != null ? safe(problem.getWrapperConfig()) : "";
@@ -795,7 +804,7 @@ public class BattleService {
          * converts to the declared type, calls the user's function, prints the result.
          *
          * wrapperConfig JSON example:
-         *   {"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}
+         * {"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}
          *
          * Supported param types: json (list/dict/any), int, float, bool, str
          */
@@ -835,7 +844,8 @@ public class BattleService {
                         sb.append("    ").append(name).append(" = ").append(parse).append("\n");
                 }
 
-                sb.append("    _result = ").append(functionName).append("(").append(String.join(", ", argNames)).append(")\n");
+                sb.append("    _result = ").append(functionName).append("(").append(String.join(", ", argNames))
+                                .append(")\n");
                 sb.append("    if _result is not None:\n");
                 sb.append("        print(_result)\n");
 
@@ -883,7 +893,8 @@ public class BattleService {
                                 sb.append("        int ").append(name).append(" = Integer.parseInt(").append(lineRef)
                                                 .append(".trim());\n");
                         } else if ("float".equals(type)) {
-                                sb.append("        double ").append(name).append(" = Double.parseDouble(").append(lineRef)
+                                sb.append("        double ").append(name).append(" = Double.parseDouble(")
+                                                .append(lineRef)
                                                 .append(".trim());\n");
                         } else if ("bool".equals(type) || "boolean".equals(type)) {
                                 sb.append("        boolean ").append(name).append(" = \"true\".equalsIgnoreCase(")
