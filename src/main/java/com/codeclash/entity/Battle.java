@@ -27,6 +27,10 @@ public class Battle {
     @Builder.Default
     private String status = "WAITING";
 
+    @Column(nullable = false, length = 10)
+    @Builder.Default
+    private String mode = "1v1"; // "1v1" or "2v2"
+
     @Column
     private Long winnerId;
 
