@@ -5,7 +5,14 @@
     const friendsListEl = document.getElementById('friendsList');
     const receivedRequestsEl = document.getElementById('receivedRequests');
     const sentRequestsEl = document.getElementById('sentRequests');
+    const allUsersSectionEl = document.getElementById('allUsersSection');
+    const openAddFriendBtnEl = document.getElementById('openAddFriendBtn');
+    const closeAddFriendBtnEl = document.getElementById('closeAddFriendBtn');
+    const allUsersSearchEl = document.getElementById('allUsersSearch');
     const allUsersEl = document.getElementById('allUsers');
+
+    let allUsersCache = [];
+    let isAllUsersPanelOpen = false;
 
     function showMessage(message, type = 'success') {
         showAlert('friendsAlert', message, type);
@@ -31,7 +38,7 @@
 
     function renderFriends(friends) {
         if (!friends || friends.length === 0) {
-            friendsListEl.innerHTML = '<div class="friends-empty">You don’t have friends yet. Send a request from All Users.</div>';
+            friendsListEl.innerHTML = '<div class="friends-empty">You don’t have friends yet. Click Add Friend to send requests.</div>';
             return;
         }
 
@@ -93,6 +100,17 @@
         }
     }
 
+    function filterUsers(users, searchValue) {
+        const search = String(searchValue || '').trim().toLowerCase();
+        if (!search) return users;
+
+        return users.filter(user => {
+            const displayName = String(user.displayName || '').toLowerCase();
+            const username = String(user.username || '').toLowerCase();
+            return displayName.includes(search) || username.includes(search);
+        });
+    }
+
     function renderAllUsers(users) {
         if (!users || users.length === 0) {
             allUsersEl.innerHTML = '<div class="friends-empty">No users found.</div>';
@@ -112,19 +130,46 @@
         `).join('');
     }
 
+    function updateAllUsersView() {
+        if (!isAllUsersPanelOpen) return;
+        const searchValue = allUsersSearchEl ? allUsersSearchEl.value : '';
+        const filteredUsers = filterUsers(allUsersCache, searchValue);
+        renderAllUsers(filteredUsers);
+    }
+
+    function setAllUsersPanelOpen(isOpen) {
+        isAllUsersPanelOpen = !!isOpen;
+        if (allUsersSectionEl) {
+            allUsersSectionEl.style.display = isAllUsersPanelOpen ? 'block' : 'none';
+        }
+
+        if (isAllUsersPanelOpen) {
+            if (allUsersSearchEl) {
+                allUsersSearchEl.value = '';
+            }
+            updateAllUsersView();
+            if (allUsersSearchEl) {
+                allUsersSearchEl.focus();
+            }
+        }
+    }
+
     async function loadOverview() {
         try {
             const overview = await api.getFriendsOverview();
             renderFriends(overview.friends || []);
             renderReceived(overview.receivedRequests || []);
             renderSent(overview.sentRequests || []);
-            renderAllUsers(overview.allUsers || []);
+            allUsersCache = overview.allUsers || [];
+            updateAllUsersView();
         } catch (error) {
             const message = '<div class="friends-empty">Could not load friends data.</div>';
             friendsListEl.innerHTML = message;
             receivedRequestsEl.innerHTML = message;
             sentRequestsEl.innerHTML = message;
-            allUsersEl.innerHTML = message;
+            if (isAllUsersPanelOpen) {
+                allUsersEl.innerHTML = message;
+            }
         }
     }
 
@@ -160,6 +205,18 @@
     }
 
     document.addEventListener('click', async (event) => {
+        const openPanelBtn = event.target.closest('#openAddFriendBtn');
+        if (openPanelBtn) {
+            setAllUsersPanelOpen(true);
+            return;
+        }
+
+        const closePanelBtn = event.target.closest('#closeAddFriendBtn');
+        if (closePanelBtn) {
+            setAllUsersPanelOpen(false);
+            return;
+        }
+
         const addButton = event.target.closest('.add-friend-btn');
         if (addButton) {
             const targetUserId = addButton.dataset.userId;
@@ -177,6 +234,10 @@
             }
         }
     });
+
+    if (allUsersSearchEl) {
+        allUsersSearchEl.addEventListener('input', updateAllUsersView);
+    }
 
     window.addEventListener('cc:friendsUpdated', loadOverview);
     await loadOverview();

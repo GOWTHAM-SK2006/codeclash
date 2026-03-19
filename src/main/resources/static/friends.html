@@ -15,8 +15,11 @@
     <main class="page-content">
         <div class="container friends-container">
             <div class="page-header friends-header">
-                <h1>👥 Friends</h1>
-                <p>Build your coding network, track requests, and connect with other coders.</p>
+                <div>
+                    <h1>👥 Friends</h1>
+                    <p>Build your coding network, track requests, and connect with other coders.</p>
+                </div>
+                <button id="openAddFriendBtn" class="btn btn-outline" type="button">Add Friend</button>
             </div>
 
             <div id="friendsAlert" class="alert" style="display:none;"></div>
@@ -42,10 +45,16 @@
                 </div>
             </section>
 
-            <section class="friends-section card">
-                <div class="friends-section-title">All Users</div>
+            <section id="allUsersSection" class="friends-section card all-users-panel" style="display:none;">
+                <div class="all-users-head">
+                    <div class="friends-section-title all-users-title">All Users</div>
+                    <button id="closeAddFriendBtn" class="btn btn-secondary btn-sm" type="button">Close</button>
+                </div>
+                <div class="all-users-search-wrap">
+                    <input id="allUsersSearch" class="input" type="text" placeholder="Search by name or username">
+                </div>
                 <div id="allUsers" class="user-list">
-                    <div class="friends-placeholder">Loading users...</div>
+                    <div class="friends-placeholder">Use search to find users.</div>
                 </div>
             </section>
         </div>
