@@ -18,6 +18,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FriendService {
 
+    private static final int MAX_FRIENDS = 3;
+
     private final UserRepository userRepository;
     private final FriendRequestRepository friendRequestRepository;
 
@@ -75,6 +77,14 @@ public class FriendService {
             throw new RuntimeException("You cannot send a friend request to yourself");
         }
 
+        if (hasReachedFriendLimit(sender)) {
+            throw new RuntimeException("Maximum friends limit reached (3)");
+        }
+
+        if (hasReachedFriendLimit(receiver)) {
+            throw new RuntimeException("This user already reached the maximum friends limit (3)");
+        }
+
         Optional<FriendRequest> existing = friendRequestRepository.findRelationshipBetweenUsers(sender.getId(), receiver.getId());
         if (existing.isPresent()) {
             FriendRequest relationship = existing.get();
@@ -101,12 +111,22 @@ public class FriendService {
         FriendRequest request = friendRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Friend request not found"));
 
+        User requester = request.getRequester();
+
         if (!Objects.equals(request.getReceiver().getId(), currentUser.getId())) {
             throw new RuntimeException("You are not allowed to accept this request");
         }
 
         if (request.getStatus() != FriendRequestStatus.PENDING) {
             throw new RuntimeException("Friend request is already processed");
+        }
+
+        if (hasReachedFriendLimit(currentUser)) {
+            throw new RuntimeException("Maximum friends limit reached (3)");
+        }
+
+        if (hasReachedFriendLimit(requester)) {
+            throw new RuntimeException("Requester already reached the maximum friends limit (3)");
         }
 
         request.setStatus(FriendRequestStatus.ACCEPTED);
@@ -181,5 +201,10 @@ public class FriendService {
 
     private String displayNameLower(User user) {
         return resolveDisplayName(user).toLowerCase(Locale.ROOT);
+    }
+
+    private boolean hasReachedFriendLimit(User user) {
+        long friendCount = friendRequestRepository.countByUserAndStatus(user, FriendRequestStatus.ACCEPTED);
+        return friendCount >= MAX_FRIENDS;
     }
 }

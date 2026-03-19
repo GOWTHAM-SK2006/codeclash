@@ -13,6 +13,8 @@
 
     let allUsersCache = [];
     let isAllUsersPanelOpen = false;
+    const MAX_FRIENDS = 3;
+    let currentFriendCount = 0;
 
     function showMessage(message, type = 'success') {
         showAlert('friendsAlert', message, type);
@@ -59,13 +61,17 @@
             return;
         }
 
+        const acceptButtonMarkup = currentFriendCount >= MAX_FRIENDS
+            ? '<button class="btn btn-secondary btn-sm" disabled>Limit Reached</button>'
+            : '<button class="btn btn-primary btn-sm accept-request-btn" data-request-id="__REQUEST_ID__">Accept</button>';
+
         receivedRequestsEl.innerHTML = requests.map(request => `
             <div class="request-item">
                 <div>
                     <div class="request-name">${escapeHtml(request.fromDisplayName || request.fromUsername)}</div>
                     <div class="request-meta">@${escapeHtml(request.fromUsername)} · ${formatDate(request.createdAt)}</div>
                 </div>
-                <button class="btn btn-primary btn-sm accept-request-btn" data-request-id="${request.requestId}">Accept</button>
+                ${acceptButtonMarkup.replace('__REQUEST_ID__', request.requestId)}
             </div>
         `).join('');
     }
@@ -96,6 +102,9 @@
             case 'RECEIVED':
                 return `<button class="btn btn-primary btn-sm accept-request-btn" data-request-id="${user.requestId}">Accept</button>`;
             default:
+                if (currentFriendCount >= MAX_FRIENDS) {
+                    return '<button class="btn btn-secondary btn-sm" disabled>Limit Reached</button>';
+                }
                 return `<button class="btn btn-outline btn-sm add-friend-btn" data-user-id="${user.userId}">Add Friend</button>`;
         }
     }
@@ -132,9 +141,20 @@
 
     function updateAllUsersView() {
         if (!isAllUsersPanelOpen) return;
+        if (currentFriendCount >= MAX_FRIENDS) {
+            allUsersEl.innerHTML = '<div class="friends-empty">You already reached the maximum of 3 friends.</div>';
+            return;
+        }
         const searchValue = allUsersSearchEl ? allUsersSearchEl.value : '';
         const filteredUsers = filterUsers(allUsersCache, searchValue);
         renderAllUsers(filteredUsers);
+    }
+
+    function updateAddFriendButtonState() {
+        if (!openAddFriendBtnEl) return;
+        const hasLimitReached = currentFriendCount >= MAX_FRIENDS;
+        openAddFriendBtnEl.disabled = hasLimitReached;
+        openAddFriendBtnEl.textContent = hasLimitReached ? 'Friend Limit Reached' : 'Add Friend';
     }
 
     function setAllUsersPanelOpen(isOpen) {
@@ -157,9 +177,11 @@
     async function loadOverview() {
         try {
             const overview = await api.getFriendsOverview();
+            currentFriendCount = (overview.friends || []).length;
             renderFriends(overview.friends || []);
             renderReceived(overview.receivedRequests || []);
             renderSent(overview.sentRequests || []);
+            updateAddFriendButtonState();
             allUsersCache = overview.allUsers || [];
             updateAllUsersView();
         } catch (error) {
@@ -207,6 +229,10 @@
     document.addEventListener('click', async (event) => {
         const openPanelBtn = event.target.closest('#openAddFriendBtn');
         if (openPanelBtn) {
+            if (currentFriendCount >= MAX_FRIENDS) {
+                showMessage('Maximum friends limit reached (3)', 'error');
+                return;
+            }
             setAllUsersPanelOpen(true);
             return;
         }
