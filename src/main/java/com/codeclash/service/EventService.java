@@ -178,6 +178,9 @@ public class EventService {
         res.put("phase", phase.name());
         res.put("entryFee", event.getEntryFee());
         res.put("maxParticipants", event.getMaxParticipants());
+        res.put("problemIds", event.getProblemIds());
+        res.put("biddingTitle", event.getBiddingTitle());
+        res.put("contestTitle", event.getContestTitle());
 
         // Timing
         res.put("biddingStart", event.getBiddingStartTime());
@@ -206,7 +209,6 @@ public class EventService {
         }).collect(Collectors.toList());
         res.put("leaderboard", leaderboard);
 
-        // User specific
         if (username != null) {
             User user = userRepository.findByUsername(username).orElse(null);
             if (user != null) {
