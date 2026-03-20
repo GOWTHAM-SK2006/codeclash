@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ public class EventService {
     private final CoinService coinService;
 
     private static final int BID_DURATION_MINS = 10;
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     // ──────────────────────────────────────────────────────────────
     // Admin Actions
@@ -144,7 +146,7 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        if (determinePhase(event, LocalDateTime.now()) != EventPhase.BIDDING_LIVE) {
+        if (determinePhase(event, LocalDateTime.now(IST)) != EventPhase.BIDDING_LIVE) {
             throw new RuntimeException("Bidding is not active");
         }
 
