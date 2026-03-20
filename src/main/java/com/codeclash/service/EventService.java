@@ -6,6 +6,7 @@ import com.codeclash.entity.User;
 import com.codeclash.repository.EventBidRepository;
 import com.codeclash.repository.EventRepository;
 import com.codeclash.repository.UserRepository;
+import com.codeclash.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -73,8 +74,10 @@ public class EventService {
             event.setContestStartTime(LocalDateTime.parse(String.valueOf(body.get("contestStartTime"))));
         if (body.containsKey("contestDuration"))
             event.setContestDurationMinutes(Integer.parseInt(String.valueOf(body.get("contestDuration"))));
-        if (body.containsKey("problemIds"))
-            event.setProblemIds(String.valueOf(body.get("problemIds")));
+        if (body.containsKey("problemIds")) {
+            List<String> ids = StringUtil.parseStringList(body.get("problemIds"));
+            event.setProblemIds(String.join(",", ids));
+        }
         if (body.containsKey("maxParticipants"))
             event.setMaxParticipants(Integer.parseInt(String.valueOf(body.get("maxParticipants"))));
         if (body.containsKey("active"))

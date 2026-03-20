@@ -620,20 +620,51 @@ function renderModalTab() {
         };
     } else if (activeTab === 'problems') {
         const pIds = (data.problemIds || '').split(',').map(s => s.trim()).filter(Boolean);
+        if (!window.allProblemsCache) {
+            adminRequest('/problems').then(rows => {
+                window.allProblemsCache = rows;
+                renderModalTab();
+            });
+            body.innerHTML = '<div class="spinner"></div>';
+            return;
+        }
+
+        const probMap = {};
+        window.allProblemsCache.forEach(p => probMap[p.id] = p);
+
         body.innerHTML = `
             <div class="tab-content">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
                     <h3 style="font-weight:800;">Event Problems</h3>
-                    <button class="btn btn-primary btn-sm" onclick="addProblemToEvent()">Add Problem</button>
+                    <button class="btn btn-primary btn-sm" onclick="showProblemPicker()">Add Problem</button>
                 </div>
-                ${makeTable(['ID', 'Actions'], pIds.map(id => `
-                    <tr>
-                        <td><code>#${id}</code></td>
-                        <td><button class="btn btn-secondary btn-sm" onclick="removeProblemFromEvent('${id}')">Remove</button></td>
-                    </tr>
-                `))}
+                ${makeTable(['ID', 'Problem Title', 'Difficulty', 'Actions'], pIds.map(id => {
+            const p = probMap[id];
+            return `
+                        <tr>
+                            <td><code>#${id}</code></td>
+                            <td>${p ? p.title : 'Unknown Problem'}</td>
+                            <td>${p ? `<span class="badge badge-${p.difficulty.toLowerCase()}">${p.difficulty}</span>` : '-'}</td>
+                            <td><button class="btn btn-secondary btn-sm" style="color:#ff4444" onclick="removeProblemFromEvent('${id}')">Remove</button></td>
+                        </tr>
+                    `;
+        }))}
+            </div>
+            <div id="problemPicker" class="wizard-overlay" style="display:none; z-index:3000;">
+                <div class="wizard-card" style="width:500px; padding:2rem; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3 style="font-weight:900;">Select Problems</h3>
+                        <button class="close-btn" onclick="document.getElementById('problemPicker').style.display='none'">✕</button>
+                    </div>
+                    <input type="text" id="pickerSearch" class="input" placeholder="Search problems..." style="width:100%; margin-bottom:1rem;">
+                    <div id="pickerList" style="flex:1; overflow-y:auto; border:1px solid var(--border); border-radius:12px;"></div>
+                </div>
             </div>
         `;
+
+        if (pIds.length === 0) {
+            body.querySelector('.tab-content').innerHTML += `<p style="text-align:center; color:var(--text-muted); padding:2rem;">No problems added to this event yet.</p>`;
+        }
     } else if (activeTab === 'participants') {
         const selected = (data.allBids || []).filter(b => b.selected);
         body.innerHTML = `
@@ -739,16 +770,50 @@ async function removeProblemFromEvent(pId) {
     await refreshModalData();
 }
 
-async function addProblemToEvent() {
-    const pId = prompt('Enter Problem ID to add:');
-    if (!pId) return;
+async function showProblemPicker() {
+    const picker = document.getElementById('problemPicker');
+    if (!picker) return;
+    picker.style.display = 'flex';
+
+    const pIds = (activeEventData.problemIds || '').split(',').map(s => s.trim()).filter(Boolean);
+    const available = window.allProblemsCache.filter(p => !pIds.includes(String(p.id)));
+
+    const list = document.getElementById('pickerList');
+    const search = document.getElementById('pickerSearch');
+
+    const renderPicker = (filter = '') => {
+        const filtered = available.filter(p => p.title.toLowerCase().includes(filter.toLowerCase()));
+        list.innerHTML = filtered.map(p => `
+            <div style="padding:0.8rem; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="addProblemIdToEvent('${p.id}')">
+                <div>
+                    <div style="font-weight:700;">${p.title}</div>
+                    <small style="color:var(--text-muted)">${p.difficulty} • ${(p.tags || []).join(', ')}</small>
+                </div>
+                <div style="color:var(--accent); font-weight:900;">ADD +</div>
+            </div>
+        `).join('');
+        if (!filtered.length) list.innerHTML = `<p style="padding:2rem; text-align:center; color:var(--text-muted);">No matching problems</p>`;
+    };
+
+    renderPicker();
+    search.oninput = (e) => renderPicker(e.target.value);
+    search.focus();
+}
+
+async function addProblemIdToEvent(pId) {
     const list = (activeEventData.problemIds || '').split(',').map(s => s.trim()).filter(Boolean);
-    if (!list.includes(pId)) list.push(pId);
+    if (!list.includes(String(pId))) list.push(String(pId));
     await adminRequest(`/events/${activeEventId}`, {
         method: 'PUT',
         body: JSON.stringify({ problemIds: list.join(',') })
     });
+    document.getElementById('problemPicker').style.display = 'none';
     await refreshModalData();
+}
+
+async function addProblemToEvent() {
+    // Replaced prompt with picker
+    showProblemPicker();
 }
 
 async function removeParticipant(userId) {
@@ -819,9 +884,12 @@ function openCreateWizard() {
                         <label>CONTEST START (AUTO: +3M)</label>
                         <input type="datetime-local" id="ev_c_start" class="input" value="${fmt(contestStart)}" style="width:100%">
                     </div>
-                    <div class="form-group">
-                        <label>PROBLEM IDS (SPLIT BY ,)</label>
-                        <input type="text" id="ev_probs" class="input" placeholder="1, 2, 5" style="width:100%">
+                    <div class="form-group" style="position:relative;">
+                        <label>PROBLEM IDS</label>
+                        <div style="display:flex; gap:0.5rem;">
+                            <input type="text" id="ev_probs" class="input" placeholder="e.g. 1,2" style="flex:1">
+                            <button class="btn btn-secondary btn-sm" id="wizardPickProbs" style="white-space:nowrap;">Pick List</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -838,10 +906,55 @@ function openCreateWizard() {
 
     document.body.appendChild(overlay);
 
-    // Sync Titles logic
-    document.getElementById('ev_title').oninput = (e) => {
-        const val = e.target.value;
-        // Automatically set similar bidding/contest titles if needed (though we hidden them for simplicity)
+    // Wizard Pick logic
+    document.getElementById('wizardPickProbs').onclick = async () => {
+        if (!window.allProblemsCache) {
+            window.allProblemsCache = await adminRequest('/problems');
+        }
+
+        const picker = document.createElement('div');
+        picker.className = 'wizard-overlay';
+        picker.style.zIndex = '6000';
+        picker.innerHTML = `
+            <div class="wizard-card" style="width:500px; padding:2rem; max-height:80vh; overflow:hidden; display:flex; flex-direction:column;">
+                <h3 style="font-weight:900; margin-bottom:1rem;">Select Problems</h3>
+                <input type="text" id="wizardSearch" class="input" placeholder="Search..." style="width:100%; margin-bottom:1rem;">
+                <div id="wizardList" style="flex:1; overflow-y:auto; border:1px solid var(--border); border-radius:12px;"></div>
+                <button class="btn btn-primary" id="wizardDone" style="margin-top:1rem;">Done</button>
+            </div>
+        `;
+        document.body.appendChild(picker);
+
+        const input = document.getElementById('ev_probs');
+        let selected = input.value.split(',').map(s => s.trim()).filter(Boolean);
+
+        const render = (filter = '') => {
+            const list = document.getElementById('wizardList');
+            list.innerHTML = window.allProblemsCache.filter(p => p.title.toLowerCase().includes(filter.toLowerCase())).map(p => {
+                const isSel = selected.includes(String(p.id));
+                return `
+                    <div style="padding:0.8rem; border-bottom:1px solid var(--border); cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:${isSel ? 'var(--accent-subtle)' : 'transparent'}" onclick="toggleWizardProb('${p.id}')">
+                        <div>
+                            <div style="font-weight:700;">${p.title}</div>
+                            <small style="color:var(--text-muted)">${p.difficulty}</small>
+                        </div>
+                        <div style="color:var(--accent); font-weight:900;">${isSel ? '✅' : 'ADD +'}</div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.toggleWizardProb = (id) => {
+            const idx = selected.indexOf(String(id));
+            if (idx > -1) selected.splice(idx, 1);
+            else selected.push(String(id));
+            input.value = selected.join(',');
+            render(document.getElementById('wizardSearch').value);
+        };
+
+        render();
+        document.getElementById('wizardSearch').oninput = (e) => render(e.target.value);
+        document.getElementById('wizardDone').onclick = () => picker.remove();
     };
 
     document.getElementById('finishQuickCreate').onclick = async () => {

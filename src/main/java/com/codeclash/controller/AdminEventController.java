@@ -3,6 +3,7 @@ package com.codeclash.controller;
 import com.codeclash.entity.Event;
 import com.codeclash.service.AdminPanelService;
 import com.codeclash.service.EventService;
+import com.codeclash.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +37,7 @@ public class AdminEventController {
                 .contestTitle(String.valueOf(body.get("contestTitle")))
                 .contestStartTime(LocalDateTime.parse(String.valueOf(body.get("contestStartTime"))))
                 .contestDurationMinutes(Integer.parseInt(String.valueOf(body.get("contestDuration"))))
-                .problemIds(String.valueOf(body.get("problemIds")))
+                .problemIds(String.join(",", StringUtil.parseStringList(body.get("problemIds"))))
                 .maxParticipants(Integer.parseInt(String.valueOf(body.get("maxParticipants"))))
                 .active(true)
                 .build();

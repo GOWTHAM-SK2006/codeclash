@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.codeclash.util.StringUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -252,9 +253,9 @@ public class AdminPanelService {
     public List<Map<String, Object>> getProblems() {
         return problemRepository.findAll().stream().map(p -> Map.of(
                 "id", p.getId(),
-                "title", safe(p.getTitle()),
-                "description", safe(p.getDescription()),
-                "difficulty", safe(p.getDifficulty()),
+                "title", StringUtil.safe(p.getTitle()),
+                "description", StringUtil.safe(p.getDescription()),
+                "difficulty", StringUtil.safe(p.getDifficulty()),
                 "tags", splitTags(p.getCategory()),
                 "constraints", "",
                 "functionSignature", extractFunctionSignature(p.getWrapperConfig()),
@@ -263,14 +264,14 @@ public class AdminPanelService {
 
     public Problem createProblem(Map<String, Object> body) {
         Problem p = new Problem();
-        p.setTitle(safe(body.get("title")));
-        p.setDescription(safe(body.get("description")));
-        p.setDifficulty(defaultIfBlank(safe(body.get("difficulty")), "Easy"));
-        p.setCategory(String.join(",", parseStringList(body.get("tags"))));
-        p.setPoints(parseInt(body.get("points"), 10));
-        p.setStarterCode(safe(body.get("starterCode")));
-        p.setExpectedOutput(safe(body.get("expectedOutput")));
-        p.setWrapperConfig(safe(body.get("functionSignature")));
+        p.setTitle(StringUtil.safe(body.get("title")));
+        p.setDescription(StringUtil.safe(body.get("description")));
+        p.setDifficulty(defaultIfBlank(StringUtil.safe(body.get("difficulty")), "Easy"));
+        p.setCategory(String.join(",", StringUtil.parseStringList(body.get("tags"))));
+        p.setPoints(StringUtil.parseInt(body.get("points"), 10));
+        p.setStarterCode(StringUtil.safe(body.get("starterCode")));
+        p.setExpectedOutput(StringUtil.safe(body.get("expectedOutput")));
+        p.setWrapperConfig(StringUtil.safe(body.get("functionSignature")));
         p.setTestCases("[]");
         return problemRepository.save(p);
     }
@@ -280,21 +281,21 @@ public class AdminPanelService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));
 
         if (body.containsKey("title"))
-            p.setTitle(safe(body.get("title")));
+            p.setTitle(StringUtil.safe(body.get("title")));
         if (body.containsKey("description"))
-            p.setDescription(safe(body.get("description")));
+            p.setDescription(StringUtil.safe(body.get("description")));
         if (body.containsKey("difficulty"))
-            p.setDifficulty(safe(body.get("difficulty")));
+            p.setDifficulty(StringUtil.safe(body.get("difficulty")));
         if (body.containsKey("tags"))
-            p.setCategory(String.join(",", parseStringList(body.get("tags"))));
+            p.setCategory(String.join(",", StringUtil.parseStringList(body.get("tags"))));
         if (body.containsKey("points"))
-            p.setPoints(parseInt(body.get("points"), p.getPoints() == null ? 10 : p.getPoints()));
+            p.setPoints(StringUtil.parseInt(body.get("points"), p.getPoints() == null ? 10 : p.getPoints()));
         if (body.containsKey("starterCode"))
-            p.setStarterCode(safe(body.get("starterCode")));
+            p.setStarterCode(StringUtil.safe(body.get("starterCode")));
         if (body.containsKey("expectedOutput"))
-            p.setExpectedOutput(safe(body.get("expectedOutput")));
+            p.setExpectedOutput(StringUtil.safe(body.get("expectedOutput")));
         if (body.containsKey("functionSignature"))
-            p.setWrapperConfig(safe(body.get("functionSignature")));
+            p.setWrapperConfig(StringUtil.safe(body.get("functionSignature")));
 
         return problemRepository.save(p);
     }
@@ -343,10 +344,10 @@ public class AdminPanelService {
         return userRepository.findAll().stream().map(u -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("id", u.getId());
-            row.put("username", safe(u.getUsername()));
-            row.put("email", safe(u.getEmail()));
+            row.put("username", StringUtil.safe(u.getUsername()));
+            row.put("email", StringUtil.safe(u.getEmail()));
             row.put("displayName", safeName(u));
-            row.put("role", safe(u.getRole()));
+            row.put("role", StringUtil.safe(u.getRole()));
             row.put("coins", u.getCoins() == null ? 0 : u.getCoins());
             row.put("problemsSolved", u.getProblemsSolved() == null ? 0 : u.getProblemsSolved());
             row.put("createdAt", u.getCreatedAt() != null ? u.getCreatedAt().toString() : "");
@@ -390,10 +391,11 @@ public class AdminPanelService {
                 .map(s -> {
                     Map<String, Object> row = new LinkedHashMap<>();
                     row.put("id", s.getId());
-                    row.put("type", safe(s.getStatus()));
-                    row.put("message", abbreviate(safe(s.getOutput()), 300));
+                    row.put("type", StringUtil.safe(s.getStatus()));
+                    row.put("message", abbreviate(StringUtil.safe(s.getOutput()), 300));
                     row.put("user", s.getUser() != null ? safeName(s.getUser()) : "-");
-                    row.put("problem", s.getProblem() != null ? safe(s.getProblem().getTitle()) : "-");
+                    row.put("problem",
+                            s.getProblem() != null ? StringUtil.safe(s.getProblem().getTitle()) : "-");
                     row.put("createdAt", s.getCreatedAt() != null ? s.getCreatedAt().toString() : "");
                     return row;
                 })
@@ -518,14 +520,14 @@ public class AdminPanelService {
     }
 
     private Map<String, Object> mapSubmission(Submission s) {
-        int runtimeMs = Math.max(8, Math.min(2200, safe(s.getCode()).length() / 3 + 12));
-        int memoryKb = 12000 + Math.min(6000, safe(s.getOutput()).length() * 2);
+        int runtimeMs = Math.max(8, Math.min(2200, StringUtil.safe(s.getCode()).length() / 3 + 12));
+        int memoryKb = 12000 + Math.min(6000, StringUtil.safe(s.getOutput()).length() * 2);
 
         return Map.of(
                 "id", s.getId(),
                 "user", s.getUser() != null ? safeName(s.getUser()) : "-",
-                "problem", s.getProblem() != null ? safe(s.getProblem().getTitle()) : "-",
-                "status", safe(s.getStatus()),
+                "problem", s.getProblem() != null ? StringUtil.safe(s.getProblem().getTitle()) : "-",
+                "status", StringUtil.safe(s.getStatus()),
                 "runtimeMs", runtimeMs,
                 "memoryKb", memoryKb,
                 "createdAt", s.getCreatedAt() != null ? s.getCreatedAt().toString() : "");
@@ -555,35 +557,11 @@ public class AdminPanelService {
                 .toList();
     }
 
-    private List<String> parseStringList(Object obj) {
-        if (obj instanceof List<?> list) {
-            return list.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isBlank()).toList();
-        }
-        if (obj == null)
-            return List.of();
-        String raw = String.valueOf(obj).trim();
-        if (raw.isBlank())
-            return List.of();
-        return List.of(raw.split(",")).stream().map(String::trim).filter(s -> !s.isBlank()).toList();
-    }
-
-    private int parseInt(Object value, int fallback) {
-        try {
-            return Integer.parseInt(String.valueOf(value));
-        } catch (Exception e) {
-            return fallback;
-        }
-    }
-
-    private String safe(Object value) {
-        return value == null ? "" : String.valueOf(value);
-    }
-
-    private String safeName(User user) {
-        String display = safe(user.getDisplayName()).trim();
+    public String safeName(User user) {
+        String display = StringUtil.safe(user.getDisplayName()).trim();
         if (!display.isBlank())
             return display;
-        return safe(user.getUsername());
+        return StringUtil.safe(user.getUsername());
     }
 
     private String defaultIfBlank(String value, String fallback) {
