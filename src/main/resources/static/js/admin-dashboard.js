@@ -45,8 +45,9 @@ async function adminRequest(path, options = {}) {
 
     if (res.status === 401) {
         localStorage.removeItem('cc_admin_session');
+        if (window.adminInterval) clearInterval(window.adminInterval);
         window.location.href = 'login.html';
-        throw new Error('Session expired');
+        return;
     }
 
     const payload = await res.json().catch(() => ({}));
@@ -202,15 +203,15 @@ async function renderProblems() {
             <button class="btn btn-primary btn-sm" id="addProblemBtn">Add Problem</button>
         </div>
         ${makeTable(
-            ['ID', 'Title', 'Difficulty', 'Tags', 'Actions'],
-            rows.map(row => `<tr>
+        ['ID', 'Title', 'Difficulty', 'Tags', 'Actions'],
+        rows.map(row => `<tr>
                 <td>${row.id}</td>
                 <td>${row.title}</td>
                 <td>${row.difficulty}</td>
                 <td>${(row.tags || []).join(', ')}</td>
                 <td><button class="btn btn-secondary btn-sm" data-del-problem="${row.id}">Delete</button></td>
             </tr>`)
-        )}
+    )}
     `;
 
     document.getElementById('addProblemBtn').onclick = async () => {
@@ -362,8 +363,8 @@ async function renderLeaderboard() {
             <button class="btn btn-secondary btn-sm" id="lbReset">Reset Leaderboard</button>
         </div>
         ${makeTable(
-            ['Rank', 'Name', 'Coins', 'Solved', 'Adjust'],
-            rows.map(row => `<tr>
+        ['Rank', 'Name', 'Coins', 'Solved', 'Adjust'],
+        rows.map(row => `<tr>
                 <td>${row.rank}</td>
                 <td>${row.name}</td>
                 <td>${row.coins}</td>
@@ -373,7 +374,7 @@ async function renderLeaderboard() {
                     <button class="btn btn-secondary btn-sm" data-minus="${row.id}">-25</button>
                 </td>
             </tr>`)
-        )}
+    )}
     `;
 
     document.getElementById('lbReset').onclick = async () => {
@@ -456,7 +457,7 @@ document.getElementById('adminLogoutBtn').addEventListener('click', () => {
 
 renderNav();
 renderSection();
-setInterval(() => {
+window.adminInterval = setInterval(() => {
     if (currentSection === 'Live Battles' || currentSection === 'Dashboard') {
         renderSection();
     }

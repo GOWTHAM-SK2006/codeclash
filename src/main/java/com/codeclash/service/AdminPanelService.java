@@ -44,6 +44,7 @@ public class AdminPanelService {
     private final BattleRepository battleRepository;
     private final BattleParticipantRepository battleParticipantRepository;
     private final Environment environment;
+    private final JwtUtil jwtUtil;
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -57,14 +58,13 @@ public class AdminPanelService {
     @Value("${app.admin.access-token-ttl-minutes:720}")
     private long tokenTtlMinutes;
 
-    private final Map<String, LocalDateTime> adminSessions = new ConcurrentHashMap<>();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Map<String, Object> settings = new ConcurrentHashMap<>(Map.of(
-            "battleRules", new HashMap<>(Map.of("fullscreenRequired", true, "disqualifyOnExit", true, "maxDurationMinutes", 30)),
+            "battleRules",
+            new HashMap<>(Map.of("fullscreenRequired", true, "disqualifyOnExit", true, "maxDurationMinutes", 30)),
             "difficulty", new HashMap<>(Map.of("easyMinutes", 10, "mediumMinutes", 20, "hardMinutes", 30)),
-            "platform", new HashMap<>(Map.of("allowRegistrations", true, "maintenanceMode", false))
-    ));
+            "platform", new HashMap<>(Map.of("allowRegistrations", true, "maintenanceMode", false))));
 
     public Map<String, Object> adminLogin(String username, String password, HttpServletRequest request) {
         if (!isProductionRequest(request)) {
@@ -75,14 +75,12 @@ public class AdminPanelService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin credentials");
         }
 
-        String token = UUID.randomUUID().toString();
-        adminSessions.put(token, LocalDateTime.now().plusMinutes(tokenTtlMinutes));
+        String token = jwtUtil.generateToken(username);
 
         return Map.of(
                 "ok", true,
                 "token", token,
-                "redirect", adminDashboardUrl
-        );
+                "redirect", adminDashboardUrl);
     }
 
     public void verifyAdminSession(String token) {
@@ -90,10 +88,13 @@ public class AdminPanelService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing admin session");
         }
 
-        LocalDateTime expiresAt = adminSessions.get(token);
-        if (expiresAt == null || expiresAt.isBefore(LocalDateTime.now())) {
-            adminSessions.remove(token);
+        if (!jwtUtil.validateToken(token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Admin session expired");
+        }
+
+        String username = jwtUtil.extractUsername(token);
+        if (!adminUsername.equals(username)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid admin session");
         }
     }
 
@@ -104,7 +105,8 @@ public class AdminPanelService {
         List<Battle> battles = battleRepository.findAll();
 
         long activeBattles = battles.stream()
-                .filter(b -> !"FINISHED".equalsIgnoreCase(b.getStatus()) && !"CANCELLED".equalsIgnoreCase(b.getStatus()))
+                .filter(b -> !"FINISHED".equalsIgnoreCase(b.getStatus())
+                        && !"CANCELLED".equalsIgnoreCase(b.getStatus()))
                 .count();
 
         List<Map<String, Object>> dailySubmissions = buildDailySubmissions(submissions, 7);
@@ -116,18 +118,16 @@ public class AdminPanelService {
                         "totalProblems", problems.size(),
                         "totalSubmissions", submissions.size(),
                         "totalBattlesPlayed", battles.size(),
-                        "activeBattles", activeBattles
-                ),
+                        "activeBattles", activeBattles),
                 "charts", Map.of(
                         "dailySubmissions", dailySubmissions,
-                        "activeUsers", activeUsers
-                )
-        );
+                        "activeUsers", activeUsers));
     }
 
     public List<Map<String, Object>> getLiveBattles() {
         List<Battle> battles = battleRepository.findAll().stream()
-                .filter(b -> !"FINISHED".equalsIgnoreCase(b.getStatus()) && !"CANCELLED".equalsIgnoreCase(b.getStatus()))
+                .filter(b -> !"FINISHED".equalsIgnoreCase(b.getStatus())
+                        && !"CANCELLED".equalsIgnoreCase(b.getStatus()))
                 .sorted(Comparator.comparing(Battle::getStartedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
 
@@ -139,8 +139,10 @@ public class AdminPanelService {
 
             String status = "Coding";
             boolean anySubmitted = participants.stream().anyMatch(p -> p.getSubmittedAt() != null);
-            if ("FINISHED".equalsIgnoreCase(battle.getStatus())) status = "Finished";
-            else if (anySubmitted) status = "Submitted";
+            if ("FINISHED".equalsIgnoreCase(battle.getStatus()))
+                status = "Finished";
+            else if (anySubmitted)
+                status = "Submitted";
 
             long elapsed = 0;
             if (battle.getStartedAt() != null) {
@@ -155,8 +157,7 @@ public class AdminPanelService {
                     "player2Id", p2 != null ? p2.getUser().getId() : 0,
                     "problemName", battle.getProblem() != null ? battle.getProblem().getTitle() : "Problem",
                     "status", status,
-                    "elapsedSec", Math.max(0, elapsed)
-            ));
+                    "elapsedSec", Math.max(0, elapsed)));
         }
         return rows;
     }
@@ -216,16 +217,21 @@ public class AdminPanelService {
             }
 
             LocalDate matchDate = battle.getEndedAt() != null ? battle.getEndedAt().toLocalDate() : null;
-            if (date != null && !date.isBlank() && matchDate != null && !date.equals(matchDate.toString())) continue;
+            if (date != null && !date.isBlank() && matchDate != null && !date.equals(matchDate.toString()))
+                continue;
             if (user != null && !user.isBlank()) {
                 String q = user.toLowerCase();
-                if (!p1.toLowerCase().contains(q) && !p2.toLowerCase().contains(q)) continue;
+                if (!p1.toLowerCase().contains(q) && !p2.toLowerCase().contains(q))
+                    continue;
             }
             if (result != null && !result.isBlank()) {
                 String computed = "Draw";
-                if ("Draw".equals(winner)) computed = "Draw";
-                else computed = "Win";
-                if (!computed.equalsIgnoreCase(result)) continue;
+                if ("Draw".equals(winner))
+                    computed = "Draw";
+                else
+                    computed = "Win";
+                if (!computed.equalsIgnoreCase(result))
+                    continue;
             }
 
             rows.add(Map.of(
@@ -236,8 +242,7 @@ public class AdminPanelService {
                     "problem", battle.getProblem() != null ? battle.getProblem().getTitle() : "-",
                     "durationSec", Math.max(0, durationSec),
                     "status", battle.getStatus(),
-                    "endedAt", battle.getEndedAt() != null ? battle.getEndedAt().toString() : ""
-            ));
+                    "endedAt", battle.getEndedAt() != null ? battle.getEndedAt().toString() : ""));
         }
 
         return rows;
@@ -252,8 +257,7 @@ public class AdminPanelService {
                 "tags", splitTags(p.getCategory()),
                 "constraints", "",
                 "functionSignature", extractFunctionSignature(p.getWrapperConfig()),
-                "points", p.getPoints() != null ? p.getPoints() : 10
-        )).toList();
+                "points", p.getPoints() != null ? p.getPoints() : 10)).toList();
     }
 
     public Problem createProblem(Map<String, Object> body) {
@@ -274,14 +278,22 @@ public class AdminPanelService {
         Problem p = problemRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Problem not found"));
 
-        if (body.containsKey("title")) p.setTitle(safe(body.get("title")));
-        if (body.containsKey("description")) p.setDescription(safe(body.get("description")));
-        if (body.containsKey("difficulty")) p.setDifficulty(safe(body.get("difficulty")));
-        if (body.containsKey("tags")) p.setCategory(String.join(",", parseStringList(body.get("tags"))));
-        if (body.containsKey("points")) p.setPoints(parseInt(body.get("points"), p.getPoints() == null ? 10 : p.getPoints()));
-        if (body.containsKey("starterCode")) p.setStarterCode(safe(body.get("starterCode")));
-        if (body.containsKey("expectedOutput")) p.setExpectedOutput(safe(body.get("expectedOutput")));
-        if (body.containsKey("functionSignature")) p.setWrapperConfig(safe(body.get("functionSignature")));
+        if (body.containsKey("title"))
+            p.setTitle(safe(body.get("title")));
+        if (body.containsKey("description"))
+            p.setDescription(safe(body.get("description")));
+        if (body.containsKey("difficulty"))
+            p.setDifficulty(safe(body.get("difficulty")));
+        if (body.containsKey("tags"))
+            p.setCategory(String.join(",", parseStringList(body.get("tags"))));
+        if (body.containsKey("points"))
+            p.setPoints(parseInt(body.get("points"), p.getPoints() == null ? 10 : p.getPoints()));
+        if (body.containsKey("starterCode"))
+            p.setStarterCode(safe(body.get("starterCode")));
+        if (body.containsKey("expectedOutput"))
+            p.setExpectedOutput(safe(body.get("expectedOutput")));
+        if (body.containsKey("functionSignature"))
+            p.setWrapperConfig(safe(body.get("functionSignature")));
 
         return problemRepository.save(p);
     }
@@ -397,8 +409,7 @@ public class AdminPanelService {
                     "id", u.getId(),
                     "name", safeName(u),
                     "coins", u.getCoins() == null ? 0 : u.getCoins(),
-                    "problemsSolved", u.getProblemsSolved() == null ? 0 : u.getProblemsSolved()
-            ));
+                    "problemsSolved", u.getProblemsSolved() == null ? 0 : u.getProblemsSolved()));
         }
         return rows;
     }
@@ -426,10 +437,12 @@ public class AdminPanelService {
 
     @SuppressWarnings("unchecked")
     public Map<String, Object> updateSettings(Map<String, Object> payload) {
-        if (payload == null) return getSettings();
+        if (payload == null)
+            return getSettings();
         payload.forEach((key, value) -> {
             if (value instanceof Map<?, ?> mapValue) {
-                Map<String, Object> section = (Map<String, Object>) settings.computeIfAbsent(key, k -> new ConcurrentHashMap<>());
+                Map<String, Object> section = (Map<String, Object>) settings.computeIfAbsent(key,
+                        k -> new ConcurrentHashMap<>());
                 mapValue.forEach((k, v) -> section.put(String.valueOf(k), v));
             } else {
                 settings.put(key, value);
@@ -440,7 +453,8 @@ public class AdminPanelService {
 
     private boolean isProductionRequest(HttpServletRequest request) {
         String host = request != null ? request.getServerName() : "";
-        boolean localhost = host != null && (host.contains("localhost") || host.contains("127.0.0.1") || host.contains("0.0.0.0"));
+        boolean localhost = host != null
+                && (host.contains("localhost") || host.contains("127.0.0.1") || host.contains("0.0.0.0"));
 
         String[] activeProfiles = environment.getActiveProfiles();
         boolean devProfile = false;
@@ -465,8 +479,7 @@ public class AdminPanelService {
             LocalDate day = today.minusDays(i);
             rows.add(Map.of(
                     "day", day.toString(),
-                    "count", byDay.getOrDefault(day, 0L)
-            ));
+                    "count", byDay.getOrDefault(day, 0L)));
         }
         return rows;
     }
@@ -480,24 +493,24 @@ public class AdminPanelService {
                 .collect(Collectors.groupingBy(
                         s -> s.getCreatedAt().withMinute(0).withSecond(0).withNano(0),
                         Collectors.mapping(s -> s.getUser() != null ? s.getUser().getId() : -1L,
-                                Collectors.collectingAndThen(Collectors.toSet(), set -> (long) set.size()))
-                ));
+                                Collectors.collectingAndThen(Collectors.toSet(), set -> (long) set.size()))));
 
         List<Map<String, Object>> rows = new ArrayList<>();
         for (int i = hours - 1; i >= 0; i--) {
             LocalDateTime slot = now.minusHours(i).withMinute(0).withSecond(0).withNano(0);
             rows.add(Map.of(
                     "hour", slot.toLocalTime().truncatedTo(ChronoUnit.HOURS).toString(),
-                    "count", byHour.getOrDefault(slot, 0L)
-            ));
+                    "count", byHour.getOrDefault(slot, 0L)));
         }
         return rows;
     }
 
     private List<Map<String, Object>> parseTestcases(String raw) {
-        if (raw == null || raw.isBlank()) return new ArrayList<>();
+        if (raw == null || raw.isBlank())
+            return new ArrayList<>();
         try {
-            return objectMapper.readValue(raw, new TypeReference<>() {});
+            return objectMapper.readValue(raw, new TypeReference<>() {
+            });
         } catch (Exception e) {
             return new ArrayList<>();
         }
@@ -514,16 +527,18 @@ public class AdminPanelService {
                 "status", safe(s.getStatus()),
                 "runtimeMs", runtimeMs,
                 "memoryKb", memoryKb,
-                "createdAt", s.getCreatedAt() != null ? s.getCreatedAt().toString() : ""
-        );
+                "createdAt", s.getCreatedAt() != null ? s.getCreatedAt().toString() : "");
     }
 
     private String extractFunctionSignature(String wrapperConfig) {
-        if (wrapperConfig == null || wrapperConfig.isBlank()) return "";
+        if (wrapperConfig == null || wrapperConfig.isBlank())
+            return "";
         try {
-            Map<String, Object> map = objectMapper.readValue(wrapperConfig, new TypeReference<>() {});
+            Map<String, Object> map = objectMapper.readValue(wrapperConfig, new TypeReference<>() {
+            });
             Object name = map.get("functionName");
-            if (name == null) return wrapperConfig;
+            if (name == null)
+                return wrapperConfig;
             return String.valueOf(name);
         } catch (Exception e) {
             return wrapperConfig;
@@ -531,7 +546,8 @@ public class AdminPanelService {
     }
 
     private List<String> splitTags(String category) {
-        if (category == null || category.isBlank()) return List.of();
+        if (category == null || category.isBlank())
+            return List.of();
         return List.of(category.split(",")).stream()
                 .map(String::trim)
                 .filter(s -> !s.isBlank())
@@ -542,9 +558,11 @@ public class AdminPanelService {
         if (obj instanceof List<?> list) {
             return list.stream().map(String::valueOf).map(String::trim).filter(s -> !s.isBlank()).toList();
         }
-        if (obj == null) return List.of();
+        if (obj == null)
+            return List.of();
         String raw = String.valueOf(obj).trim();
-        if (raw.isBlank()) return List.of();
+        if (raw.isBlank())
+            return List.of();
         return List.of(raw.split(",")).stream().map(String::trim).filter(s -> !s.isBlank()).toList();
     }
 
@@ -562,7 +580,8 @@ public class AdminPanelService {
 
     private String safeName(User user) {
         String display = safe(user.getDisplayName()).trim();
-        if (!display.isBlank()) return display;
+        if (!display.isBlank())
+            return display;
         return safe(user.getUsername());
     }
 
@@ -571,8 +590,10 @@ public class AdminPanelService {
     }
 
     private String abbreviate(String value, int max) {
-        if (value == null) return "";
-        if (value.length() <= max) return value;
+        if (value == null)
+            return "";
+        if (value.length() <= max)
+            return value;
         return value.substring(0, max) + "...";
     }
 }
