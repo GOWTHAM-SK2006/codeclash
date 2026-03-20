@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contest Arena — CodeClash</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .contest-hero {
+            max-width: 800px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .arena-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .arena-card.live {
+            border-color: var(--success);
+            box-shadow: 0 0 40px rgba(0, 255, 128, 0.1);
+        }
+
+        .timer-big {
+            font-size: 5rem;
+            font-weight: 900;
+            color: var(--accent);
+            font-family: monospace;
+            letter-spacing: -3px;
+            margin: 1.5rem 0;
+        }
+
+        .status-pill {
+            display: inline-block;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-weight: 800;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            margin-bottom: 2rem;
+        }
+
+        .pill-upcoming {
+            background: #222;
+            color: #777;
+        }
+
+        .pill-live {
+            background: var(--success);
+            color: white;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 128, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 15px rgba(0, 255, 128, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 128, 0);
+            }
+        }
+
+        .eligibility-check {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-enter {
+            width: 100%;
+            padding: 1.2rem;
+            font-size: 1.25rem;
+            font-weight: 900;
+            border-radius: 16px;
+            margin-top: 2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .problem-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 3rem;
+            text-align: left;
+        }
+
+        .problem-item {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            padding: 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .problem-item:hover {
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="logo">Code<span style="color:var(--accent)">Clash</span></a>
+            <div class="nav-links">
+                <a href="/dashboard.html">Dashboard</a>
+                <a href="/events.html">Events</a>
+            </div>
+            <div id="userProfile" class="user-profile"></div>
+        </div>
+    </nav>
+
+    <div class="contest-hero">
+        <div id="arenaCard" class="arena-card">
+            <div id="contestStatus" class="status-pill pill-upcoming">Loading...</div>
+            <h1 id="contestTitle" style="font-size: 3rem; font-weight: 900; margin-bottom: 0.5rem;">Arena Entrance</h1>
+            <p id="eventParentTitle" style="color: var(--text-secondary); margin-bottom: 2.5rem;">Event Title</p>
+
+            <div id="timerContainer">
+                <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 1px;"
+                    id="timerLabel">Arena Opens In</div>
+                <div id="contestTimer" class="timer-big">00:00:00</div>
+            </div>
+
+            <div id="eligibilityMessage" class="eligibility-check">
+                <p style="color: var(--text-secondary)">Checking your eligibility...</p>
+            </div>
+
+            <div id="actionArea" style="display: none;">
+                <button class="btn btn-primary btn-enter" id="enterArenaBtn">Enter Arena 🔥</button>
+            </div>
+        </div>
+
+        <div id="problemArea" style="display: none;">
+            <h2 style="text-align: left; margin-bottom: 1.5rem; font-weight: 800;">Battle Objectives</h2>
+            <div id="problemList" class="problem-list">
+                <!-- Problems injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/contest.js"></script>
+</body>
+
+</html>

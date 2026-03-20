@@ -36,12 +36,13 @@ function renderNav(activePage) {
             <li><a href="learn.html" class="${activePage === 'learn' ? 'active' : ''}">Learn</a></li>
             <li><a href="problems.html" class="${activePage === 'problems' ? 'active' : ''}">Problems</a></li>
             <li><a href="battle-mode.html" class="${activePage === 'battle' ? 'active' : ''}">Battle</a></li>
+            <li><a href="events.html" class="${activePage === 'events' ? 'active' : ''}">Events</a></li>
             <li><a href="leaderboard.html" class="${activePage === 'leaderboard' ? 'active' : ''}">Leaderboard</a></li>
             <li><a href="friends.html" class="${activePage === 'friends' ? 'active' : ''}">Friends</a></li>
         </ul>
         <div class="nav-auth">
             ${isLoggedIn
-             ? `<div class="notification-wrap" id="friendNotificationWrap">
+            ? `<div class="notification-wrap" id="friendNotificationWrap">
                   <button class="notification-bell" id="friendNotificationBell" aria-label="Friend notifications" title="Friend notifications">
                       🔔
                       <span class="notification-badge hidden" id="friendNotificationBadge">0</span>

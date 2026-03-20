@@ -14,7 +14,8 @@ const sections = [
     'Submissions',
     'Leaderboard',
     'Error Monitoring',
-    'Settings'
+    'Settings',
+    'Events'
 ];
 
 let currentSection = 'Dashboard';
@@ -445,6 +446,7 @@ async function renderSection() {
         if (currentSection === 'Leaderboard') return await renderLeaderboard();
         if (currentSection === 'Error Monitoring') return await renderErrors();
         if (currentSection === 'Settings') return await renderSettings();
+        if (currentSection === 'Events') return await renderEvents();
     } catch (e) {
         showAlert(e.message || 'Failed to load section');
     }
@@ -462,3 +464,218 @@ window.adminInterval = setInterval(() => {
         renderSection();
     }
 }, 5000);
+
+async function renderEvents() {
+    const data = await adminRequest('/events');
+    const container = document.createElement('div');
+    container.className = 'events-view';
+    
+    sectionRoot.innerHTML = `
+        <style>
+            .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
+            .event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+            .event-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+            .event-card.create-new { border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; min-height: 200px; }
+            .event-card.create-new:hover { border-color: var(--accent); color: var(--accent); }
+            .event-badge { position: absolute; top: 1rem; right: 1rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+            .badge-live { background: #ff6b00; color: white; box-shadow: 0 0 15px rgba(255,107,0,0.4); }
+            .badge-upcoming { background: #333; color: #999; }
+            .event-title { font-size: 1.25rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--text-primary); }
+            .event-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
+            .info-item b { display: block; color: var(--text-primary); margin-bottom: 0.2rem; }
+            .event-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+            
+            /* Wizard Styles */
+            .wizard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
+            .wizard-card { background: #111; border: 1px solid var(--border); width: 500px; border-radius: 24px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+            .wizard-step { display: none; }
+            .wizard-step.active { display: block; }
+            .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
+            .step-dot { flex: 1; height: 4px; background: #222; border-radius: 2px; }
+            .step-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+        </style>
+        
+        <div class="events-grid">
+            <div class="event-card create-new" id="openWizardBtn">
+                <span style="font-size: 2.5rem; margin-bottom: 0.5rem;">➕</span>
+                <h3 style="font-weight: 800;">Create New Event</h3>
+            </div>
+            ${data.map(event => `
+                <div class="event-card">
+                    <div class="event-title">${event.title}</div>
+                    <div style="font-size: 0.85rem; color: var(--accent); font-weight: 700;">${event.biddingTitle}</div>
+                    
+                    <div class="event-info">
+                        <div class="info-item"><b>Entry Fee</b>🪙 ${event.entryFee}</div>
+                        <div class="info-item"><b>Max Spots</b>👥 ${event.maxParticipants}</div>
+                        <div class="info-item"><b>Bidding Start</b>📅 ${new Date(event.biddingStartTime).toLocaleString()}</div>
+                        <div class="info-item"><b>Contest Start</b>🚀 ${new Date(event.contestStartTime).toLocaleString()}</div>
+                    </div>
+
+                    <div class="event-actions">
+                        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="editEvent('${event.id}')">✏️ Edit</button>
+                        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="previewEvent('${event.id}')">👁 Preview</button>
+                        <button class="btn btn-secondary btn-sm" style="color:#ff4444" onclick="deleteEvent('${event.id}')">🗑 Delete</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    document.getElementById('openWizardBtn').onclick = openCreateWizard;
+}
+
+function openCreateWizard() {
+    const overlay = document.createElement('div');
+    overlay.className = 'wizard-overlay';
+    overlay.innerHTML = `
+        <div class="wizard-card">
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1"></div>
+                <div class="step-dot" id="dot2"></div>
+                <div class="step-dot" id="dot3"></div>
+            </div>
+
+            <!-- STEP 1: BIDDING -->
+            <div class="wizard-step active" id="step1">
+                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 1: Bidding 🪙</h2>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Configure the entry and timing.</p>
+                
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label>Event Title</label>
+                    <input type="text" id="ev_title" class="input" placeholder="e.g. Weekend Clash #42" style="width:100%">
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label>Bidding Title</label>
+                    <input type="text" id="ev_b_title" class="input" placeholder="e.g. Elite Qualifiers" style="width:100%">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
+                    <div class="form-group">
+                        <label>Entry Fee</label>
+                        <input type="number" id="ev_fee" class="input" value="100" style="width:100%">
+                    </div>
+                    <div class="form-group">
+                        <label>Bidding Start</label>
+                        <input type="datetime-local" id="ev_b_start" class="input" style="width:100%">
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="toStep2" style="width:100%;padding:0.8rem;font-weight:800;">Next: Contest Details →</button>
+            </div>
+
+            <!-- STEP 2: CONTEST -->
+            <div class="wizard-step" id="step2">
+                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 2: Contest 🚀</h2>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Set the playground rules.</p>
+                
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label>Contest Title</label>
+                    <input type="text" id="ev_c_title" class="input" placeholder="e.g. The Grand Arena" style="width:100%">
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                    <div class="form-group">
+                        <label>Contest Start</label>
+                        <input type="datetime-local" id="ev_c_start" class="input" style="width:100%">
+                    </div>
+                    <div class="form-group">
+                        <label>Duration</label>
+                        <select id="ev_c_dur" class="input" style="width:100%;background:#0a0a0a;">
+                            <option value="30">30 Minutes</option>
+                            <option value="45">45 Minutes</option>
+                            <option value="60" selected>60 Minutes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Problem IDs (comma-separated)</label>
+                    <input type="text" id="ev_probs" class="input" placeholder="1, 2, 3" style="width:100%">
+                </div>
+                <div style="display:flex;gap:1rem;">
+                    <button class="btn btn-secondary" id="backTo1" style="flex:1">Back</button>
+                    <button class="btn btn-primary" id="toStep3" style="flex:2;font-weight:800;">Next: Selection →</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: SELECTION -->
+            <div class="wizard-step" id="step3">
+                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 3: Selection 🏆</h2>
+                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Finalize participant limits.</p>
+                
+                <div class="form-group" style="margin-bottom:2rem;">
+                    <label>Max Winners (Top N)</label>
+                    <input type="number" id="ev_max" class="input" value="10" style="width:100%;font-size:1.5rem;text-align:center;">
+                </div>
+                
+                <div style="display:flex;gap:1rem;">
+                    <button class="btn btn-secondary" id="backTo2" style="flex:1">Back</button>
+                    <button class="btn btn-primary" id="finishWizard" style="flex:2;font-weight:900;background:linear-gradient(45deg, #ff6b00, #ff9e00);box-shadow: 0 0 20px rgba(255,107,0,0.3);">Create Event 🚀</button>
+                </div>
+            </div>
+            
+            <button onclick="this.closest('.wizard-overlay').remove()" style="position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:#555;cursor:pointer;font-size:1.5rem;">✕</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    // Navigation logic
+    document.getElementById('toStep2').onclick = () => {
+        document.getElementById('step1').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('dot2').classList.add('active');
+    };
+    document.getElementById('backTo1').onclick = () => {
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step1').classList.add('active');
+        document.getElementById('dot2').classList.remove('active');
+    };
+    document.getElementById('toStep3').onclick = () => {
+        document.getElementById('step2').classList.remove('active');
+        document.getElementById('step3').classList.add('active');
+        document.getElementById('dot3').classList.add('active');
+    };
+    document.getElementById('backTo2').onclick = () => {
+        document.getElementById('step3').classList.remove('active');
+        document.getElementById('step2').classList.add('active');
+        document.getElementById('dot3').classList.remove('active');
+    };
+
+    document.getElementById('finishWizard').onclick = async () => {
+        const body = {
+            title: document.getElementById('ev_title').value,
+            biddingTitle: document.getElementById('ev_b_title').value,
+            entryFee: parseInt(document.getElementById('ev_fee').value),
+            biddingStartTime: document.getElementById('ev_b_start').value,
+            contestTitle: document.getElementById('ev_c_title').value,
+            contestStartTime: document.getElementById('ev_c_start').value,
+            contestDuration: document.getElementById('ev_c_dur').value,
+            problemIds: document.getElementById('ev_probs').value,
+            maxParticipants: parseInt(document.getElementById('ev_max').value)
+        };
+
+        try {
+            await adminRequest('/events', { method: 'POST', body: JSON.stringify(body) });
+            overlay.remove();
+            showAlert('Event created successfully! 🚀');
+            renderEvents();
+        } catch (e) {
+            showAlert(e.message);
+        }
+    };
+}
+
+async function deleteEvent(id) {
+    if (!confirm('Are you sure you want to delete this event?')) return;
+    try {
+        await adminRequest(`/events/${id}`, { method: 'DELETE' });
+        renderEvents();
+    } catch (e) {
+        showAlert(e.message);
+    }
+}
+
+function editEvent(id) {
+    showAlert('Edit functionality coming soon! For now, please recreate the event.');
+}
+
+function previewEvent(id) {
+    window.open('/events.html#' + id, '_blank');
+}
