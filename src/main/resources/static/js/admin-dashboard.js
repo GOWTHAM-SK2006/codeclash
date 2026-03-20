@@ -774,136 +774,102 @@ async function deleteAndClose() {
 function openCreateWizard() {
     const overlay = document.createElement('div');
     overlay.className = 'wizard-overlay';
+
+    // Calculate smart defaults
+    const now = new Date();
+    const bidStart = new Date(now.getTime() + 2 * 60000); // +2 mins
+    const contestStart = new Date(bidStart.getTime() + 3 * 60000); // +3 mins (covering 2m bid duration)
+
+    const fmt = (d) => {
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+        return d.toISOString().slice(0, 16);
+    };
+
     overlay.innerHTML = `
-        <div class="wizard-card">
-            <div class="step-indicator">
-                <div class="step-dot active" id="dot1"></div>
-                <div class="step-dot" id="dot2"></div>
-                <div class="step-dot" id="dot3"></div>
+        <div class="wizard-card" style="width: 700px; padding: 2.5rem; background: #0c0c0c; border: 1px solid #333; position: relative; overflow: visible;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-weight: 900; font-size: 2rem; background: linear-gradient(45deg, #fff, #555); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Quick Event Creator ⚡</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">Launch a new coding battle in seconds.</p>
             </div>
 
-            <!-- STEP 1: BIDDING -->
-            <div class="wizard-step active" id="step1">
-                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 1: Bidding 🪙</h2>
-                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Configure the entry and timing.</p>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label>Event Title</label>
-                    <input type="text" id="ev_title" class="input" placeholder="e.g. Weekend Clash #42" style="width:100%">
-                </div>
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label>Bidding Title</label>
-                    <input type="text" id="ev_b_title" class="input" placeholder="e.g. Elite Qualifiers" style="width:100%">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;">
-                    <div class="form-group">
-                        <label>Entry Fee</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <!-- Left: Info -->
+                <div>
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label style="color:var(--accent); font-size:0.75rem; letter-spacing:1px;">EVENT TITLE</label>
+                        <input type="text" id="ev_title" class="input" placeholder="e.g. Midnight Clash #12" style="width:100%; font-size: 1.1rem;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label>ENTRY FEE (COINS)</label>
                         <input type="number" id="ev_fee" class="input" value="100" style="width:100%">
                     </div>
-                    <div class="form-group">
-                        <label>Bidding Start</label>
-                        <input type="datetime-local" id="ev_b_start" class="input" style="width:100%">
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label>MAX SELECTED USERS</label>
+                        <input type="number" id="ev_max" class="input" value="10" style="width:100%">
                     </div>
                 </div>
-                <button class="btn btn-primary" id="toStep2" style="width:100%;padding:0.8rem;font-weight:800;">Next: Contest Details →</button>
-            </div>
 
-            <!-- STEP 2: CONTEST -->
-            <div class="wizard-step" id="step2">
-                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 2: Contest 🚀</h2>
-                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Set the playground rules.</p>
-                
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label>Contest Title</label>
-                    <input type="text" id="ev_c_title" class="input" placeholder="e.g. The Grand Arena" style="width:100%">
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
-                    <div class="form-group">
-                        <label>Contest Start</label>
-                        <input type="datetime-local" id="ev_c_start" class="input" style="width:100%">
+                <!-- Right: Timing & Logic -->
+                <div>
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label style="color:var(--accent); font-size:0.75rem; letter-spacing:1px;">BIDDING START (IST)</label>
+                        <input type="datetime-local" id="ev_b_start" class="input" value="${fmt(bidStart)}" style="width:100%">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 1.2rem;">
+                        <label>CONTEST START (AUTO: +3M)</label>
+                        <input type="datetime-local" id="ev_c_start" class="input" value="${fmt(contestStart)}" style="width:100%">
                     </div>
                     <div class="form-group">
-                        <label>Duration</label>
-                        <select id="ev_c_dur" class="input" style="width:100%;background:#0a0a0a;">
-                            <option value="30">30 Minutes</option>
-                            <option value="45">45 Minutes</option>
-                            <option value="60" selected>60 Minutes</option>
-                        </select>
+                        <label>PROBLEM IDS (SPLIT BY ,)</label>
+                        <input type="text" id="ev_probs" class="input" placeholder="1, 2, 5" style="width:100%">
                     </div>
-                </div>
-                <div class="form-group" style="margin-bottom:1.5rem;">
-                    <label>Problem IDs (comma-separated)</label>
-                    <input type="text" id="ev_probs" class="input" placeholder="1, 2, 3" style="width:100%">
-                </div>
-                <div style="display:flex;gap:1rem;">
-                    <button class="btn btn-secondary" id="backTo1" style="flex:1">Back</button>
-                    <button class="btn btn-primary" id="toStep3" style="flex:2;font-weight:800;">Next: Selection →</button>
                 </div>
             </div>
 
-            <!-- STEP 3: SELECTION -->
-            <div class="wizard-step" id="step3">
-                <h2 style="font-weight:900;margin-bottom:0.5rem;">Step 3: Selection 🏆</h2>
-                <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Finalize participant limits.</p>
-                
-                <div class="form-group" style="margin-bottom:2rem;">
-                    <label>Max Winners (Top N)</label>
-                    <input type="number" id="ev_max" class="input" value="10" style="width:100%;font-size:1.5rem;text-align:center;">
-                </div>
-                
-                <div style="display:flex;gap:1rem;">
-                    <button class="btn btn-secondary" id="backTo2" style="flex:1">Back</button>
-                    <button class="btn btn-primary" id="finishWizard" style="flex:2;font-weight:900;background:linear-gradient(45deg, #ff6b00, #ff9e00);box-shadow: 0 0 20px rgba(255,107,0,0.3);">Create Event 🚀</button>
-                </div>
+            <div style="margin-top: 2.5rem; display: flex; gap: 1rem;">
+                <button class="btn btn-secondary" onclick="this.closest('.wizard-overlay').remove()" style="flex: 1; padding: 1rem;">Cancel</button>
+                <button class="btn btn-primary" id="finishQuickCreate" style="flex: 2; padding: 1rem; font-weight: 900; background: linear-gradient(45deg, #ff6b00, #ff9e00); box-shadow: 0 10px 30px rgba(255,107,0,0.3);">🚀 Deploy Event Live</button>
             </div>
-            
-            <button onclick="this.closest('.wizard-overlay').remove()" style="position:absolute;top:1rem;right:1rem;background:transparent;border:none;color:#555;cursor:pointer;font-size:1.5rem;">✕</button>
+
+            <!-- Floating Effect -->
+            <div style="position: absolute; top: -50px; left: 50%; transform: translateX(-50%); width: 100px; height: 100px; background: var(--accent); filter: blur(80px); opacity: 0.2; pointer-events: none;"></div>
         </div>
     `;
+
     document.body.appendChild(overlay);
 
-    // Navigation logic
-    document.getElementById('toStep2').onclick = () => {
-        document.getElementById('step1').classList.remove('active');
-        document.getElementById('step2').classList.add('active');
-        document.getElementById('dot2').classList.add('active');
-    };
-    document.getElementById('backTo1').onclick = () => {
-        document.getElementById('step2').classList.remove('active');
-        document.getElementById('step1').classList.add('active');
-        document.getElementById('dot2').classList.remove('active');
-    };
-    document.getElementById('toStep3').onclick = () => {
-        document.getElementById('step2').classList.remove('active');
-        document.getElementById('step3').classList.add('active');
-        document.getElementById('dot3').classList.add('active');
-    };
-    document.getElementById('backTo2').onclick = () => {
-        document.getElementById('step3').classList.remove('active');
-        document.getElementById('step2').classList.add('active');
-        document.getElementById('dot3').classList.remove('active');
+    // Sync Titles logic
+    document.getElementById('ev_title').oninput = (e) => {
+        const val = e.target.value;
+        // Automatically set similar bidding/contest titles if needed (though we hidden them for simplicity)
     };
 
-    document.getElementById('finishWizard').onclick = async () => {
+    document.getElementById('finishQuickCreate').onclick = async () => {
         const body = {
-            title: document.getElementById('ev_title').value,
-            biddingTitle: document.getElementById('ev_b_title').value,
-            entryFee: parseInt(document.getElementById('ev_fee').value),
+            title: document.getElementById('ev_title').value || 'Untitled Clash',
+            biddingTitle: 'Selection Phase: ' + (document.getElementById('ev_title').value || 'New Battle'),
+            entryFee: parseInt(document.getElementById('ev_fee').value) || 100,
             biddingStartTime: document.getElementById('ev_b_start').value,
-            contestTitle: document.getElementById('ev_c_title').value,
+            contestTitle: 'Combat Arena: ' + (document.getElementById('ev_title').value || 'New Battle'),
             contestStartTime: document.getElementById('ev_c_start').value,
-            contestDuration: document.getElementById('ev_c_dur').value,
-            problemIds: document.getElementById('ev_probs').value,
-            maxParticipants: parseInt(document.getElementById('ev_max').value)
+            contestDuration: 60, // Default 60 mins
+            problemIds: document.getElementById('ev_probs').value || "1",
+            maxParticipants: parseInt(document.getElementById('ev_max').value) || 10
         };
+
+        const btn = document.getElementById('finishQuickCreate');
+        btn.disabled = true;
+        btn.innerHTML = '⚡ Deploying...';
 
         try {
             await adminRequest('/events', { method: 'POST', body: JSON.stringify(body) });
             overlay.remove();
-            showAlert('Event created successfully! 🚀');
+            showAlert('Event Deployed Successfully! 🚀');
             renderEvents();
         } catch (e) {
             showAlert(e.message);
+            btn.disabled = false;
+            btn.innerHTML = '🚀 Deploy Event Live';
         }
     };
 }
