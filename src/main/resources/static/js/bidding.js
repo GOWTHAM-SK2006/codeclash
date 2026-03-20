@@ -132,5 +132,6 @@ document.getElementById('addBidBtn').onclick = async () => {
     }
 };
 
+renderNav('events');
 refresh();
 setInterval(refresh, 3000); // Higher frequency for bidding

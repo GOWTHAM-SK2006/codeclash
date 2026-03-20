@@ -8,9 +8,9 @@
     <link rel="stylesheet" href="css/styles.css">
     <style>
         .bidding-layout {
-            max-width: 1000px;
-            margin: 2rem auto;
-            padding: 0 1rem;
+            max-width: 1400px;
+            margin: 1rem auto;
+            padding: 0 2rem;
             display: grid;
             grid-template-columns: 1fr 350px;
             gap: 2rem;
@@ -199,16 +199,7 @@
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">Code<span style="color:var(--accent)">Clash</span></a>
-            <div class="nav-links">
-                <a href="/dashboard.html">Dashboard</a>
-                <a href="/events.html">Events</a>
-            </div>
-            <div id="userProfile" class="user-profile"></div>
-        </div>
-    </nav>
+    <nav class="navbar" id="navbar"></nav>
 
     <div class="bidding-layout">
         <div class="main-column">
@@ -264,6 +255,7 @@
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/bidding.js"></script>
 </body>
 

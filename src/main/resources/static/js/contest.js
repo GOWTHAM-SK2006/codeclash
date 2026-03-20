@@ -114,5 +114,6 @@ async function loadProblems() {
     `).join('');
 }
 
+renderNav('events');
 fetchStatus();
 setInterval(fetchStatus, 5000);

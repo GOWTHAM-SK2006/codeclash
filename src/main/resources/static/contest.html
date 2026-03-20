@@ -8,8 +8,8 @@
     <link rel="stylesheet" href="css/styles.css">
     <style>
         .contest-hero {
-            max-width: 800px;
-            margin: 4rem auto;
+            max-width: 1200px;
+            margin: 2rem auto;
             text-align: center;
             padding: 2rem;
         }
@@ -118,16 +118,7 @@
 </head>
 
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <a href="/" class="logo">Code<span style="color:var(--accent)">Clash</span></a>
-            <div class="nav-links">
-                <a href="/dashboard.html">Dashboard</a>
-                <a href="/events.html">Events</a>
-            </div>
-            <div id="userProfile" class="user-profile"></div>
-        </div>
-    </nav>
+    <nav class="navbar" id="navbar"></nav>
 
     <div class="contest-hero">
         <div id="arenaCard" class="arena-card">
@@ -159,6 +150,7 @@
     </div>
 
     <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/contest.js"></script>
 </body>
 
