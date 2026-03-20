@@ -38,6 +38,7 @@ public class AdminEventController {
                 .contestDurationMinutes(Integer.parseInt(String.valueOf(body.get("contestDuration"))))
                 .problemIds(String.valueOf(body.get("problemIds")))
                 .maxParticipants(Integer.parseInt(String.valueOf(body.get("maxParticipants"))))
+                .active(true)
                 .build();
 
         return eventService.createEvent(event);

@@ -8,7 +8,7 @@ if (!eventId) {
 
 async function refresh() {
     try {
-        const data = await apiRequest(`/events/${eventId}`);
+        const data = await api.request(`/events/${eventId}`);
         currentEvent = data;
         render(data);
     } catch (e) {
@@ -120,7 +120,7 @@ function showRankUpNotif(msg) {
 
 document.getElementById('addBidBtn').onclick = async () => {
     try {
-        const res = await apiRequest(`/events/${eventId}/bid`, { method: 'POST' });
+        const res = await api.request(`/events/${eventId}/bid`, { method: 'POST' });
         // Update local user coin cache
         const user = JSON.parse(localStorage.getItem('cc_user') || '{}');
         user.coins -= currentEvent.entryFee;

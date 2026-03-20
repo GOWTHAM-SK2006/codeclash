@@ -6,7 +6,7 @@ if (!eventId) {
 
 async function fetchStatus() {
     try {
-        const data = await apiRequest(`/events/${eventId}`);
+        const data = await api.request(`/events/${eventId}`);
         renderLobby(data);
     } catch (e) {
         console.error('Failed to fetch contest status:', e);
@@ -86,7 +86,7 @@ document.getElementById('enterArenaBtn').onclick = () => {
 };
 
 async function loadProblems() {
-    const data = await apiRequest(`/events/${eventId}`);
+    const data = await api.request(`/events/${eventId}`);
     const list = document.getElementById('problemList');
 
     // We need to fetch problem titles from IDs

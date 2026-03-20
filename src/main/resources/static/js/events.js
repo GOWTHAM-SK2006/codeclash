@@ -2,7 +2,7 @@ let currentEvents = [];
 
 async function fetchEvents() {
     try {
-        const events = await apiRequest('/events');
+        const events = await api.request('/events');
         currentEvents = events;
         renderEvents();
     } catch (e) {
