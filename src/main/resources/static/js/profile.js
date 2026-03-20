@@ -25,6 +25,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     const easyCountEl = document.getElementById('easySolvedCount');
     const mediumCountEl = document.getElementById('mediumSolvedCount');
     const hardCountEl = document.getElementById('hardSolvedCount');
+    const viewAllHistoryContainer = document.getElementById('viewAllHistoryContainer');
+    const viewAllHistoryBtn = document.getElementById('viewAllHistoryBtn');
+    const historyModal = document.getElementById('historyModal');
+    const historyModalContent = document.getElementById('historyModalContent');
+    const modalHistoryContainer = document.getElementById('modalHistoryContainer');
+    const closeHistoryModal = document.getElementById('closeHistoryModal');
+
+    let allTransactions = [];
+
+    function renderTransactionCard(item) {
+        const isPositive = item.amount >= 0;
+        const date = new Date(item.createdAt);
+        const day = date.getDate();
+        const month = date.toLocaleString('default', { month: 'short' });
+        const year = date.getFullYear();
+
+        return `
+            <div class="transaction-card ${isPositive ? 'transaction-positive' : 'transaction-negative'} p-4 rounded-xl border border-[#2A2A2A] flex items-center justify-between group shadow-lg">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border ${isPositive ? 'border-[#00C853]/20' : 'border-[#FF3D00]/20'} shadow-inner">
+                        <span class="text-xl font-bold">${isPositive ? '↑' : '↓'}</span>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white group-hover:text-[#FF6B00] transition-colors">${item.reason}</h4>
+                        <div class="flex items-center gap-2 mt-0.5">
+                            <span class="text-[10px] font-bold tracking-widest uppercase py-0.5 px-2 rounded bg-[#242424] text-gray-400">
+                                ${isPositive ? 'Credit' : 'Debit'}
+                            </span>
+                            <span class="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
+                                ${month} ${day}, ${year}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="amount-badge text-xl font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'} drop-shadow-sm">
+                        ${isPositive ? '+' : ''}${item.amount}
+                    </div>
+                    <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">CodeCoins</div>
+                </div>
+            </div>
+        `;
+    }
 
     async function loadProfileData() {
         try {
@@ -35,50 +78,26 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (coinsEl) coinsEl.textContent = user.coins;
 
             // Fetch coin history
-            const history = await api.getCoinHistory();
+            allTransactions = await api.getCoinHistory();
 
             if (historyContainer) {
-                if (!history || history.length === 0) {
+                if (!allTransactions || allTransactions.length === 0) {
                     historyContainer.innerHTML = `
                         <div class="p-12 text-center text-gray-500 italic bg-[#1A1A1A] rounded-xl border border-[#2A2A2A]">
                             No coin history found.
                         </div>
                     `;
+                    if (viewAllHistoryContainer) viewAllHistoryContainer.classList.add('hidden');
                 } else {
-                    historyContainer.innerHTML = history.map(item => {
-                        const isPositive = item.amount >= 0;
-                        const date = new Date(item.createdAt);
-                        const day = date.getDate();
-                        const month = date.toLocaleString('default', { month: 'short' });
-                        const year = date.getFullYear();
+                    // Render ONLY TOP 3
+                    const top3 = allTransactions.slice(0, 3);
+                    historyContainer.innerHTML = top3.map(renderTransactionCard).join('');
 
-                        return `
-                            <div class="transaction-card ${isPositive ? 'transaction-positive' : 'transaction-negative'} p-4 rounded-xl border border-[#2A2A2A] flex items-center justify-between group shadow-lg">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border ${isPositive ? 'border-[#00C853]/20' : 'border-[#FF3D00]/20'} shadow-inner">
-                                        <span class="text-xl font-bold">${isPositive ? '↑' : '↓'}</span>
-                                    </div>
-                                    <div>
-                                        <h4 class="font-bold text-white group-hover:text-[#FF6B00] transition-colors">${item.reason}</h4>
-                                        <div class="flex items-center gap-2 mt-0.5">
-                                            <span class="text-[10px] font-bold tracking-widest uppercase py-0.5 px-2 rounded bg-[#242424] text-gray-400">
-                                                ${isPositive ? 'Credit' : 'Debit'}
-                                            </span>
-                                            <span class="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
-                                                ${month} ${day}, ${year}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-right">
-                                    <div class="amount-badge text-xl font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'} drop-shadow-sm">
-                                        ${isPositive ? '+' : ''}${item.amount}
-                                    </div>
-                                    <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">CodeCoins</div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                    if (allTransactions.length > 3) {
+                        if (viewAllHistoryContainer) viewAllHistoryContainer.classList.remove('hidden');
+                    } else {
+                        if (viewAllHistoryContainer) viewAllHistoryContainer.classList.add('hidden');
+                    }
                 }
             }
 
@@ -116,6 +135,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             }
         }
+    }
+
+    // Modal Control
+    function toggleModal(show) {
+        if (!historyModal) return;
+        if (show) {
+            historyModal.classList.remove('hidden');
+            setTimeout(() => {
+                if (historyModalContent) historyModalContent.classList.remove('scale-95');
+                if (historyModalContent) historyModalContent.classList.add('scale-100');
+            }, 10);
+
+            // Populate modal
+            if (modalHistoryContainer) {
+                modalHistoryContainer.innerHTML = allTransactions.map(renderTransactionCard).join('');
+            }
+        } else {
+            if (historyModalContent) historyModalContent.classList.remove('scale-100');
+            if (historyModalContent) historyModalContent.classList.add('scale-95');
+            setTimeout(() => {
+                historyModal.classList.add('hidden');
+            }, 300);
+        }
+    }
+
+    if (viewAllHistoryBtn) {
+        viewAllHistoryBtn.addEventListener('click', () => toggleModal(true));
+    }
+
+    if (closeHistoryModal) {
+        closeHistoryModal.addEventListener('click', () => toggleModal(false));
+    }
+
+    // Close on outside click
+    if (historyModal) {
+        historyModal.addEventListener('click', (e) => {
+            if (e.target === historyModal) toggleModal(false);
+        });
     }
 
     // Connect Button Handler
