@@ -30,6 +30,7 @@ public class EventService {
 
     private static final int BID_DURATION_MINS = 10;
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
+    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     // ──────────────────────────────────────────────────────────────
     // Admin Actions
@@ -79,10 +80,11 @@ public class EventService {
 
         // Countdowns
         if (phase == EventPhase.NOT_STARTED) {
-            res.put("secondsUntilBidding", ChronoUnit.SECONDS.between(now, event.getBiddingStartTime()));
+            res.put("secondsUntilBidding", java.time.Duration.between(now, event.getBiddingStartTime()).getSeconds());
         } else if (phase == EventPhase.BIDDING_LIVE) {
             res.put("secondsRemainingBidding",
-                    ChronoUnit.SECONDS.between(now, event.getBiddingStartTime().plusMinutes(BID_DURATION_MINS)));
+                    java.time.Duration.between(now, event.getBiddingStartTime().plusMinutes(BID_DURATION_MINS))
+                            .getSeconds());
         }
 
         // Leaderboard
@@ -175,7 +177,7 @@ public class EventService {
     @Scheduled(fixedRate = 30000) // 30 sec
     @Transactional
     public void processEvents() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(IST);
         List<Event> activeEvents = eventRepository.findAllByActiveTrueOrderByBiddingStartTimeAsc();
 
         for (Event event : activeEvents) {
