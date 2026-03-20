@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const usernameEl = document.getElementById('profileUsername');
     const emailEl = document.getElementById('profileEmail');
     const coinsEl = document.getElementById('totalCoinsDisplay');
-    const historyBody = document.getElementById('coinHistoryBody');
+    const historyContainer = document.getElementById('coinHistoryContainer');
 
     // LeetCode Elements
     const leetcodeConnectView = document.getElementById('leetcodeConnectView');
@@ -107,11 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         } catch (error) {
             console.error('Error loading profile:', error);
-            if (historyBody) {
-                historyBody.innerHTML = `
-                    <tr>
-                        <td colspan="3" class="px-6 py-8 text-center text-red-500">Failed to load profile data.</td>
-                    </tr>
+            if (historyContainer) {
+                historyContainer.innerHTML = `
+                    <div class="p-8 text-center text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
+                        <p class="font-bold">Failed to load transaction history</p>
+                        <p class="text-xs mt-1 opacity-70">${error.message || 'Unknown error'}</p>
+                    </div>
                 `;
             }
         }
