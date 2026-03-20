@@ -96,13 +96,29 @@ document.getElementById('enterArenaBtn').onclick = () => {
 };
 
 async function loadProblems() {
-    const data = await api.request(`/events/${eventId}`);
     const list = document.getElementById('problemList');
-    list.innerHTML = '<div class="spinner"></div>';
-
-    const ids = data.problemIds.split(',').map(s => s.trim()).filter(Boolean);
 
     try {
+        const data = await api.request(`/events/${eventId}`);
+        const problemIdsStr = data.problemIds || "";
+        const ids = problemIdsStr.split(',').map(s => s.trim()).filter(Boolean);
+
+        if (ids.length === 0) {
+            list.innerHTML = `
+                <div style="text-align: center; padding: 3rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed var(--border);">
+                    <div style="font-size: 2rem; margin-bottom: 1rem; opacity: 0.5;">⚔️</div>
+                    <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">Waiting for Objectives</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">The arena is empty. Contact your administrator to add battle objectives.</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Only show spinner if we actually have IDs to fetch
+        if (list.innerHTML.includes('Waiting for Objectives') || !list.children.length) {
+            list.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div>';
+        }
+
         // Fetch all problem details concurrently
         const problems = await Promise.all(ids.map(id => api.getProblem(id)));
 
@@ -119,6 +135,7 @@ async function loadProblems() {
             </div>
         `).join('');
     } catch (e) {
+        console.error('loadProblems failed:', e);
         list.innerHTML = `<div class="alert alert-error">Failed to load problems: ${e.message}</div>`;
     }
 }
