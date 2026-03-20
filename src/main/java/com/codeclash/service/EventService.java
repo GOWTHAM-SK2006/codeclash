@@ -30,7 +30,6 @@ public class EventService {
 
     private static final int BID_DURATION_MINS = 10;
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
-    private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     // ──────────────────────────────────────────────────────────────
     // Admin Actions
