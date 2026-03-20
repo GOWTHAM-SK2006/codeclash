@@ -46,7 +46,9 @@ public class EventService {
         return eventRepository.findAll();
     }
 
+    @Transactional
     public void deleteEvent(String id) {
+        eventBidRepository.deleteAllByEventId(id);
         eventRepository.deleteById(id);
     }
 

@@ -9,4 +9,6 @@ public interface EventBidRepository extends JpaRepository<EventBid, Long> {
     Optional<EventBid> findByEventIdAndUserId(String eventId, Long userId);
 
     List<EventBid> findAllByEventIdOrderByAmountDescUpdatedAtAsc(String eventId);
+
+    void deleteAllByEventId(String eventId);
 }
