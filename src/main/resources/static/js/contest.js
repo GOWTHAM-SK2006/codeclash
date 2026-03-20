@@ -31,6 +31,11 @@ function renderLobby(data) {
     }
 
     if (!data.userSelected) {
+        if (data.phase === 'BIDDING_ENDED' && !data.biddingProcessed) {
+            eligibilityEl.innerHTML = `<p style="color: var(--accent); font-weight: 700;">⌛ Selection in progress...</p>
+                                       <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Finalizing results, please wait.</p>`;
+            return;
+        }
         eligibilityEl.innerHTML = `<p style="color: #ff4444; font-weight: 700;">❌ You were not selected for this contest.</p>
                                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Only the top ${data.maxParticipants} bidders can enter.</p>`;
         timerEl.style.opacity = '0.3';

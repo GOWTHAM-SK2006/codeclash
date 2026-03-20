@@ -28,7 +28,7 @@ public class EventService {
     private final UserRepository userRepository;
     private final CoinService coinService;
 
-    private static final int BID_DURATION_MINS = 10;
+    private static final int BID_DURATION_MINS = 2;
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
 
     // ──────────────────────────────────────────────────────────────
@@ -103,9 +103,9 @@ public class EventService {
         if (username != null) {
             User user = userRepository.findByUsername(username).orElse(null);
             if (user != null) {
-                Optional<EventBid> bid = eventBidRepository.findByEventIdAndUserId(eventId, user.getId());
-                res.put("userBid", bid.map(EventBid::getAmount).orElse(0));
-                res.put("userSelected", bid.map(EventBid::isSelected).orElse(false));
+                Optional<EventBid> bidOpt = eventBidRepository.findByEventIdAndUserId(eventId, user.getId());
+                int userAmount = bidOpt.map(EventBid::getAmount).orElse(0);
+                boolean isSelected = bidOpt.map(EventBid::isSelected).orElse(false);
 
                 // Rank calculation
                 int rank = -1;
@@ -115,7 +115,19 @@ public class EventService {
                         break;
                     }
                 }
+
+                // Predictive selection check if bidding ended but not processed
+                if (!isSelected && phase != EventPhase.NOT_STARTED && phase != EventPhase.BIDDING_LIVE
+                        && !event.isBiddingProcessed()) {
+                    if (rank != -1 && rank <= event.getMaxParticipants() && userAmount > 0) {
+                        isSelected = true;
+                    }
+                }
+
+                res.put("userBid", userAmount);
+                res.put("userSelected", isSelected);
                 res.put("userRank", rank);
+                res.put("biddingProcessed", event.isBiddingProcessed());
             }
         }
 
