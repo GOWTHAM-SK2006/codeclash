@@ -13,86 +13,106 @@ async function fetchEvents() {
 function renderEvents() {
     const grid = document.getElementById('eventsGrid');
     if (!currentEvents.length) {
-        grid.innerHTML = `<div class="no-events card">
-            <h2>No active events right now</h2>
-            <p>Check back later for upcoming clashes!</p>
-        </div>`;
+        grid.innerHTML = `
+            <div class="no-events">
+                <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;">📅</div>
+                <h2 style="font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.5rem;">No events scheduled</h2>
+                <p style="color: var(--text-muted);">Check back later for new coding challenges.</p>
+            </div>
+        `;
         return;
     }
 
     grid.innerHTML = currentEvents.map(event => {
-        const isLive = event.phase === 'BIDDING_LIVE';
-        const isEnded = ['BIDDING_ENDED', 'CONTEST_LIVE', 'CONTEST_ENDED'].includes(event.phase);
-
-        let statusText = '';
+        let statusBadge = '';
         let timerLabel = '';
         let timerValue = 0;
         let btnText = 'View Details';
         let btnClass = 'btn-secondary';
 
+        // Calculate occupancy progress
+        // Assume event has a currentParticipants field or use a fallback
+        const occupancy = event.currentParticipants || 0;
+        const max = event.maxParticipants || 10;
+        const progress = Math.min(100, Math.round((occupancy / max) * 100));
+
         if (event.phase === 'NOT_STARTED') {
-            statusText = `<span class="status-badge badge-upcoming">Upcoming</span>`;
-            timerLabel = 'Starts In';
+            statusBadge = `<span class="status-badge badge-upcoming">Upcoming</span>`;
+            timerLabel = 'Starts in';
             timerValue = event.secondsUntilBidding;
-            btnText = 'Join Bidding Info';
         } else if (event.phase === 'BIDDING_LIVE') {
-            statusText = `<span class="status-badge badge-live">🔥 Bidding LIVE</span>`;
-            timerLabel = 'Ends In';
+            statusBadge = `<span class="status-badge badge-live">Live Now</span>`;
+            timerLabel = 'Bidding ends';
             timerValue = event.secondsRemainingBidding;
-            btnText = 'Join Bidding →';
+            btnText = 'Join Bidding';
             btnClass = 'btn-primary';
         } else if (event.phase === 'BIDDING_ENDED') {
-            statusText = `<span class="status-badge badge-upcoming">Bidding Ended</span>`;
-            timerLabel = 'Contest Starts In';
-            // Estimate countdown to contest
+            statusBadge = `<span class="status-badge badge-upcoming">Selection</span>`;
+            timerLabel = 'Contest starts';
             const contestStart = new Date(event.contestStart).getTime();
-            const now = new Date().getTime();
-            timerValue = Math.max(0, Math.floor((contestStart - now) / 1000));
-            btnText = 'Check Selection';
+            timerValue = Math.max(0, Math.floor((contestStart - Date.now()) / 1000));
+            btnText = 'View Results';
         } else if (event.phase === 'CONTEST_LIVE') {
-            statusText = `<span class="status-badge badge-live">🏆 Contest LIVE</span>`;
-            timerLabel = 'Ends In';
-            // Duration logic
+            statusBadge = `<span class="status-badge badge-live">Contest Live</span>`;
+            timerLabel = 'Ends in';
             const contestEnd = new Date(event.contestStart).getTime() + (event.contestDuration * 60 * 1000);
-            const now = new Date().getTime();
-            timerValue = Math.max(0, Math.floor((contestEnd - now) / 1000));
-            btnText = 'Enter Contest →';
+            timerValue = Math.max(0, Math.floor((contestEnd - Date.now()) / 1000));
+            btnText = 'Enter Arena';
             btnClass = 'btn-primary';
         } else {
-            statusText = `<span class="status-badge badge-upcoming">Event Ended</span>`;
-            btnText = 'View Results';
+            statusBadge = `<span class="status-badge badge-ended">Ended</span>`;
+            btnText = 'View Standings';
         }
 
+        const countdownHtml = timerValue > 0 ? `
+            <div class="countdown-wrap">
+                <span class="countdown-time" data-event-id="${event.id}">${formatTime(timerValue)}</span>
+                <span class="countdown-label">${timerLabel}</span>
+            </div>
+        ` : '';
+
         return `
-            <div class="event-card ${isLive ? 'live' : ''}" onclick="navigateToEvent('${event.id}', '${event.phase}')" style="cursor: pointer;">
-                ${statusText}
-                <div class="event-title">${event.title}</div>
-                <div class="event-meta">
-                    <div class="meta-item"><b>Entry Fee</b>🪙 ${event.entryFee}</div>
-                    <div class="meta-item"><b>Max Slots</b>👥 ${event.maxParticipants}</div>
+            <div class="event-card ${event.phase.includes('LIVE') ? 'live' : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    ${statusBadge}
+                    <div style="font-size: 1.25rem; opacity: 0.8;">⚡</div>
                 </div>
 
-                ${timerValue > 0 ? `
-                    <div style="margin-bottom: 2rem;">
-                        <div class="countdown" data-event-id="${event.id}">${formatTime(timerValue)}</div>
-                        <div class="countdown-label">${timerLabel}</div>
-                    </div>
-                ` : ''}
+                <div class="event-title">${event.title}</div>
 
-                <button class="btn ${btnClass} btn-join">
+                <div class="event-meta">
+                    <div class="meta-row">
+                        <span>Entry Fee</span>
+                        <span class="meta-value">🪙 ${event.entryFee}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span>Max Slots</span>
+                        <span class="meta-value">👥 ${event.maxParticipants}</span>
+                    </div>
+                </div>
+
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>Occupancy</span>
+                        <span>${occupancy}/${max}</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${progress}%"></div>
+                    </div>
+                </div>
+
+                ${countdownHtml}
+
+                <button class="btn ${btnClass} btn-join" onclick="navigateToEvent('${event.id}', '${event.phase}')">
                     ${btnText}
                 </button>
-                
-                <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-secondary); text-align: center;">
-                    Top ${event.maxParticipants} users will be selected
-                </p>
             </div>
         `;
     }).join('');
 }
 
 function formatTime(seconds) {
-    if (seconds < 0) return "00:00:00";
+    if (seconds <= 0) return "00:00:00";
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
@@ -101,26 +121,30 @@ function formatTime(seconds) {
 
 function navigateToEvent(id, phase) {
     if (phase === 'BIDDING_LIVE' || phase === 'NOT_STARTED') {
-        window.location.href = `/bidding.html?eventId=${id}`;
+        window.location.href = `bidding.html?eventId=${id}`;
     } else if (phase === 'CONTEST_LIVE' || phase === 'BIDDING_ENDED') {
-        window.location.href = `/contest.html?eventId=${id}`;
+        window.location.href = `contest.html?eventId=${id}`;
     } else {
-        window.location.href = `/contest.html?eventId=${id}&results=true`;
+        window.location.href = `contest.html?eventId=${id}&results=true`;
     }
 }
 
-// Global update loop for countdowns
-setInterval(() => {
-    document.querySelectorAll('.countdown').forEach(el => {
-        const id = el.dataset.eventId;
-        const event = currentEvents.find(e => e.id === id);
-        if (event) {
-            // This is a bit simplified, but fine for now
-            // We should ideally track the target time and diff it
-            fetchEvents(); // Refresh from server to keep sync
-        }
-    });
-}, 5000); // Polling every 5s is fine for simple real-time
+// Global update loop for countdowns and nav
+(async function () {
+    renderNav('events');
+    await fetchEvents();
 
-fetchEvents();
-setInterval(fetchEvents, 10000); // Fallback refresh
+    // Refresh loop
+    setInterval(fetchEvents, 20000);
+
+    // Local countdown ticker
+    setInterval(() => {
+        document.querySelectorAll('.countdown-time').forEach(el => {
+            let timeParts = el.textContent.split(':').map(Number);
+            let totalSec = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+            if (totalSec > 0) {
+                el.textContent = formatTime(totalSec - 1);
+            }
+        });
+    }, 1000);
+})();
