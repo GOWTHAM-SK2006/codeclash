@@ -11,9 +11,7 @@ const sections = [
     'Problems',
     'Testcases',
     'Users',
-    'Submissions',
     'Leaderboard',
-    'Error Monitoring',
     'Settings',
     'Events'
 ];
@@ -325,38 +323,6 @@ async function renderUsers() {
     });
 }
 
-async function renderSubmissions() {
-    const rows = await adminRequest('/submissions');
-    sectionRoot.innerHTML = `
-        <div class="filters">
-            <select id="subFilter"><option value="">All</option><option value="ACCEPTED">Accepted</option><option value="WRONG_ANSWER">Wrong Answer</option><option value="RUNTIME_ERROR">Runtime Error</option></select>
-            <button class="btn btn-primary btn-sm" id="subApply">Apply</button>
-        </div>
-        <div id="subWrap"></div>
-    `;
-
-    const draw = (items) => {
-        document.getElementById('subWrap').innerHTML = makeTable(
-            ['User', 'Problem', 'Status', 'Runtime', 'Memory', 'Time'],
-            items.map(row => `<tr>
-                <td>${row.user}</td>
-                <td>${row.problem}</td>
-                <td>${row.status}</td>
-                <td>${row.runtimeMs} ms</td>
-                <td>${row.memoryKb} KB</td>
-                <td>${row.createdAt}</td>
-            </tr>`)
-        );
-    };
-
-    draw(rows);
-    document.getElementById('subApply').onclick = async () => {
-        const status = document.getElementById('subFilter').value;
-        const data = await adminRequest(`/submissions?${new URLSearchParams({ status })}`);
-        draw(data);
-    };
-}
-
 async function renderLeaderboard() {
     const rows = await adminRequest('/leaderboard');
     sectionRoot.innerHTML = `
@@ -391,20 +357,6 @@ async function renderLeaderboard() {
         await adminRequest(`/leaderboard/${btn.dataset.minus}/adjust-points`, { method: 'POST', body: JSON.stringify({ delta: -25 }) });
         renderLeaderboard();
     });
-}
-
-async function renderErrors() {
-    const rows = await adminRequest('/errors');
-    sectionRoot.innerHTML = makeTable(
-        ['Type', 'Message', 'User', 'Problem', 'Time'],
-        rows.map(row => `<tr>
-            <td>${row.type}</td>
-            <td style="max-width:420px;white-space:normal;">${row.message}</td>
-            <td>${row.user}</td>
-            <td>${row.problem}</td>
-            <td>${row.createdAt}</td>
-        </tr>`)
-    );
 }
 
 async function renderSettings() {
@@ -442,9 +394,7 @@ async function renderSection() {
         if (currentSection === 'Problems') return await renderProblems();
         if (currentSection === 'Testcases') return await renderTestcases();
         if (currentSection === 'Users') return await renderUsers();
-        if (currentSection === 'Submissions') return await renderSubmissions();
         if (currentSection === 'Leaderboard') return await renderLeaderboard();
-        if (currentSection === 'Error Monitoring') return await renderErrors();
         if (currentSection === 'Settings') return await renderSettings();
         if (currentSection === 'Events') return await renderEvents();
     } catch (e) {
