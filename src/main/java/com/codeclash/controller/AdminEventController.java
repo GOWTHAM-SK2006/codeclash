@@ -49,4 +49,38 @@ public class AdminEventController {
         adminPanelService.verifyAdminSession(token);
         eventService.deleteEvent(id);
     }
+
+    @GetMapping("/{id}/details")
+    public Map<String, Object> getEventDetails(@RequestHeader("X-Admin-Session") String token,
+            @PathVariable String id) {
+        adminPanelService.verifyAdminSession(token);
+        return eventService.getAdminEventDetails(id);
+    }
+
+    @PutMapping("/{id}")
+    public Event updateEvent(@RequestHeader("X-Admin-Session") String token, @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        adminPanelService.verifyAdminSession(token);
+        return eventService.updateEvent(id, body);
+    }
+
+    @PostMapping("/{id}/finalize")
+    public Map<String, Object> finalizeBidding(@RequestHeader("X-Admin-Session") String token, @PathVariable String id,
+            @RequestBody Map<String, Object> body) {
+        adminPanelService.verifyAdminSession(token);
+        @SuppressWarnings("unchecked")
+        List<Long> winnerIds = (List<Long>) body.get("winnerIds");
+        eventService.manualFinalizeWinners(id, winnerIds);
+        return Map.of("ok", true);
+    }
+
+    @PostMapping("/{id}/distribute")
+    public Map<String, Object> distributeRewards(@RequestHeader("X-Admin-Session") String token,
+            @PathVariable String id, @RequestBody Map<String, Object> body) {
+        adminPanelService.verifyAdminSession(token);
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> customRewards = (List<Map<String, Object>>) body.get("rewards");
+        eventService.distributeRewards(id, customRewards);
+        return Map.of("ok", true);
+    }
 }

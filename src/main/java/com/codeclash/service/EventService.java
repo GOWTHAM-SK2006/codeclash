@@ -50,6 +50,111 @@ public class EventService {
         eventRepository.deleteById(id);
     }
 
+    public Event getEventById(String id) {
+        return eventRepository.findById(id).orElseThrow(() -> new RuntimeException("Event not found"));
+    }
+
+    @Transactional
+    public Event updateEvent(String id, Map<String, Object> body) {
+        Event event = getEventById(id);
+        if (body.containsKey("title"))
+            event.setTitle(String.valueOf(body.get("title")));
+        if (body.containsKey("biddingTitle"))
+            event.setBiddingTitle(String.valueOf(body.get("biddingTitle")));
+        if (body.containsKey("entryFee"))
+            event.setEntryFee(Integer.parseInt(String.valueOf(body.get("entryFee"))));
+        if (body.containsKey("biddingStartTime"))
+            event.setBiddingStartTime(LocalDateTime.parse(String.valueOf(body.get("biddingStartTime"))));
+        if (body.containsKey("contestTitle"))
+            event.setContestTitle(String.valueOf(body.get("contestTitle")));
+        if (body.containsKey("contestStartTime"))
+            event.setContestStartTime(LocalDateTime.parse(String.valueOf(body.get("contestStartTime"))));
+        if (body.containsKey("contestDuration"))
+            event.setContestDurationMinutes(Integer.parseInt(String.valueOf(body.get("contestDuration"))));
+        if (body.containsKey("problemIds"))
+            event.setProblemIds(String.valueOf(body.get("problemIds")));
+        if (body.containsKey("maxParticipants"))
+            event.setMaxParticipants(Integer.parseInt(String.valueOf(body.get("maxParticipants"))));
+        if (body.containsKey("active"))
+            event.setActive((Boolean) body.get("active"));
+        return eventRepository.save(event);
+    }
+
+    public Map<String, Object> getAdminEventDetails(String id) {
+        Event event = getEventById(id);
+        Map<String, Object> status = getEventStatus(id, null);
+
+        List<EventBid> bids = eventBidRepository.findAllByEventIdOrderByAmountDescUpdatedAtAsc(id);
+        List<Map<String, Object>> bidDetails = bids.stream().map(b -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("userId", b.getUser().getId());
+            m.put("username", b.getUser().getUsername());
+            m.put("displayName",
+                    b.getUser().getDisplayName() != null ? b.getUser().getDisplayName() : b.getUser().getUsername());
+            m.put("amount", b.getAmount());
+            m.put("selected", b.isSelected());
+            m.put("refunded", b.isRefunded());
+            m.put("rank", b.getRank());
+            return m;
+        }).collect(Collectors.toList());
+
+        status.put("allBids", bidDetails);
+        status.put("selectedCount", bids.stream().filter(EventBid::isSelected).count());
+        status.put("isBiddingProcessed", event.isBiddingProcessed());
+        status.put("isContestProcessed", event.isContestProcessed());
+
+        return status;
+    }
+
+    @Transactional
+    public void manualFinalizeWinners(String id, List<Long> winnerUserIds) {
+        Event event = getEventById(id);
+        List<EventBid> allBids = eventBidRepository.findAllByEventIdOrderByAmountDescUpdatedAtAsc(id);
+
+        for (EventBid bid : allBids) {
+            boolean isWinner = winnerUserIds.contains(bid.getUser().getId());
+
+            bid.setSelected(isWinner);
+            if (isWinner) {
+                bid.setRank(winnerUserIds.indexOf(bid.getUser().getId()) + 1);
+                bid.setRefunded(false);
+            } else {
+                bid.setRank(null);
+                if (!bid.isRefunded() && bid.getAmount() > 0) {
+                    bid.setRefunded(true);
+                    coinService.awardCoins(bid.getUser(), bid.getAmount(),
+                            "Bidding refund (Manual Selection) for: " + event.getTitle());
+                }
+            }
+            eventBidRepository.save(bid);
+        }
+
+        event.setBiddingProcessed(true);
+        eventRepository.save(event);
+    }
+
+    @Transactional
+    public void distributeRewards(String id, List<Map<String, Object>> customRewards) {
+        Event event = getEventById(id);
+        if (event.isContestProcessed()) {
+            throw new RuntimeException("Rewards already distributed");
+        }
+
+        for (Map<String, Object> reward : customRewards) {
+            Long userId = Long.valueOf(String.valueOf(reward.get("userId")));
+            int amount = Integer.valueOf(String.valueOf(reward.get("amount")));
+            String reason = String.valueOf(reward.getOrDefault("reason", "Event Rewards: " + event.getTitle()));
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+
+            coinService.awardCoins(user, amount, reason);
+        }
+
+        event.setContestProcessed(true);
+        eventRepository.save(event);
+    }
+
     // ──────────────────────────────────────────────────────────────
     // Status & Logic
     // ──────────────────────────────────────────────────────────────

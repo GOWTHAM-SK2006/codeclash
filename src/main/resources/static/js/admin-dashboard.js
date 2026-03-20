@@ -467,32 +467,16 @@ window.adminInterval = setInterval(() => {
 
 async function renderEvents() {
     const data = await adminRequest('/events');
-    const container = document.createElement('div');
-    container.className = 'events-view';
-    
     sectionRoot.innerHTML = `
         <style>
             .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem; }
-            .event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+            .event-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; transition: all 0.3s ease; position: relative; overflow: hidden; cursor: pointer; }
             .event-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-            .event-card.create-new { border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; min-height: 200px; }
+            .event-card.create-new { border: 2px dashed var(--border); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; }
             .event-card.create-new:hover { border-color: var(--accent); color: var(--accent); }
-            .event-badge { position: absolute; top: 1rem; right: 1rem; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
-            .badge-live { background: #ff6b00; color: white; box-shadow: 0 0 15px rgba(255,107,0,0.4); }
-            .badge-upcoming { background: #333; color: #999; }
             .event-title { font-size: 1.25rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--text-primary); }
             .event-info { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
             .info-item b { display: block; color: var(--text-primary); margin-bottom: 0.2rem; }
-            .event-actions { display: flex; gap: 0.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1rem; }
-            
-            /* Wizard Styles */
-            .wizard-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(8px); }
-            .wizard-card { background: #111; border: 1px solid var(--border); width: 500px; border-radius: 24px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-            .wizard-step { display: none; }
-            .wizard-step.active { display: block; }
-            .step-indicator { display: flex; gap: 0.5rem; margin-bottom: 2rem; }
-            .step-dot { flex: 1; height: 4px; background: #222; border-radius: 2px; }
-            .step-dot.active { background: var(--accent); box-shadow: 0 0 10px var(--accent); }
         </style>
         
         <div class="events-grid">
@@ -501,7 +485,7 @@ async function renderEvents() {
                 <h3 style="font-weight: 800;">Create New Event</h3>
             </div>
             ${data.map(event => `
-                <div class="event-card">
+                <div class="event-card" onclick="openAdminModal('${event.id}')">
                     <div class="event-title">${event.title}</div>
                     <div style="font-size: 0.85rem; color: var(--accent); font-weight: 700;">${event.biddingTitle}</div>
                     
@@ -511,18 +495,280 @@ async function renderEvents() {
                         <div class="info-item"><b>Bidding Start</b>📅 ${new Date(event.biddingStartTime).toLocaleString()}</div>
                         <div class="info-item"><b>Contest Start</b>🚀 ${new Date(event.contestStartTime).toLocaleString()}</div>
                     </div>
-
-                    <div class="event-actions">
-                        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="editEvent('${event.id}')">✏️ Edit</button>
-                        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="previewEvent('${event.id}')">👁 Preview</button>
-                        <button class="btn btn-secondary btn-sm" style="color:#ff4444" onclick="deleteEvent('${event.id}')">🗑 Delete</button>
-                    </div>
                 </div>
             `).join('')}
         </div>
     `;
 
-    document.getElementById('openWizardBtn').onclick = openCreateWizard;
+    document.getElementById('openWizardBtn').onclick = (e) => {
+        e.stopPropagation();
+        openCreateWizard();
+    };
+}
+
+let activeEventId = null;
+let activeEventData = null;
+let activeTab = 'overview';
+
+async function openAdminModal(eventId) {
+    activeEventId = eventId;
+    activeTab = 'overview';
+
+    document.getElementById('adminModalOverlay').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // Close on overlay click
+    document.getElementById('adminModalOverlay').onclick = (e) => {
+        if (e.target.id === 'adminModalOverlay') closeAdminModal();
+    };
+
+    // Set up tab listeners
+    document.querySelectorAll('.modal-tab-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.modal-tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeTab = btn.dataset.tab;
+            renderModalTab();
+        };
+        if (btn.dataset.tab === 'overview') btn.classList.add('active');
+        else btn.classList.remove('active');
+    });
+
+    await refreshModalData();
+}
+
+function closeAdminModal() {
+    document.getElementById('adminModalOverlay').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    activeEventId = null;
+    activeEventData = null;
+}
+
+async function refreshModalData() {
+    if (!activeEventId) return;
+    try {
+        activeEventData = await adminRequest(`/events/${activeEventId}/details`);
+        document.getElementById('modalEventTitle').textContent = activeEventData.title || 'Event Management';
+        renderModalTab();
+    } catch (e) {
+        showAlert(e.message);
+        closeAdminModal();
+    }
+}
+
+function renderModalTab() {
+    const body = document.getElementById('modalBody');
+    const data = activeEventData;
+    if (!data) return;
+
+    if (activeTab === 'overview') {
+        body.innerHTML = `
+            <div class="tab-content">
+                <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 2rem;">
+                    <div class="card"><p>Status</p><h2 style="color:var(--accent)">${data.phase}</h2></div>
+                    <div class="card"><p>Bids</p><h2>${data.allBids ? data.allBids.length : 0}</h2></div>
+                    <div class="card"><p>Selected</p><h2 style="color:var(--success)">${data.selectedCount || 0}/${data.maxParticipants}</h2></div>
+                </div>
+                <div class="card">
+                    <h3 style="margin-bottom:1rem; font-weight:800;">Event Breakdown</h3>
+                    <div class="form-row">
+                        <div class="info-item"><b>Event ID</b><code style="color:var(--accent)">${data.id}</code></div>
+                        <div class="info-item"><b>Entry Fee</b>🪙 ${data.entryFee}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="info-item"><b>Bidding Title</b>${data.biddingTitle || '-'}</div>
+                        <div class="info-item"><b>Bidding Start</b>${new Date(data.biddingStart).toLocaleString()}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="info-item"><b>Contest Title</b>${data.contestTitle || '-'}</div>
+                        <div class="info-item"><b>Contest Start</b>${new Date(data.contestStart).toLocaleString()}</div>
+                    </div>
+                    <div class="form-row">
+                        <div class="info-item"><b>Duration</b>${data.contestDuration} min</div>
+                        <div class="info-item"><b>Processing</b>${data.isBiddingProcessed ? '✅ Bidding Done' : '⏳ Bidding Pending'}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (activeTab === 'bidding') {
+        const bids = data.allBids || [];
+        body.innerHTML = `
+            <div class="tab-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <h3 style="font-weight:800;">User Bids (${bids.length})</h3>
+                    <button class="btn btn-primary btn-sm" id="finalizeBiddingBtn">Finalize Winners</button>
+                </div>
+                ${makeTable(['User', 'Amount', 'Status', 'Selected'], bids.map(b => `
+                    <tr>
+                        <td><b>${b.username}</b><br><small style="color:var(--text-muted)">${b.displayName || ''}</small></td>
+                        <td style="color:var(--accent)">🪙 ${b.amount}</td>
+                        <td>${b.refunded ? '<span style="color:#ff4444">Refunded</span>' : (b.selected ? '<span style="color:var(--success)">Selected</span>' : 'Active')}</td>
+                        <td><input type="checkbox" class="bid-select" data-user-id="${b.userId}" ${b.selected ? 'checked' : ''}></td>
+                    </tr>
+                `))}
+            </div>
+        `;
+        document.getElementById('finalizeBiddingBtn').onclick = async () => {
+            const selectedIds = Array.from(document.querySelectorAll('.bid-select:checked')).map(cb => Number(cb.dataset.userId));
+            if (!confirm(`Finalize with ${selectedIds.length} winners? This will refund all other bidders.`)) return;
+            await adminRequest(`/events/${activeEventId}/finalize`, {
+                method: 'POST',
+                body: JSON.stringify({ winnerIds: selectedIds })
+            });
+            showAlert('Bidding finalized!');
+            await refreshModalData();
+        };
+    } else if (activeTab === 'problems') {
+        const pIds = (data.problemIds || '').split(',').map(s => s.trim()).filter(Boolean);
+        body.innerHTML = `
+            <div class="tab-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <h3 style="font-weight:800;">Event Problems</h3>
+                    <button class="btn btn-primary btn-sm" onclick="addProblemToEvent()">Add Problem</button>
+                </div>
+                ${makeTable(['ID', 'Actions'], pIds.map(id => `
+                    <tr>
+                        <td><code>#${id}</code></td>
+                        <td><button class="btn btn-secondary btn-sm" onclick="removeProblemFromEvent('${id}')">Remove</button></td>
+                    </tr>
+                `))}
+            </div>
+        `;
+    } else if (activeTab === 'participants') {
+        const selected = (data.allBids || []).filter(b => b.selected);
+        body.innerHTML = `
+            <div class="tab-content">
+                <h3 style="font-weight:800; margin-bottom:1rem;">Selected Participants (${selected.length})</h3>
+                ${makeTable(['Rank', 'User', 'Actions'], selected.map(u => `
+                    <tr>
+                        <td><b>#${u.rank || '-'}</b></td>
+                        <td>${u.username}</td>
+                        <td><button class="btn btn-secondary btn-sm" style="color:#ff4444" onclick="removeParticipant('${u.userId}')">Remove</button></td>
+                    </tr>
+                `))}
+            </div>
+        `;
+    } else if (activeTab === 'results') {
+        body.innerHTML = `
+            <div class="tab-content">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1.5rem;">
+                    <h3 style="font-weight:800;">Contest Results</h3>
+                    <button class="btn btn-primary" id="distributeBtn" ${data.isContestProcessed ? 'disabled' : ''}>Distribute Rewards</button>
+                </div>
+                <div class="card" style="margin-bottom:1.5rem;">
+                    <label>Prize Amount (per winner)</label>
+                    <input type="number" id="prizeAmount" class="input" value="500" style="width:100%; margin-top:0.5rem;">
+                </div>
+                <p style="color:var(--text-muted); text-align:center; padding: 2rem;">Leaderboard and submission views will be available after contest starts.</p>
+            </div>
+        `;
+        document.getElementById('distributeBtn').onclick = async () => {
+            const winners = (data.allBids || []).filter(b => b.selected);
+            if (!winners.length) return showAlert('No winners selected!');
+            const amount = Number(document.getElementById('prizeAmount').value);
+            const rewards = winners.map(w => ({ userId: w.userId, amount: amount }));
+
+            if (!confirm(`Distribute ${amount} coins to each of the ${winners.length} winners?`)) return;
+            await adminRequest(`/events/${activeEventId}/distribute`, {
+                method: 'POST',
+                body: JSON.stringify({ rewards: rewards })
+            });
+            showAlert('Rewards distributed!');
+            await refreshModalData();
+        };
+    } else if (activeTab === 'settings') {
+        body.innerHTML = `
+            <div class="tab-content">
+                <h3 style="font-weight:800; margin-bottom:1.5rem;">Advanced Configuration</h3>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Event Name</label>
+                    <input type="text" id="edit_title" class="input" value="${data.title}" style="width:100%">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Entry Fee</label>
+                        <input type="number" id="edit_fee" class="input" value="${data.entryFee}" style="width:100%">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Participants</label>
+                        <input type="number" id="edit_max" class="input" value="${data.maxParticipants}" style="width:100%">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Bidding Start</label>
+                        <input type="datetime-local" id="edit_b_start" class="input" value="${data.biddingStart ? data.biddingStart.slice(0, 16) : ''}" style="width:100%">
+                    </div>
+                    <div class="form-group">
+                        <label>Contest Start</label>
+                        <input type="datetime-local" id="edit_c_start" class="input" value="${data.contestStart ? data.contestStart.slice(0, 16) : ''}" style="width:100%">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:1.5rem;">
+                    <label>Problem IDs (comma-separated)</label>
+                    <input type="text" id="edit_probs" class="input" value="${data.problemIds || ''}" style="width:100%">
+                </div>
+                <button class="btn btn-primary" id="saveEventBtn" style="width:100%; padding: 1rem; font-weight:800;">Save All Changes</button>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button class="btn btn-secondary btn-sm" style="color:#ff4444" onclick="deleteAndClose()">🗑 Delete Event Permanently</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('saveEventBtn').onclick = async () => {
+            const body = {
+                title: document.getElementById('edit_title').value,
+                entryFee: parseInt(document.getElementById('edit_fee').value),
+                maxParticipants: parseInt(document.getElementById('edit_max').value),
+                biddingStartTime: document.getElementById('edit_b_start').value,
+                contestStartTime: document.getElementById('edit_c_start').value,
+                problemIds: document.getElementById('edit_probs').value
+            };
+            await adminRequest(`/events/${activeEventId}`, { method: 'PUT', body: JSON.stringify(body) });
+            showAlert('Event updated!');
+            await refreshModalData();
+        };
+    }
+}
+
+async function removeProblemFromEvent(pId) {
+    const list = activeEventData.problemIds.split(',').map(s => s.trim()).filter(s => s && s !== pId);
+    await adminRequest(`/events/${activeEventId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ problemIds: list.join(',') })
+    });
+    await refreshModalData();
+}
+
+async function addProblemToEvent() {
+    const pId = prompt('Enter Problem ID to add:');
+    if (!pId) return;
+    const list = (activeEventData.problemIds || '').split(',').map(s => s.trim()).filter(Boolean);
+    if (!list.includes(pId)) list.push(pId);
+    await adminRequest(`/events/${activeEventId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ problemIds: list.join(',') })
+    });
+    await refreshModalData();
+}
+
+async function removeParticipant(userId) {
+    if (!confirm('Remove user from selected participants? This will NOT refund them automatically unless you deselect them in Bidding tab.')) return;
+    // For now, we reuse the finalize endpoint with the filtered list
+    const selectedIds = (activeEventData.allBids || [])
+        .filter(b => b.selected && b.userId != userId)
+        .map(b => b.userId);
+    await adminRequest(`/events/${activeEventId}/finalize`, {
+        method: 'POST',
+        body: JSON.stringify({ winnerIds: selectedIds })
+    });
+    await refreshModalData();
+}
+
+async function deleteAndClose() {
+    if (!confirm('EXTREMELY IMPORTANT: This will delete the event and all associated bids. Are you absolutely sure?')) return;
+    await adminRequest(`/events/${activeEventId}`, { method: 'DELETE' });
+    closeAdminModal();
+    renderEvents();
 }
 
 function openCreateWizard() {
