@@ -10,6 +10,7 @@ import com.codeclash.repository.BattleRepository;
 import com.codeclash.repository.ProblemRepository;
 import com.codeclash.repository.SubmissionRepository;
 import com.codeclash.repository.UserRepository;
+import com.codeclash.security.JwtUtil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
