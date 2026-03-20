@@ -361,28 +361,167 @@ async function renderLeaderboard() {
 
 async function renderSettings() {
     const data = await adminRequest('/settings');
+
+    // Helper to get nested value safely
+    const get = (path, fallback = '') => {
+        const parts = path.split('.');
+        let curr = data;
+        for (const p of parts) {
+            if (curr && curr[p] !== undefined) curr = curr[p];
+            else return fallback;
+        }
+        return curr;
+    };
+
+    // Helper to render a section
+    const section = (title, icon, content) => `
+        <div class="card" style="margin-bottom: 1rem; height: 100%;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+                <span style="font-size: 1.5rem;">${icon}</span>
+                <h3 style="font-weight: 800; margin: 0; color: var(--accent);">${title}</h3>
+            </div>
+            <div style="display: grid; gap: 0.8rem;">
+                ${content}
+            </div>
+        </div>
+    `;
+
+    // Helper to render a field
+    const field = (label, id, type, value, options = {}) => {
+        let input = '';
+        if (type === 'toggle') {
+            input = `
+                <label class="switch">
+                    <input type="checkbox" id="${id}" ${value ? 'checked' : ''}>
+                    <span class="slider round"></span>
+                </label>
+            `;
+        } else if (type === 'number') {
+            input = `<input type="number" id="${id}" class="filters" style="width: 80px; text-align: center; background: #111; border: 1px solid #333; color: white; border-radius: 6px; padding: 4px;" value="${value}">`;
+        } else if (type === 'select') {
+            input = `
+                <select id="${id}" class="filters" style="width: auto; background: #111; border: 1px solid #333; color: white; border-radius: 6px; padding: 4px;">
+                    ${options.map(opt => `<option value="${opt.val}" ${value == opt.val ? 'selected' : ''}>${opt.lab}</option>`).join('')}
+                </select>
+            `;
+        }
+
+        return `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0;">
+                <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">${label}</span>
+                ${input}
+            </div>
+        `;
+    };
+
     sectionRoot.innerHTML = `
-        <div class="card">
-            <h3 style="font-weight:700;margin-bottom:.6rem;">Battle Rules</h3>
-            <textarea id="settingsBox" class="input" style="min-height:260px;width:100%;font-family:monospace;">${JSON.stringify(data, null, 2)}</textarea>
-            <button class="btn btn-primary" id="settingsSave" style="margin-top:.7rem;">Save Settings</button>
+        <style>
+            .switch { position: relative; display: inline-block; width: 42px; height: 22px; }
+            .switch input { opacity: 0; width: 0; height: 0; }
+            .slider { position: absolute; cursor: pointer; inset: 0; background-color: #222; transition: .4s; border-radius: 34px; border: 1px solid #333; }
+            .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: #666; transition: .4s; border-radius: 50%; shadow: 0 2px 4px rgba(0,0,0,0.5); }
+            input:checked + .slider { background-color: rgba(255, 107, 0, 0.2); border-color: var(--accent); }
+            input:checked + .slider:before { transform: translateX(20px); background-color: var(--accent); }
+            .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+        </style>
+        
+        <div class="settings-grid">
+            ${section('Platform Settings', '🌐', `
+                ${field('Allow Registrations', 'plat_reg', 'toggle', get('platform.allowRegistrations', true))}
+                ${field('Maintenance Mode', 'plat_maint', 'toggle', get('platform.maintenanceMode', false))}
+            `)}
+
+            ${section('Battle Settings', '⚔️', `
+                ${field('Max Battle Duration (Min)', 'bat_dur', 'number', get('battle.maxDuration', 30))}
+                ${field('Allow Fullscreen Mode', 'bat_fs', 'toggle', get('battle.allowFullscreen', true))}
+                ${field('Auto Submit on Timeout', 'bat_auto', 'toggle', get('battle.autoSubmit', true))}
+            `)}
+
+            ${section('Bidding Settings', '🪙', `
+                ${field('Default Entry Fee', 'bid_fee', 'number', get('bidding.entryFee', 100))}
+                ${field('Bid Increment Value', 'bid_inc', 'number', get('bidding.increment', 50))}
+                ${field('Bidding Duration (Min)', 'bid_dur', 'number', get('bidding.duration', 10))}
+                ${field('Max Participants (Top N)', 'bid_max', 'number', get('bidding.maxParticipants', 10))}
+            `)}
+
+            ${section('Contest Settings', '🏆', `
+                ${field('Default Duration', 'con_dur', 'select', get('contest.duration', 45), [
+        { val: 30, lab: '30 Minutes' }, { val: 45, lab: '45 Minutes' }, { val: 60, lab: '60 Minutes' }
+    ])}
+                ${field('Delay After Bidding (Min)', 'con_delay', 'number', get('contest.delayAfterBidding', 2))}
+                ${field('Allow Late Entry', 'con_late', 'toggle', get('contest.allowLateEntry', false))}
+            `)}
+
+            ${section('Coin Settings', '💰', `
+                ${field('Coins per Win', 'coin_win', 'number', get('reward.winCoins', 50))}
+                ${field('Daily Login Reward', 'coin_daily', 'number', get('reward.dailyCoins', 10))}
+                ${field('Refund Policy', 'coin_refund', 'toggle', get('reward.refundPolicy', true))}
+            `)}
+
+            ${section('Safety Settings', '🛡️', `
+                ${field('Anti-cheat Enabled', 'saf_anti', 'toggle', get('safety.antiCheat', true))}
+                ${field('Disable Copy-Paste', 'saf_cp', 'toggle', get('safety.disableCopyPaste', true))}
+                ${field('Tab Switch Warning', 'saf_tab', 'toggle', get('safety.tabSwitchWarning', true))}
+            `)}
+        </div>
+
+        <div style="margin-top: 2.5rem; display: flex; justify-content: center; margin-bottom: 2rem;">
+            <button class="btn btn-primary" id="settingsSave" style="padding: 1rem 4rem; font-weight: 900; letter-spacing: 2px; border-radius: 12px; box-shadow: 0 4px 20px rgba(255, 107, 0, 0.2);">SAVE ALL SETTINGS</button>
         </div>
     `;
 
     document.getElementById('settingsSave').onclick = async () => {
-        let parsed = {};
-        try {
-            parsed = JSON.parse(document.getElementById('settingsBox').value);
-        } catch (_e) {
-            showAlert('Invalid JSON');
-            return;
-        }
+        const btn = document.getElementById('settingsSave');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'SAVING CHANGES...';
 
-        await adminRequest('/settings', {
-            method: 'PUT',
-            body: JSON.stringify(parsed)
-        });
-        showAlert('Settings updated');
+        const payload = {
+            platform: {
+                allowRegistrations: document.getElementById('plat_reg').checked,
+                maintenanceMode: document.getElementById('plat_maint').checked
+            },
+            battle: {
+                maxDuration: parseInt(document.getElementById('bat_dur').value),
+                allowFullscreen: document.getElementById('bat_fs').checked,
+                autoSubmit: document.getElementById('bat_auto').checked,
+                disqualifyOnExit: get('battle.disqualifyOnExit', true)
+            },
+            bidding: {
+                entryFee: parseInt(document.getElementById('bid_fee').value),
+                increment: parseInt(document.getElementById('bid_inc').value),
+                duration: parseInt(document.getElementById('bid_dur').value),
+                maxParticipants: parseInt(document.getElementById('bid_max').value)
+            },
+            contest: {
+                duration: parseInt(document.getElementById('con_dur').value),
+                delayAfterBidding: parseInt(document.getElementById('con_delay').value),
+                allowLateEntry: document.getElementById('con_late').checked
+            },
+            reward: {
+                winCoins: parseInt(document.getElementById('coin_win').value),
+                dailyCoins: parseInt(document.getElementById('coin_daily').value),
+                refundPolicy: document.getElementById('coin_refund').checked
+            },
+            safety: {
+                antiCheat: document.getElementById('saf_anti').checked,
+                disableCopyPaste: document.getElementById('saf_cp').checked,
+                tabSwitchWarning: document.getElementById('saf_tab').checked
+            }
+        };
+
+        try {
+            await adminRequest('/settings', {
+                method: 'PUT',
+                body: JSON.stringify(payload)
+            });
+            showAlert('Settings successfully synchronized! ✨');
+        } catch (e) {
+            showAlert('Error: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     };
 }
 

@@ -62,11 +62,15 @@ public class AdminPanelService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private final Map<String, Object> settings = new ConcurrentHashMap<>(Map.of(
-            "battleRules",
-            new HashMap<>(Map.of("fullscreenRequired", true, "disqualifyOnExit", true, "maxDurationMinutes", 30)),
-            "difficulty", new HashMap<>(Map.of("easyMinutes", 10, "mediumMinutes", 20, "hardMinutes", 30)),
-            "platform", new HashMap<>(Map.of("allowRegistrations", true, "maintenanceMode", false))));
+    private final Map<String, Object> settings = new ConcurrentHashMap<>(new HashMap<>(Map.of(
+            "platform", new HashMap<>(Map.of("allowRegistrations", true, "maintenanceMode", false)),
+            "battle",
+            new HashMap<>(
+                    Map.of("maxDuration", 30, "allowFullscreen", true, "autoSubmit", true, "disqualifyOnExit", true)),
+            "bidding", new HashMap<>(Map.of("entryFee", 100, "increment", 50, "duration", 10, "maxParticipants", 10)),
+            "contest", new HashMap<>(Map.of("duration", 45, "delayAfterBidding", 2, "allowLateEntry", false)),
+            "reward", new HashMap<>(Map.of("winCoins", 50, "dailyCoins", 10, "refundPolicy", true)),
+            "safety", new HashMap<>(Map.of("antiCheat", true, "disableCopyPaste", true, "tabSwitchWarning", true)))));
 
     public Map<String, Object> adminLogin(String username, String password, HttpServletRequest request) {
         if (!isProductionRequest(request)) {
