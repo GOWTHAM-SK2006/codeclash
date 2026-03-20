@@ -62,7 +62,7 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new RuntimeException("Event not found"));
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(IST);
         EventPhase phase = determinePhase(event, now);
 
         Map<String, Object> res = new LinkedHashMap<>();
