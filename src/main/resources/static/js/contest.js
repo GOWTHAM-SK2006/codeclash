@@ -36,10 +36,15 @@ function renderLobby(data) {
                                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Finalizing results, please wait.</p>`;
             return;
         }
-        eligibilityEl.innerHTML = `<p style="color: #ff4444; font-weight: 700;">❌ You were not selected for this contest.</p>
-                                   <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Only the top ${data.maxParticipants} bidders can enter.</p>`;
-        timerEl.style.opacity = '0.3';
-        return;
+
+        // Only block if the contest is still potentially being prepared or live
+        // Once CONTEST_ENDED, everyone should seen the final state
+        if (data.phase !== 'CONTEST_ENDED') {
+            eligibilityEl.innerHTML = `<p style="color: #ff4444; font-weight: 700;">❌ You were not selected for this contest.</p>
+                                       <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Only the top ${data.maxParticipants} bidders can enter.</p>`;
+            timerEl.style.opacity = '0.3';
+            return;
+        }
     }
 
     eligibilityEl.innerHTML = `<p style="color: var(--success); font-weight: 700;">✅ You are eligible for this arena!</p>`;

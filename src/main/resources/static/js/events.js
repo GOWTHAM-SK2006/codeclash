@@ -64,7 +64,7 @@ function renderEvents() {
         }
 
         return `
-            <div class="event-card ${isLive ? 'live' : ''}">
+            <div class="event-card ${isLive ? 'live' : ''}" onclick="navigateToEvent('${event.id}', '${event.phase}')" style="cursor: pointer;">
                 ${statusText}
                 <div class="event-title">${event.title}</div>
                 <div class="event-meta">
@@ -79,7 +79,7 @@ function renderEvents() {
                     </div>
                 ` : ''}
 
-                <button class="btn ${btnClass} btn-join" onclick="navigateToEvent('${event.id}', '${event.phase}')">
+                <button class="btn ${btnClass} btn-join">
                     ${btnText}
                 </button>
                 
