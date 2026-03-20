@@ -32,6 +32,30 @@
             border-color: #3A3A3A;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
         }
+
+        .transaction-card {
+            background: linear-gradient(to right, #1A1A1A, #141414);
+            border-left: 4px solid transparent;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .transaction-card:hover {
+            background: #222;
+            transform: translateX(4px);
+        }
+
+        .transaction-positive {
+            border-left-color: #00C853;
+        }
+
+        .transaction-negative {
+            border-left-color: #FF3D00;
+        }
+
+        .amount-badge {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            letter-spacing: -0.5px;
+        }
     </style>
 </head>
 
@@ -148,34 +172,14 @@
                     <div class="w-2 h-8 bg-[#FF6B00] rounded-full"></div>
                     <h2 class="text-2xl font-extrabold tracking-tight">Coin History</h2>
                 </div>
-                <div class="profile-card overflow-hidden shadow-xl">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead class="bg-[#1F1F1F] border-b border-[#2A2A2A]">
-                                <tr>
-                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">Date
-                                    </th>
-                                    <th class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest">
-                                        Action</th>
-                                    <th
-                                        class="px-6 py-4 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">
-                                        Coins</th>
-                                </tr>
-                            </thead>
-                            <tbody id="coinHistoryBody" class="divide-y divide-[#242424]">
-                                <!-- Rows populated by profile.js -->
-                                <tr>
-                                    <td colspan="3" class="px-6 py-8 text-center">
-                                        <div class="flex flex-col items-center gap-3">
-                                            <div
-                                                class="w-6 h-6 border-2 border-gray-600 border-t-[#FF6B00] rounded-full animate-spin">
-                                            </div>
-                                            <span class="text-gray-500 text-sm">Fetching transaction history...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <div class="space-y-4" id="coinHistoryContainer">
+                    <!-- Transaction cards populated by profile.js -->
+                    <div class="px-6 py-12 text-center text-gray-500 italic">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="w-6 h-6 border-2 border-gray-600 border-t-[#FF6B00] rounded-full animate-spin">
+                            </div>
+                            <span>Fetching transaction history...</span>
+                        </div>
                     </div>
                 </div>
             </section>

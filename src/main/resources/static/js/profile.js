@@ -37,27 +37,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Fetch coin history
             const history = await api.getCoinHistory();
 
-            if (historyBody) {
+            if (historyContainer) {
                 if (!history || history.length === 0) {
-                    historyBody.innerHTML = `
-                        <tr>
-                            <td colspan="3" class="px-6 py-8 text-center text-gray-500 italic">No coin history found.</td>
-                        </tr>
+                    historyContainer.innerHTML = `
+                        <div class="p-12 text-center text-gray-500 italic bg-[#1A1A1A] rounded-xl border border-[#2A2A2A]">
+                            No coin history found.
+                        </div>
                     `;
                 } else {
-                    historyBody.innerHTML = history.map(item => `
-                        <tr class="hover:bg-[#242424] transition-colors">
-                            <td class="px-6 py-4 text-sm text-gray-400 font-mono">
-                                ${new Date(item.createdAt).toLocaleDateString()}
-                            </td>
-                            <td class="px-6 py-4 text-sm font-medium text-white">
-                                ${item.reason}
-                            </td>
-                            <td class="px-6 py-4 text-sm font-bold text-right ${item.amount >= 0 ? 'text-[#00C853]' : 'text-[#FF3D00]'}">
-                                ${item.amount >= 0 ? '+' : ''}${item.amount}
-                            </td>
-                        </tr>
-                    `).join('');
+                    historyContainer.innerHTML = history.map(item => {
+                        const isPositive = item.amount >= 0;
+                        const date = new Date(item.createdAt);
+                        const day = date.getDate();
+                        const month = date.toLocaleString('default', { month: 'short' });
+                        const year = date.getFullYear();
+
+                        return `
+                            <div class="transaction-card ${isPositive ? 'transaction-positive' : 'transaction-negative'} p-4 rounded-xl border border-[#2A2A2A] flex items-center justify-between group shadow-lg">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border ${isPositive ? 'border-[#00C853]/20' : 'border-[#FF3D00]/20'} shadow-inner">
+                                        <span class="text-xl font-bold">${isPositive ? '↑' : '↓'}</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white group-hover:text-[#FF6B00] transition-colors">${item.reason}</h4>
+                                        <div class="flex items-center gap-2 mt-0.5">
+                                            <span class="text-[10px] font-bold tracking-widest uppercase py-0.5 px-2 rounded bg-[#242424] text-gray-400">
+                                                ${isPositive ? 'Credit' : 'Debit'}
+                                            </span>
+                                            <span class="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
+                                                ${month} ${day}, ${year}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="amount-badge text-xl font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'} drop-shadow-sm">
+                                        ${isPositive ? '+' : ''}${item.amount}
+                                    </div>
+                                    <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">CodeCoins</div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
                 }
             }
 
