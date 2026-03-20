@@ -98,20 +98,29 @@ document.getElementById('enterArenaBtn').onclick = () => {
 async function loadProblems() {
     const data = await api.request(`/events/${eventId}`);
     const list = document.getElementById('problemList');
+    list.innerHTML = '<div class="spinner"></div>';
 
-    // We need to fetch problem titles from IDs
-    // For now we'll assume problemIds is "1,2,3"
     const ids = data.problemIds.split(',').map(s => s.trim()).filter(Boolean);
 
-    list.innerHTML = ids.map(id => `
-        <div class="problem-item" onclick="window.location.href='/problem.html?id=${id}'">
-            <div>
-                <div style="font-weight: 700;">Problem #${id}</div>
-                <div style="font-size: 0.8rem; color: var(--text-secondary);">Battle Objective</div>
+    try {
+        // Fetch all problem details concurrently
+        const problems = await Promise.all(ids.map(id => api.getProblem(id)));
+
+        list.innerHTML = problems.map(prob => `
+            <div class="problem-item" onclick="window.location.href='/problem.html?id=${prob.id}&eventId=${eventId}'">
+                <div>
+                    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">${prob.title}</div>
+                    <div style="display: flex; gap: 0.75rem; margin-top: 0.4rem; align-items: center;">
+                        <span class="badge badge-${prob.difficulty.toLowerCase()}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;">${prob.difficulty}</span>
+                        <span style="font-size: 0.8rem; color: var(--accent); font-weight: 700;">🪙 ${prob.points} pts</span>
+                    </div>
+                </div>
+                <div style="color: var(--accent); font-weight: 900; letter-spacing: 0.5px;">SOLVE →</div>
             </div>
-            <div style="color: var(--accent); font-weight: 800;">Solve →</div>
-        </div>
-    `).join('');
+        `).join('');
+    } catch (e) {
+        list.innerHTML = `<div class="alert alert-error">Failed to load problems: ${e.message}</div>`;
+    }
 }
 
 renderNav('events');

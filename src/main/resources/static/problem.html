@@ -65,9 +65,21 @@
         let currentProblem = null;
         const params = new URLSearchParams(window.location.search);
         const problemId = params.get('id');
+        const eventId = params.get('eventId');
+
+        if (eventId) {
+            const backBtn = document.querySelector('a[href="problems.html"]');
+            if (backBtn) {
+                backBtn.href = `contest.html?eventId=${eventId}`;
+                backBtn.textContent = '← Back to Contest Arena';
+            }
+        }
 
         (async function () {
-            if (!problemId) { window.location.href = 'problems.html'; return; }
+            if (!problemId) {
+                window.location.href = eventId ? `contest.html?eventId=${eventId}` : 'problems.html';
+                return;
+            }
 
             try {
                 currentProblem = await api.getProblem(problemId);
