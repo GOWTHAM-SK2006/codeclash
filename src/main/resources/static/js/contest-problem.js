@@ -1,4 +1,4 @@
-// Contest Problem Page — mirrors battle-room.js functionality
+
 const params = new URLSearchParams(window.location.search);
 const eventId = params.get('eventId');
 const problemId = params.get('id');
@@ -283,7 +283,7 @@ function parseBattleTestcases(problem) {
     try {
         const parsed = JSON.parse(testCaseText);
         if (Array.isArray(parsed) && parsed.length) {
-            const normalized = parsed.map(item => ({ input: String(item?.input ?? ''), expected: String(item?.expected ?? '') })).filter(item => item.expected.length > 0 || item.input.length > 0);
+            const normalized = parsed.filter(item => item.sample === true || item.sample === undefined).map(item => ({ input: String(item?.input ?? ''), expected: String(item?.expected ?? '') })).filter(item => item.expected.length > 0 || item.input.length > 0);
             if (normalized.length) return normalized;
         }
     } catch (_) { }

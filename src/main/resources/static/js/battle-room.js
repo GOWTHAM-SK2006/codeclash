@@ -765,6 +765,7 @@ function parseBattleTestcases(problem) {
         const parsed = JSON.parse(testCaseText);
         if (Array.isArray(parsed) && parsed.length) {
             const normalized = parsed
+                .filter(item => item.sample === true || item.sample === undefined)
                 .map(item => ({
                     input: String(item?.input ?? ''),
                     expected: String(item?.expected ?? '')
