@@ -8,9 +8,6 @@ const router = express.Router();
 router.post("/run-code", async (req, res) => {
   try {
     const { code, language = "python", problemId } = req.body || {};
-    if (language !== "python") {
-      return res.status(400).json({ error: "Only python supported currently" });
-    }
     if (!code || typeof code !== "string") {
       return res.status(400).json({ error: "Code is required" });
     }
@@ -24,7 +21,7 @@ router.post("/run-code", async (req, res) => {
       return res.status(404).json({ error: "Problem not found" });
     }
 
-    const result = await runVisibleTestcases({ code, problem, timeoutMs: 2000 });
+    const result = await runVisibleTestcases({ code, problem, language, timeoutMs: 2000 });
     return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: "Run failed", details: err.message });
@@ -34,10 +31,6 @@ router.post("/run-code", async (req, res) => {
 router.post("/submit-code", async (req, res) => {
   try {
     const { battleId, playerId, problemId, code, language = "python" } = req.body || {};
-
-    if (language !== "python") {
-      return res.status(400).json({ error: "Only python supported currently" });
-    }
     if (!code || typeof code !== "string") {
       return res.status(400).json({ error: "Code is required" });
     }
@@ -49,7 +42,7 @@ router.post("/submit-code", async (req, res) => {
     if (!problem) return res.status(404).json({ error: "Problem not found" });
 
     const startedAt = Date.now();
-    const judge = await judgeSubmission({ code, problem, timeoutMs: 2000 });
+    const judge = await judgeSubmission({ code, problem, language, timeoutMs: 2000 });
     const completedAt = Date.now();
 
     // Battle mode: update battle state if both battleId and playerId provided
@@ -81,9 +74,6 @@ router.post("/submit-code", async (req, res) => {
 router.post("/run-function-style", async (req, res) => {
   try {
     const { code, functionName, problemId, language = "python" } = req.body || {};
-    if (language !== "python") {
-      return res.status(400).json({ error: "Only python supported currently" });
-    }
     if (!code || typeof code !== "string") {
       return res.status(400).json({ error: "Code is required" });
     }

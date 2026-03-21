@@ -28,6 +28,10 @@ export async function executeJava({ code, stdin = "", timeoutMs = DEFAULT_TIMEOU
   return executeGeneric({ code, stdin, timeoutMs, lang: 'java', filename: 'Solution.java', compileCommand: 'javac', compileArgs: ['Solution.java'], command: 'java', args: ['SolutionRunner'] });
 }
 
+export async function executeJavascript({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_MS }) {
+  return executeGeneric({ code, stdin, timeoutMs, lang: 'javascript', filename: 'solution.js', command: 'node', args: ['solution.js'] });
+}
+
 async function executeGeneric({ code, stdin, timeoutMs, lang, filename, compileCommand, compileArgs, command, args = [] }) {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "codeclash-"));
   const filePath = path.join(tempDir, filename);

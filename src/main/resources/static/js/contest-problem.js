@@ -16,7 +16,7 @@ let battleTestcases = [];
 let selectedTestcaseIndex = 0;
 let testcaseRunResults = [];
 
-const DEFAULT_STARTER_CODE = 'def solve(n):\n    # Your code here\n    pass';
+const DEFAULT_STARTER_CODE = '';
 
 // ── Back button ──
 document.getElementById('backBtn').onclick = () => {
@@ -253,8 +253,7 @@ function getSelectedLanguage() {
 
 function onLanguageChanged() {
     setEditorLanguage(getSelectedLanguage());
-    const starterCode = getEditorStarterCode(currentProblem, getSelectedLanguage());
-    if (starterCode) setEditorCode(starterCode);
+    // Removed auto-insert of starter code to ensure empty editor
 }
 
 function bindGlobalShortcuts() {

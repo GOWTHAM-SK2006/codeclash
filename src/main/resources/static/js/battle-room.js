@@ -732,29 +732,7 @@ function getEditorCode() {
 }
 
 function getEditorStarterCode(problem, language = 'python') {
-    // 1. Check if we have pre-defined standardized signatures
-    if (problem?.functionSignatures) {
-        try {
-            const sigs = typeof problem.functionSignatures === 'string'
-                ? JSON.parse(problem.functionSignatures)
-                : problem.functionSignatures;
-            if (sigs[language]) return sigs[language];
-        } catch (e) {
-            console.error('Failed to parse functionSignatures:', e);
-        }
-    }
-    const raw = String(problem?.starterCode || '').trim();
-
-    const fromWrapper = buildStarterFromWrapper(problem, language);
-    if (fromWrapper) return fromWrapper;
-
-    const inferred = inferStarterByTitle(problem?.title, language);
-    if (inferred) return inferred;
-
-    const fromRaw = buildStarterFromRaw(problem, language);
-    if (fromRaw) return fromRaw;
-
-    return getDefaultStarterCode(language);
+    return "";
 }
 
 function normalizeJavaTypeByHint(typeHint, paramName = '') {
