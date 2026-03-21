@@ -215,6 +215,20 @@ async function loadBattleDetails() {
         document.getElementById('battleProblemTitle').textContent = battle.problem?.title || 'Problem';
         document.getElementById('battleProblemDesc').textContent = battle.problem?.description || '';
         currentProblem = battle.problem || null;
+
+        // Input/Output Format
+        const formatSection = document.getElementById('formatSection');
+        const inputFormatEl = document.getElementById('inputFormat');
+        const outputFormatEl = document.getElementById('outputFormat');
+
+        if (currentProblem.inputFormat || currentProblem.outputFormat) {
+            if (formatSection) formatSection.style.display = 'block';
+            if (inputFormatEl) inputFormatEl.textContent = currentProblem.inputFormat || 'Not specified';
+            if (outputFormatEl) outputFormatEl.textContent = currentProblem.outputFormat || 'Not specified';
+        } else {
+            if (formatSection) formatSection.style.display = 'none';
+        }
+
         if (battle.problem?.difficulty) {
             const badge = document.getElementById('difficultyBadge');
             badge.textContent = battle.problem.difficulty;
@@ -718,6 +732,17 @@ function getEditorCode() {
 }
 
 function getEditorStarterCode(problem, language = 'python') {
+    // 1. Check if we have pre-defined standardized signatures
+    if (problem?.functionSignatures) {
+        try {
+            const sigs = typeof problem.functionSignatures === 'string'
+                ? JSON.parse(problem.functionSignatures)
+                : problem.functionSignatures;
+            if (sigs[language]) return sigs[language];
+        } catch (e) {
+            console.error('Failed to parse functionSignatures:', e);
+        }
+    }
     const raw = String(problem?.starterCode || '').trim();
 
     const fromWrapper = buildStarterFromWrapper(problem, language);
