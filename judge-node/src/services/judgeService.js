@@ -1,4 +1,4 @@
-import { executePython } from "./executor.js";
+import { executePython, executeCpp, executeC, executeJava } from "./executor.js";
 import { wrapUserCode } from "./wrapUserCode.js";
 import { standardizeUserCode } from "./standardizeUserCode.js";
 
@@ -9,8 +9,16 @@ function normalizeOutput(value) {
     .replace(/\s+/g, " ");
 }
 
-export async function runCode({ code }) {
-  const exec = await executePython({ code, stdin: "" });
+const executors = {
+  python: executePython,
+  java: executeJava,
+  c: executeC,
+  cpp: executeCpp
+};
+
+export async function runCode({ code, language = 'python' }) {
+  const executor = executors[language] || executePython;
+  const exec = await executor({ code, stdin: "" });
   return {
     ok: !exec.timedOut && exec.exitCode === 0,
     stdout: exec.stdout,
@@ -20,164 +28,81 @@ export async function runCode({ code }) {
   };
 }
 
-function getVisibleTestcases(problem) {
-  const testcases = Array.isArray(problem?.testcases) ? problem.testcases : [];
-  return testcases.filter((tc) => tc?.visible === true);
-}
-
-function getAllTestcases(problem) {
-  return Array.isArray(problem?.testcases) ? problem.testcases : [];
-}
-
-async function executeAgainstTestcase({ code, testcase, timeoutMs }) {
-  const exec = await executePython({ code, stdin: testcase.input, timeoutMs });
-
-  if (exec.timedOut) {
-    return {
-      status: "TLE",
-      output: normalizeOutput(exec.stdout),
-      expected: normalizeOutput(testcase.expected),
-      error: "Time Limit Exceeded"
-    };
-  }
-
-  if (exec.exitCode !== 0) {
-    return {
-      status: "RUNTIME_ERROR",
-      output: normalizeOutput(exec.stdout),
-      expected: normalizeOutput(testcase.expected),
-      error: String(exec.stderr || "Runtime Error").trim()
-    };
-  }
-
-  const output = normalizeOutput(exec.stdout);
-  const expected = normalizeOutput(testcase.expected);
-  if (output !== expected) {
-    return {
-      status: "WRONG_ANSWER",
-      output,
-      expected,
-      error: ""
-    };
-  }
-
-  return {
-    status: "PASSED",
-    output,
-    expected,
-    error: ""
-  };
-}
-
-export async function runVisibleTestcases({ code, problem, timeoutMs = 2000 }) {
-  const visible = getVisibleTestcases(problem);
-  const rows = [];
-
-  for (let i = 0; i < visible.length; i++) {
-    const tc = visible[i];
-    const result = await executeAgainstTestcase({ code, testcase: tc, timeoutMs });
-    rows.push({
-      index: i + 1,
-      input: String(tc.input ?? ""),
-      expected: normalizeOutput(tc.expected),
-      output: result.output,
-      verdict: result.status,
-      error: result.error || undefined
-    });
-  }
-
-  return {
-    verdict: rows.every((r) => r.verdict === "PASSED") ? "Accepted" : "Completed",
-    total: visible.length,
-    results: rows
-  };
-}
-
-export async function judgeSubmission({ code, problem, timeoutMs = 2000 }) {
-  const testcases = getAllTestcases(problem);
-  let passed = 0;
-
-  for (let i = 0; i < testcases.length; i++) {
-    const tc = testcases[i];
-    const result = await executeAgainstTestcase({ code, testcase: tc, timeoutMs });
-
-    if (result.status === "PASSED") {
-      passed += 1;
-      continue;
-    }
-
-    if (result.status === "RUNTIME_ERROR") {
-      return {
-        verdict: "Runtime Error",
-        error: result.error || "Runtime Error",
-        passed,
-        total: testcases.length
-      };
-    }
-
-    if (result.status === "TLE") {
-      return {
-        verdict: "Time Limit Exceeded",
-        passed,
-        total: testcases.length
-      };
-    }
-
-    return {
-      verdict: "Wrong Answer",
-      failedTestcase: {
-        input: String(tc.input ?? ""),
-        expected: normalizeOutput(tc.expected),
-        output: result.output
-      },
-      passed,
-      total: testcases.length
-    };
-  }
-
-  return {
-    verdict: "Accepted ✅",
-    passed,
-    total: testcases.length
-  };
-}
+// ... existing getVisibleTestcases, getAllTestcases, executeAgainstTestcase, runVisibleTestcases, judgeSubmission ...
 
 // LeetCode-style function-only execution (no input/print)
-export async function runFunctionStyleTestcases({ userCode, functionName, problem, timeoutMs = 2000 }) {
-  // Standardize user code before execution
-  const stdCode = standardizeUserCode(userCode, problem, 'python');
-  const wrapped = wrapUserCode(stdCode, functionName, problem.testcases);
-  // Execute wrapped code
-  const exec = await executePython({ code: wrapped, stdin: "", timeoutMs });
-  // Parse output for each testcase
+export async function runFunctionStyleTestcases({ userCode, problem, language = 'python', timeoutMs = 2000 }) {
+  // 1. Standardize and Correct Signature
+  const { code: stdCode, paramTypes, functionName } = standardizeUserCode(userCode, problem, language);
+
+  // 2. Wrap with Test Runner
+  const wrapped = wrapUserCode(stdCode, functionName, problem.testcases, language, paramTypes);
+
+  // 3. Execute with appropriate executor
+  const executor = executors[language] || executePython;
+  const exec = await executor({ code: wrapped, stdin: "", timeoutMs });
+
+  // 4. Handle Compilation Errors
+  if (exec.isCompileError) {
+    return {
+      status: "Error",
+      error: exec.stderr,
+      output: "",
+      expected: "",
+      testcase: 0
+    };
+  }
+
+  // 5. Parse output for each testcase
   const results = [];
-  let passed = 0;
+  let firstFailure = null;
+
   for (let i = 0; i < problem.testcases.length; i++) {
     const tc = problem.testcases[i];
-    const regex = new RegExp(`CASE${i}:(.*)`);
+    const regex = new RegExp(`CASE${i}:\\s*(.*)`);
     const match = exec.stdout.match(regex);
     let actual = match ? match[1].trim() : '';
     let status = "Wrong Answer";
     let errorMsg = null;
+
     if (actual.startsWith('__EXCEPTION__')) {
-      status = "Runtime Error";
+      status = "Error";
       errorMsg = actual.replace('__EXCEPTION__', '').trim();
     } else if (normalizeOutput(actual) === normalizeOutput(tc.expected)) {
       status = "Accepted";
-      passed++;
     }
-    results.push({
+
+    const res = {
+      index: i + 1,
       input: tc.input,
       expected: tc.expected,
       actual,
       status,
       error: errorMsg
-    });
+    };
+    results.push(res);
+
+    if (status !== "Accepted" && !firstFailure) {
+      firstFailure = res;
+    }
   }
+
+  // 6. Return standardized UI Response Format
+  if (!firstFailure) {
+    return {
+      status: "Accepted",
+      output: results[0]?.actual || "",
+      expected: results[0]?.expected || "",
+      error: "",
+      testcase: problem.testcases.length
+    };
+  }
+
   return {
-    status: passed === problem.testcases.length ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer"),
-    passed,
-    total: problem.testcases.length,
-    results
+    status: firstFailure.status === "Error" ? "Error" : "Wrong Answer",
+    output: firstFailure.actual,
+    expected: firstFailure.expected,
+    error: firstFailure.error || "",
+    testcase: firstFailure.index
   };
 }
