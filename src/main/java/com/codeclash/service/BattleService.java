@@ -507,7 +507,7 @@ public class BattleService {
                 return battleRepository.save(battle);
         }
 
-        private boolean evaluateGenericBattleSubmission(Problem problem, String userCode, String language) {
+        private boolean evaluateBattleSubmission(Problem problem, String userCode, String language) {
                 List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
 
                 if (testCases.isEmpty()) {
@@ -536,212 +536,18 @@ public class BattleService {
                 return true;
         }
 
-        private DockerSandboxService.ExecutionResult runGenericBattleCode(Problem problem, String userCode,
-                        String language,
+        private DockerSandboxService.ExecutionResult runBattleCode(Problem problem, String userCode, String language,
                         String selectedInputData) {
-                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
-
-                if (selectedInputData != null) {
+                if (selectedInputData != null && !selectedInputData.isBlank()) {
                         return dockerSandboxService.execute(userCode, language, selectedInputData);
                 }
 
+                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
                 if (testCases.isEmpty()) {
                         return dockerSandboxService.execute(userCode, language, "");
                 }
 
-                ProblemService.TestCaseData firstCase = testCases.get(0);
-                return dockerSandboxService.execute(userCode, language, firstCase.input());
-        }
-
-        private boolean evaluatePythonBattleSubmission(Problem problem, String userCode) {
-                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
-
-                if (testCases.isEmpty()) {
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "PYTHON");
-                        if (result.isTimedOut() || result.getExitCode() != 0) {
-                                return false;
-                        }
-                        return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
-                }
-
-                for (ProblemService.TestCaseData testCase : testCases) {
-                        String codeToRun = buildExecutablePythonCode(problem, userCode, testCase.input());
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "PYTHON");
-                        if (result.isTimedOut() || result.getExitCode() != 0) {
-                                return false;
-                        }
-
-                        String actual = normalizeOutput(result.getStdout());
-                        String expected = normalizeOutput(testCase.expected());
-                        if (!actual.equals(expected)) {
-                                return false;
-                        }
-                }
-
-                return true;
-        }
-
-        private DockerSandboxService.ExecutionResult runPythonBattleCode(Problem problem, String userCode,
-                        String selectedInputData) {
-                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
-
-                if (selectedInputData != null) {
-                        String codeToRun = buildExecutablePythonCode(problem, userCode, selectedInputData);
-                        return dockerSandboxService.execute(codeToRun, "PYTHON");
-                }
-
-                if (testCases.isEmpty()) {
-                        return dockerSandboxService.execute(userCode, "PYTHON");
-                }
-
-                ProblemService.TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildExecutablePythonCode(problem, userCode, firstCase.input());
-                return dockerSandboxService.execute(codeToRun, "PYTHON");
-        }
-
-        private boolean evaluateJavaBattleSubmission(Problem problem, String userCode) {
-                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
-
-                if (testCases.isEmpty()) {
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, "JAVA");
-                        if (result.isTimedOut() || result.getExitCode() != 0) {
-                                return false;
-                        }
-                        return normalizeOutput(result.getStdout()).equals(normalizeOutput(problem.getExpectedOutput()));
-                }
-
-                for (ProblemService.TestCaseData testCase : testCases) {
-                        String codeToRun = buildExecutableJavaCode(problem, userCode, testCase.input());
-                        DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(codeToRun, "JAVA");
-                        if (result.isTimedOut() || result.getExitCode() != 0) {
-                                return false;
-                        }
-
-                        String actual = normalizeOutput(result.getStdout());
-                        String expected = normalizeOutput(testCase.expected());
-                        if (!actual.equals(expected)) {
-                                return false;
-                        }
-                }
-
-                return true;
-        }
-
-        private DockerSandboxService.ExecutionResult runJavaBattleCode(Problem problem, String userCode,
-                        String selectedInputData) {
-                List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
-
-                if (selectedInputData != null) {
-                        String codeToRun = buildExecutableJavaCode(problem, userCode, selectedInputData);
-                        return dockerSandboxService.execute(codeToRun, "JAVA");
-                }
-
-                if (testCases.isEmpty()) {
-                        return dockerSandboxService.execute(userCode, "JAVA");
-                }
-
-                ProblemService.TestCaseData firstCase = testCases.get(0);
-                String codeToRun = buildExecutableJavaCode(problem, userCode, firstCase.input());
-                return dockerSandboxService.execute(codeToRun, "JAVA");
-        }
-
-        private String buildExecutableJavaCode(Problem problem, String userCode, String rawInput) {
-                return userCode;
-        }
-
-        private String buildExecutablePythonCode(Problem problem, String userCode, String rawInput) {
-                return userCode;
-        }
-
-        private boolean usesInputFunction(String userCode) {
-                return false;
-        }
-
-        private String buildPythonInputPatchedScript(String userCode, String rawInput) {
-                return userCode;
-        }
-
-        private String buildLeetCodeWrapper(String userCode, JsonNode config, String rawInput) {
-                return userCode;
-        }
-
-        private String buildJavaWrapper(String userCode, JsonNode config, String rawInput) {
-                return userCode;
-        }
-
-        private String buildJavaAutoWrapper(String userCode, String functionName, String rawInput) {
-                return userCode;
-        }
-
-        private JsonNode mapInputsToParams(JsonNode inputs) {
-                try {
-                        List<Map<String, String>> params = new ArrayList<>();
-                        for (int i = 0; i < inputs.size(); i++) {
-                                String rawType = inputs.get(i).asText("str").toLowerCase();
-                                String mappedType = switch (rawType) {
-                                        case "array" -> "json";
-                                        case "number" -> "int";
-                                        case "string" -> "str";
-                                        case "boolean" -> "bool";
-                                        default -> rawType;
-                                };
-                                params.add(Map.of("name", "arg" + i, "type", mappedType));
-                        }
-                        return OBJECT_MAPPER.valueToTree(params);
-                } catch (Exception ignored) {
-                        return OBJECT_MAPPER.createArrayNode();
-                }
-        }
-
-        /**
-         * Fallback wrapper: auto-parses each stdin line as JSON → int → str,
-         * then calls the detected function with those args.
-         */
-        private String buildAutoFunctionWrapper(String userCode, String functionName, String rawInput) {
-                String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
-                return userCode + "\n\n"
-                                + "import sys, json\n\n"
-                                + "if __name__ == '__main__':\n"
-                                + "    _raw = " + inputLiteral + "\n"
-                                + "    _lines = [l for l in _raw.strip().split('\\n') if l.strip()]\n"
-                                + "    _args = []\n"
-                                + "    for _l in _lines:\n"
-                                + "        try:\n"
-                                + "            _args.append(json.loads(_l))\n"
-                                + "        except Exception:\n"
-                                + "            try:\n"
-                                + "                _args.append(int(_l.strip()))\n"
-                                + "            except Exception:\n"
-                                + "                _args.append(_l)\n"
-                                + "    _result = " + functionName + "(*_args)\n"
-                                + "    if _result is not None:\n"
-                                + "        print(_result)\n";
-        }
-
-        private String toPythonStringLiteral(String value) {
-                return "'" + value
-                                .replace("\\", "\\\\")
-                                .replace("'", "\\'")
-                                .replace("\r", "\\r")
-                                .replace("\n", "\\n") + "'";
-        }
-
-        private String toJavaStringLiteral(String value) {
-                return "\"" + value
-                                .replace("\\", "\\\\")
-                                .replace("\"", "\\\"")
-                                .replace("\r", "\\r")
-                                .replace("\n", "\\n") + "\"";
-        }
-
-        private String extractFirstJavaMethodName(String code) {
-                if (code == null || code.isBlank()) {
-                        return null;
-                }
-                Matcher matcher = Pattern.compile(
-                                "(?m)^\\s*public\\s+(?:static\\s+)?(?:[a-zA-Z_][a-zA-Z0-9_<>\\[\\]]*\\s+)+([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\(")
-                                .matcher(code);
-                return matcher.find() ? matcher.group(1) : null;
+                return dockerSandboxService.execute(userCode, language, testCases.get(0).input());
         }
 
         private String normalizeOutput(String value) {
