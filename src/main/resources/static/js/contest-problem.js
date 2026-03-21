@@ -255,6 +255,17 @@ function bindGlobalShortcuts() {
 
 // ── Starter Code Generation (same as battle-room) ──
 function getEditorStarterCode(problem, language = 'python') {
+    // Strictly infer parameter types from testcases and constraints
+    const paramTypes = inferParamTypesFromTestcasesAndConstraints(problem);
+    const functionName = problem.functionName || 'solve';
+    // Generate function signature for Java
+    if (language === 'java') {
+        const javaParams = paramTypes.map((t, i) => `${t.type} ${t.name}`).join(', ');
+        const returnType = inferJavaReturnType(problem, 'int');
+        const stub = returnType === 'boolean' ? 'false' : returnType === 'double' ? '0.0' : returnType.endsWith('[]') ? `new ${returnType.replace('[]', '')}[] {}` : returnType === 'String' ? '""' : '0';
+        return `class Solution {\n    public ${returnType} ${functionName}(${javaParams}) {\n        // Your code here\n        return ${stub};\n    }\n}`;
+    }
+    // Fallback to original logic for other languages
     const fromWrapper = buildStarterFromWrapper(problem, language);
     if (fromWrapper) return fromWrapper;
     const inferred = inferStarterByTitle(problem?.title, language);
@@ -262,6 +273,95 @@ function getEditorStarterCode(problem, language = 'python') {
     const fromRaw = buildStarterFromRaw(problem, language);
     if (fromRaw) return fromRaw;
     return getDefaultStarterCode(language);
+// Infer parameter types from testcases and constraints
+function inferParamTypesFromTestcasesAndConstraints(problem) {
+    // Try to parse the first testcase input
+    let inputExample = '';
+    if (problem.testcases && problem.testcases.length > 0) {
+        inputExample = problem.testcases[0].input;
+    }
+    // Try to parse as JSON array or primitive
+    let params = [];
+    try {
+        // If input is like "[1,2,3], 4" or "\"HELLO\"", split by comma respecting brackets/quotes
+        params = smartSplitInput(inputExample);
+    } catch (e) {
+        params = [inputExample];
+    }
+    // Infer type for each param
+    return params.map((val, idx) => {
+        const type = detectType(val, problem.constraints);
+        return { type, name: suggestParamName(type, idx) };
+    });
+}
+
+// Smartly split input string into parameters
+function smartSplitInput(input) {
+    // Handles cases like: [1,2,3], 4  or  "HELLO"  or  42
+    let result = [];
+    let depth = 0, current = '', inString = false;
+    for (let i = 0; i < input.length; i++) {
+        const c = input[i];
+        if (c === '"' || c === "'") inString = !inString;
+        if (!inString && (c === '[' || c === '{')) depth++;
+        if (!inString && (c === ']' || c === '}')) depth--;
+        if (!inString && c === ',' && depth === 0) {
+            result.push(current.trim());
+            current = '';
+        } else {
+            current += c;
+        }
+    }
+    if (current.trim()) result.push(current.trim());
+    return result;
+}
+
+// Detect Java type from value and constraints
+function detectType(val, constraints) {
+    val = val.trim();
+    if (/^\".*\"$|^'.*'$/.test(val)) return 'String';
+    if (/^\[.*\]$/.test(val)) {
+        // Try to detect array element type
+        const arrContent = val.slice(1, -1).trim();
+        if (/^\d+(,\s*\d+)*$/.test(arrContent)) return 'int[]';
+        if (/^\".*\"(,\s*\".*\")*$/.test(arrContent)) return 'String[]';
+        // Fallback
+        return 'int[]';
+    }
+    if (/^-?\d+$/.test(val)) return 'int';
+    if (/^-?\d*\.\d+$/.test(val)) return 'double';
+    // Fallback: try to use constraints
+    if (constraints && /string/i.test(constraints)) return 'String';
+    if (constraints && /array/i.test(constraints)) return 'int[]';
+    if (constraints && /integer|int/i.test(constraints)) return 'int';
+    return 'String';
+}
+
+// Suggest parameter name based on type
+function suggestParamName(type, idx) {
+    if (type.endsWith('[]')) return 'arr';
+    if (type === 'String') return 's';
+    if (type === 'int') return 'n';
+    if (type === 'double') return 'd';
+    return 'arg' + (idx + 1);
+}
+
+// Validation: Ensure function signature matches expected types
+function validateFunctionSignature(expectedTypes, userSignature) {
+    // expectedTypes: array of {type, name}
+    // userSignature: string, e.g. "public int foo(int[] arr, int n)"
+    const paramRegex = /\((.*)\)/;
+    const match = userSignature.match(paramRegex);
+    if (!match) throw new Error('Invalid function signature format');
+    const params = match[1].split(',').map(s => s.trim()).filter(Boolean);
+    if (params.length !== expectedTypes.length) throw new Error('Invalid function signature: Parameter count mismatch');
+    for (let i = 0; i < params.length; i++) {
+        const expected = expectedTypes[i].type;
+        if (!params[i].startsWith(expected + ' ')) {
+            throw new Error(`Invalid function signature: Expected ${expected} but found ${params[i]}`);
+        }
+    }
+}
 }
 
 function normalizeJavaTypeByHint(typeHint, paramName = '') {

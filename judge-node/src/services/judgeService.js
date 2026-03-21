@@ -1,5 +1,6 @@
 import { executePython } from "./executor.js";
 import { wrapUserCode } from "./wrapUserCode.js";
+import { standardizeUserCode } from "./standardizeUserCode.js";
 
 function normalizeOutput(value) {
   return String(value ?? "")
@@ -143,8 +144,9 @@ export async function judgeSubmission({ code, problem, timeoutMs = 2000 }) {
 
 // LeetCode-style function-only execution (no input/print)
 export async function runFunctionStyleTestcases({ userCode, functionName, problem, timeoutMs = 2000 }) {
-  // Wrap user code with test runner
-  const wrapped = wrapUserCode(userCode, functionName, problem.testcases);
+  // Standardize user code before execution
+  const stdCode = standardizeUserCode(userCode, problem, 'python');
+  const wrapped = wrapUserCode(stdCode, functionName, problem.testcases);
   // Execute wrapped code
   const exec = await executePython({ code: wrapped, stdin: "", timeoutMs });
   // Parse output for each testcase
