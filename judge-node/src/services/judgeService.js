@@ -1,4 +1,5 @@
 import { executePython, executeCpp, executeC, executeJava, executeJavascript } from "./executor.js";
+import { normalizeInput } from "../utils/inputNormalizer.js";
 
 function normalizeOutput(value) {
   return String(value ?? "").trim();
@@ -23,9 +24,10 @@ export async function judgeSubmission({ code, language = 'python', testcases = [
 
   for (let i = 0; i < testcases.length; i++) {
     const tc = testcases[i];
+    const normalizedStdin = normalizeInput(tc.input || "");
     const exec = await executor({
       code,
-      stdin: tc.input || "",
+      stdin: normalizedStdin,
       timeoutMs: 3000 // Standard 3s timeout
     });
 
@@ -63,7 +65,8 @@ export async function judgeSubmission({ code, language = 'python', testcases = [
 // Minimal runCode for testing
 export async function runCode({ code, language = 'python', stdin = "" }) {
   const executor = executors[language] || executePython;
-  const exec = await executor({ code, stdin });
+  const normalizedStdin = normalizeInput(stdin);
+  const exec = await executor({ code, stdin: normalizedStdin });
   return {
     ok: !exec.timedOut && exec.exitCode === 0,
     stdout: exec.stdout,

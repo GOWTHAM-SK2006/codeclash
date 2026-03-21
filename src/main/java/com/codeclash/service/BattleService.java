@@ -506,8 +506,9 @@ public class BattleService {
                 }
 
                 for (ProblemService.TestCaseData testCase : testCases) {
+                        String normalizedInput = normalizeInputData(testCase.input());
                         DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(userCode, language,
-                                        testCase.input());
+                                        normalizedInput);
                         if (result.isTimedOut() || result.getExitCode() != 0) {
                                 return false;
                         }
@@ -525,7 +526,7 @@ public class BattleService {
         private DockerSandboxService.ExecutionResult runBattleCode(Problem problem, String userCode, String language,
                         String selectedInputData) {
                 if (selectedInputData != null && !selectedInputData.isBlank()) {
-                        return dockerSandboxService.execute(userCode, language, selectedInputData);
+                        return dockerSandboxService.execute(userCode, language, normalizeInputData(selectedInputData));
                 }
 
                 List<ProblemService.TestCaseData> testCases = problemService.parseTestCases(problem);
@@ -533,7 +534,94 @@ public class BattleService {
                         return dockerSandboxService.execute(userCode, language, "");
                 }
 
-                return dockerSandboxService.execute(userCode, language, testCases.get(0).input());
+                return dockerSandboxService.execute(userCode, language, normalizeInputData(testCases.get(0).input()));
+        }
+
+        /**
+         * Converts JSON-style inputs to standard CP stdin format.
+         * e.g., "[1,2,3,4]" → "4\n1 2 3 4"
+         * "[1,2]\n9" → "2\n1 2\n9"
+         * "hello" → "hello"
+         */
+        private String normalizeInputData(String raw) {
+                if (raw == null || raw.trim().isEmpty())
+                        return "";
+                String[] lines = raw.split("\n");
+                StringBuilder result = new StringBuilder();
+
+                for (String line : lines) {
+                        String trimmed = line.trim();
+                        if (trimmed.isEmpty())
+                                continue;
+
+                        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                                // Parse JSON-style array
+                                try {
+                                        String inner = trimmed.substring(1, trimmed.length() - 1).trim();
+                                        if (inner.isEmpty()) {
+                                                if (result.length() > 0)
+                                                        result.append("\n");
+                                                result.append("0");
+                                                continue;
+                                        }
+
+                                        // Check for nested arrays (2D)
+                                        if (inner.startsWith("[")) {
+                                                // 2D array: parse sub-arrays
+                                                java.util.List<String> subArrays = new java.util.ArrayList<>();
+                                                int depth = 0;
+                                                int start = 0;
+                                                for (int i = 0; i < inner.length(); i++) {
+                                                        char c = inner.charAt(i);
+                                                        if (c == '[')
+                                                                depth++;
+                                                        else if (c == ']') {
+                                                                depth--;
+                                                                if (depth == 0) {
+                                                                        subArrays.add(inner.substring(start, i + 1)
+                                                                                        .trim());
+                                                                        // Skip comma
+                                                                        start = i + 1;
+                                                                        while (start < inner.length() && (inner
+                                                                                        .charAt(start) == ','
+                                                                                        || inner.charAt(start) == ' '))
+                                                                                start++;
+                                                                }
+                                                        }
+                                                }
+
+                                                if (result.length() > 0)
+                                                        result.append("\n");
+                                                result.append(subArrays.size());
+                                                for (String sub : subArrays) {
+                                                        String subInner = sub.substring(1, sub.length() - 1).trim();
+                                                        String[] elements = subInner.split("\\s*,\\s*");
+                                                        result.append("\n").append(elements.length);
+                                                        result.append("\n").append(String.join(" ", elements));
+                                                }
+                                        } else {
+                                                // 1D array
+                                                String[] elements = inner.split("\\s*,\\s*");
+                                                if (result.length() > 0)
+                                                        result.append("\n");
+                                                result.append(elements.length);
+                                                result.append("\n").append(String.join(" ", elements));
+                                        }
+                                } catch (Exception e) {
+                                        // Fallback: pass as-is
+                                        if (result.length() > 0)
+                                                result.append("\n");
+                                        result.append(trimmed);
+                                }
+                        } else {
+                                // Plain value
+                                if (result.length() > 0)
+                                        result.append("\n");
+                                result.append(trimmed);
+                        }
+                }
+
+                return result.toString();
         }
 
         private String normalizeOutput(String value) {

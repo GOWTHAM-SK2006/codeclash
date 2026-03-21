@@ -59,16 +59,14 @@ public class SubmissionService {
         String status;
         String message;
 
-        // Online Judge flow for Python (multi-testcase)
-        if ("python".equalsIgnoreCase(request.getLanguage())) {
-            JudgeSummary judgeSummary = judgePythonSubmission(problem, request.getCode());
-            status = judgeSummary.status();
-            message = judgeSummary.message();
-        } else {
-            // Preserve existing behavior for other languages
-            DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(request.getCode(),
-                    request.getLanguage());
+        // Unified test case judge for ALL languages
+        String language = request.getLanguage();
+        List<TestCaseData> testCases = parseTestCases(problem);
 
+        if (testCases.isEmpty()) {
+            // No test cases — just run and compare to expected output
+            DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(
+                    request.getCode(), language, "");
             status = "WRONG_ANSWER";
             message = "Wrong answer";
 
@@ -79,14 +77,67 @@ public class SubmissionService {
                 status = "RUNTIME_ERROR";
                 message = result.getStderr();
             } else {
-                String output = result.getStdout().trim();
-                String expected = problem.getExpectedOutput() != null ? problem.getExpectedOutput().trim() : "";
+                String output = normalizeOutput(result.getStdout());
+                String expected = normalizeOutput(problem.getExpectedOutput());
                 if (output.equals(expected)) {
                     status = "ACCEPTED";
                     message = "All test cases passed!";
                 } else {
                     message = "Expected: " + expected + "\nActual: " + output;
                 }
+            }
+        } else {
+            // Run through all test cases with normalized input
+            int passed = 0;
+            int failed = 0;
+            StringBuilder report = new StringBuilder();
+
+            for (int i = 0; i < testCases.size(); i++) {
+                TestCaseData tc = testCases.get(i);
+                String normalizedInput = normalizeInputData(tc.input());
+                DockerSandboxService.ExecutionResult result = dockerSandboxService.execute(
+                        request.getCode(), language, normalizedInput);
+                int caseNo = i + 1;
+
+                if (result.isTimedOut()) {
+                    failed++;
+                    report.append("Testcase ").append(caseNo).append(": TLE\n");
+                    break;
+                } else if (result.getExitCode() != 0) {
+                    failed++;
+                    report.append("Testcase ").append(caseNo).append(": RE\n");
+                    report.append(result.getStderr()).append("\n");
+                    break;
+                } else {
+                    String actual = normalizeOutput(result.getStdout());
+                    String expected = normalizeOutput(tc.expected());
+                    if (actual.equals(expected)) {
+                        passed++;
+                        report.append("Testcase ").append(caseNo).append(": AC\n");
+                    } else {
+                        failed++;
+                        report.append("Testcase ").append(caseNo).append(": WA\n");
+                        report.append("Expected: ").append(tc.expected()).append("\n");
+                        report.append("Got: ").append(result.getStdout()).append("\n");
+                    }
+                }
+            }
+
+            if (failed == 0) {
+                status = "ACCEPTED";
+                report.append("\nAll test cases passed! (").append(passed).append("/").append(testCases.size())
+                        .append(")");
+                message = report.toString().trim();
+            } else if (report.toString().contains("RE")) {
+                status = "RUNTIME_ERROR";
+                message = report.toString().trim();
+            } else if (report.toString().contains("TLE")) {
+                status = "TIME_LIMIT_EXCEEDED";
+                message = report.toString().trim();
+            } else {
+                status = "WRONG_ANSWER";
+                report.append("\nPassed ").append(passed).append("/").append(testCases.size());
+                message = report.toString().trim();
             }
         }
 
@@ -166,7 +217,8 @@ public class SubmissionService {
                     failed++;
                     report.append("Testcase ").append(caseNo).append(": Failed\n");
                     report.append("Reason: Runtime Error\n");
-                    report.append(result.stderr().isBlank() ? "Python execution failed." : result.stderr()).append("\n");
+                    report.append(result.stderr().isBlank() ? "Python execution failed." : result.stderr())
+                            .append("\n");
                     return new JudgeSummary("RUNTIME_ERROR", report.toString().trim());
                 }
 
@@ -185,7 +237,8 @@ public class SubmissionService {
             }
 
             if (failed == 0) {
-                report.append("\nAll test cases passed! (").append(passed).append("/").append(testCases.size()).append(")");
+                report.append("\nAll test cases passed! (").append(passed).append("/").append(testCases.size())
+                        .append(")");
                 return new JudgeSummary("ACCEPTED", report.toString().trim());
             }
 
@@ -345,6 +398,50 @@ public class SubmissionService {
 
     private String safe(String value) {
         return value == null ? "" : value;
+    }
+
+    /**
+     * Converts JSON-style inputs to standard CP stdin format.
+     * e.g., "[1,2,3,4]" → "4\n1 2 3 4"
+     */
+    private String normalizeInputData(String raw) {
+        if (raw == null || raw.trim().isEmpty())
+            return "";
+        String[] lines = raw.split("\n");
+        StringBuilder result = new StringBuilder();
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty())
+                continue;
+
+            if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+                try {
+                    String inner = trimmed.substring(1, trimmed.length() - 1).trim();
+                    if (inner.isEmpty()) {
+                        if (result.length() > 0)
+                            result.append("\n");
+                        result.append("0");
+                        continue;
+                    }
+                    String[] elements = inner.split("\\s*,\\s*");
+                    if (result.length() > 0)
+                        result.append("\n");
+                    result.append(elements.length);
+                    result.append("\n").append(String.join(" ", elements));
+                } catch (Exception e) {
+                    if (result.length() > 0)
+                        result.append("\n");
+                    result.append(trimmed);
+                }
+            } else {
+                if (result.length() > 0)
+                    result.append("\n");
+                result.append(trimmed);
+            }
+        }
+
+        return result.toString();
     }
 
     private void cleanupTempDirectory(Path tempDir) {
