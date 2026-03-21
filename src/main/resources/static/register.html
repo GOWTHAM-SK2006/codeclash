@@ -50,6 +50,30 @@
     <script>
         renderNav('register');
 
+        // Check if registrations are allowed
+        (async () => {
+            try {
+                const res = await fetch('/api/auth/registration-status');
+                const status = await res.json();
+                if (!status.allowed) {
+                    // Freeze the entire form
+                    const form = document.getElementById('registerForm');
+                    const inputs = form.querySelectorAll('input, button');
+                    inputs.forEach(el => {
+                        el.disabled = true;
+                        el.style.opacity = '0.4';
+                        el.style.cursor = 'not-allowed';
+                    });
+
+                    // Show closed banner
+                    const banner = document.createElement('div');
+                    banner.style.cssText = 'background: rgba(255,60,60,0.15); border: 1px solid #ff4444; color: #ff6b6b; padding: 1rem; border-radius: 10px; text-align: center; font-weight: 700; margin-bottom: 1rem; font-size: 0.95rem;';
+                    banner.innerHTML = '🚫 Registrations are currently closed by the administrator.';
+                    form.parentNode.insertBefore(banner, form);
+                }
+            } catch (_) { /* allow form if check fails */ }
+        })();
+
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const displayName = document.getElementById('displayName').value;
