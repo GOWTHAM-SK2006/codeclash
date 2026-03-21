@@ -25,7 +25,22 @@ export async function executeC({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_M
 }
 
 export async function executeJava({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_MS }) {
-  return executeGeneric({ code, stdin, timeoutMs, lang: 'java', filename: 'Solution.java', compileCommand: 'javac', compileArgs: ['Solution.java'], command: 'java', args: ['SolutionRunner'] });
+  // Detect public class name for Java
+  const classMatch = code.match(/public\s+class\s+(\w+)/);
+  const className = classMatch ? classMatch[1] : "Solution";
+  const filename = `${className}.java`;
+
+  return executeGeneric({
+    code,
+    stdin,
+    timeoutMs,
+    lang: 'java',
+    filename,
+    compileCommand: 'javac',
+    compileArgs: [filename],
+    command: 'java',
+    args: [className]
+  });
 }
 
 export async function executeJavascript({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_MS }) {
