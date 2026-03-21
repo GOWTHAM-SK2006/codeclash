@@ -272,14 +272,7 @@ public class BattleService {
 
                 String language = normalizeLanguage(request.getLanguage());
 
-                boolean correct;
-                if ("PYTHON".equals(language)) {
-                        correct = evaluatePythonBattleSubmission(battle.getProblem(), request.getCode());
-                } else if ("JAVA".equals(language)) {
-                        correct = evaluateJavaBattleSubmission(battle.getProblem(), request.getCode());
-                } else {
-                        correct = evaluateGenericBattleSubmission(battle.getProblem(), request.getCode(), language);
-                }
+                boolean correct = evaluateBattleSubmission(battle.getProblem(), request.getCode(), language);
 
                 myEntry.setIsCorrect(correct);
                 participantRepository.save(myEntry);
@@ -322,15 +315,8 @@ public class BattleService {
                 }
 
                 String language = normalizeLanguage(request.getLanguage());
-                DockerSandboxService.ExecutionResult result;
-                if ("PYTHON".equals(language)) {
-                        result = runPythonBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
-                } else if ("JAVA".equals(language)) {
-                        result = runJavaBattleCode(battle.getProblem(), request.getCode(), request.getInputData());
-                } else {
-                        result = runGenericBattleCode(battle.getProblem(), request.getCode(), language,
-                                        request.getInputData());
-                }
+                DockerSandboxService.ExecutionResult result = runBattleCode(battle.getProblem(), request.getCode(),
+                                language, request.getInputData());
 
                 String cleanedStderr = cleanRunnerWarning(result.getStderr());
 
