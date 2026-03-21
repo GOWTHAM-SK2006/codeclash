@@ -22,7 +22,7 @@ let pageExitGuardEnabled = true;
 let battleDurationSeconds = 900;
 let battleTimeoutTriggered = false;
 
-const DEFAULT_STARTER_CODE = 'def reverseString(s):\n    # Your code here\n    pass';
+const DEFAULT_STARTER_CODE = '';
 
 (async function () {
     renderNav('battle');
@@ -973,7 +973,7 @@ function inferStarterByTitle(title, language = 'python') {
     }
     if (text === 'reverse string') {
         return mk(
-            'def reverseString(s):\n    # Your code here\n    pass',
+            '',
             'function reverseString(s) {\n  // Your code here\n}',
             'class Solution {\n    public String reverseString(String s) {\n        // Your code here\n        return \"\";\n    }\n}'
         );

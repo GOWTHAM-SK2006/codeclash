@@ -492,21 +492,6 @@ function buildStarterFromWrapper(problem, language = 'python') {
 }
 
 function inferStarterByTitle(title, language = 'python') {
-    const text = String(title || '').toLowerCase();
-    const cFallback = '#include <stdio.h>\n\nint main() {\n    // Your code here\n    return 0;\n}';
-    const cppFallback = '#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // Your code here\n    return 0;\n}';
-    const mk = (py, js, java) => {
-        if (language === 'cpp') return cppFallback;
-        if (language === 'c') return cFallback;
-        if (language === 'javascript') return js;
-        if (language === 'java') return java;
-        return py;
-    };
-    if (text === 'two sum') return mk('def twoSum(nums, target):\n    # Your code here\n    pass', 'function twoSum(nums, target) {\n  // Your code here\n}', 'class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        // Your code here\n        return new int[]{};\n    }\n}');
-    if (text === 'reverse string') return mk('def reverseString(s):\n    # Your code here\n    pass', 'function reverseString(s) {\n  // Your code here\n}', 'class Solution {\n    public String reverseString(String s) {\n        // Your code here\n        return "";\n    }\n}');
-    if (text === 'fizzbuzz') return mk('def fizzBuzz(n):\n    result = []\n    # Your code here\n    return result', 'function fizzBuzz(n) {\n  const result = [];\n  // Your code here\n  return result;\n}', 'import java.util.*;\n\nclass Solution {\n    public List<String> fizzBuzz(int n) {\n        List<String> result = new ArrayList<>();\n        // Your code here\n        return result;\n    }\n}');
-    if (text === 'valid parentheses') return mk('def isValid(s):\n    # Your code here\n    pass', 'function isValid(s) {\n  // Your code here\n}', 'class Solution {\n    public boolean isValid(String s) {\n        // Your code here\n        return false;\n    }\n}');
-    if (text === 'merge sorted arrays') return mk('def merge(nums1, nums2):\n    # Your code here\n    pass', 'function merge(nums1, nums2) {\n  // Your code here\n}', 'import java.util.*;\n\nclass Solution {\n    public List<Integer> merge(List<Integer> nums1, List<Integer> nums2) {\n        // Your code here\n        return new ArrayList<>();\n    }\n}');
     return '';
 }
 
