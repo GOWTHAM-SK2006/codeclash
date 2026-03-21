@@ -122,18 +122,34 @@ async function loadProblems() {
         // Fetch all problem details concurrently
         const problems = await Promise.all(ids.map(id => api.getProblem(id)));
 
-        list.innerHTML = problems.map(prob => `
-            <div class="problem-item" onclick="window.location.href='/contest-problem.html?id=${prob.id}&eventId=${eventId}'">
-                <div>
-                    <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">${prob.title}</div>
-                    <div style="display: flex; gap: 0.75rem; margin-top: 0.4rem; align-items: center;">
-                        <span class="badge badge-${prob.difficulty.toLowerCase()}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;">${prob.difficulty}</span>
-                        <span style="font-size: 0.8rem; color: var(--accent); font-weight: 700;">🪙 ${prob.points} pts</span>
+        // Fetch user submissions to determine solved status
+        let submissions = [];
+        try {
+            submissions = await api.getSubmissions();
+        } catch (e) {
+            // If submissions fail to load, fallback to empty
+            submissions = [];
+        }
+        list.innerHTML = problems.map((prob, idx) => {
+            // Check if this problem is solved by the user
+            const solved = submissions.some(s => s.problemId === prob.id && s.status === 'ACCEPTED');
+            return `
+                <div class="problem-item" onclick="window.location.href='/contest-problem.html?id=${prob.id}&eventId=${eventId}'">
+                    <div>
+                        <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">
+                            <span style="margin-right: 0.7em; color: var(--text-secondary); font-size: 0.95em; font-weight: 600;">${idx + 1}.</span>
+                            ${prob.title}
+                        </div>
+                        <div style="display: flex; gap: 0.75rem; margin-top: 0.4rem; align-items: center;">
+                            <span class="badge badge-${prob.difficulty.toLowerCase()}" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px;">${prob.difficulty}</span>
+                        </div>
+                    </div>
+                    <div style="color: var(--accent); font-weight: 900; letter-spacing: 0.5px;">
+                        ${solved ? 'Solved' : 'SOLVE →'}
                     </div>
                 </div>
-                <div style="color: var(--accent); font-weight: 900; letter-spacing: 0.5px;">SOLVE →</div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (e) {
         console.error('loadProblems failed:', e);
         list.innerHTML = `<div class="alert alert-error">Failed to load problems: ${e.message}</div>`;
