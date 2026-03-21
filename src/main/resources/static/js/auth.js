@@ -14,6 +14,7 @@ function requireAuth() {
 
 let friendNotificationPoller = null;
 let notificationDocListenerBound = false;
+let activeNotifTab = 'alerts'; // 'alerts' or 'friends'
 
 function renderNav(activePage) {
     const user = api.getUser();
@@ -43,14 +44,19 @@ function renderNav(activePage) {
         <div class="nav-auth">
             ${isLoggedIn
             ? `<div class="notification-wrap" id="friendNotificationWrap">
-                  <button class="notification-bell" id="friendNotificationBell" aria-label="Friend notifications" title="Friend notifications">
+                  <button class="notification-bell" id="friendNotificationBell" aria-label="Notifications" title="Notifications">
                       🔔
                       <span class="notification-badge hidden" id="friendNotificationBadge">0</span>
                   </button>
                   <div class="notification-dropdown" id="friendNotificationDropdown">
-                      <div class="notification-title">Friend Requests</div>
-                      <div id="friendNotificationList" class="notification-list">
-                          <div class="notification-empty">Checking notifications...</div>
+                      <div style="display:flex;border-bottom:1px solid var(--border);">
+                          <button class="notification-tab active" id="notifTabAlerts" data-tab="alerts" style="flex:1;padding:0.55rem 0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text-secondary);border-bottom:2px solid transparent;">📢 Alerts</button>
+                          <button class="notification-tab" id="notifTabFriends" data-tab="friends" style="flex:1;padding:0.55rem 0.5rem;font-size:0.75rem;font-weight:700;cursor:pointer;border:none;background:transparent;color:var(--text-secondary);border-bottom:2px solid transparent;">👥 Requests</button>
+                      </div>
+                      <div id="notifContentAlerts" class="notification-list"></div>
+                      <div id="notifContentFriends" class="notification-list" style="display:none;"></div>
+                      <div id="notifMarkReadWrap" style="display:none;padding:0.4rem 0.6rem;border-top:1px solid var(--border);">
+                          <button id="markAllReadBtn" style="width:100%;padding:0.4rem;font-size:0.7rem;font-weight:700;cursor:pointer;border:1px solid var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--accent);">✓ Mark All Read</button>
                       </div>
                   </div>
              </div>
@@ -66,7 +72,7 @@ function renderNav(activePage) {
     `;
 
     if (isLoggedIn) {
-        initializeFriendNotifications();
+        initializeNotifications();
     } else {
         teardownFriendNotifications();
     }
@@ -79,35 +85,77 @@ function teardownFriendNotifications() {
     }
 }
 
-function initializeFriendNotifications() {
+function initializeNotifications() {
     const wrap = document.getElementById('friendNotificationWrap');
     const bell = document.getElementById('friendNotificationBell');
     const dropdown = document.getElementById('friendNotificationDropdown');
-    const list = document.getElementById('friendNotificationList');
 
-    if (!wrap || !bell || !dropdown || !list) return;
+    if (!wrap || !bell || !dropdown) return;
 
+    // Toggle dropdown
     bell.addEventListener('click', (event) => {
         event.stopPropagation();
         wrap.classList.toggle('open');
     });
-
     dropdown.addEventListener('click', (event) => {
         event.stopPropagation();
     });
 
-    list.addEventListener('click', async (event) => {
+    // Tab switching
+    const tabAlerts = document.getElementById('notifTabAlerts');
+    const tabFriends = document.getElementById('notifTabFriends');
+    const contentAlerts = document.getElementById('notifContentAlerts');
+    const contentFriends = document.getElementById('notifContentFriends');
+    const markReadWrap = document.getElementById('notifMarkReadWrap');
+
+    function switchTab(tab) {
+        activeNotifTab = tab;
+        if (tab === 'alerts') {
+            tabAlerts.classList.add('active');
+            tabAlerts.style.borderBottomColor = 'var(--accent)';
+            tabAlerts.style.color = 'var(--text-primary)';
+            tabFriends.classList.remove('active');
+            tabFriends.style.borderBottomColor = 'transparent';
+            tabFriends.style.color = 'var(--text-secondary)';
+            contentAlerts.style.display = '';
+            contentFriends.style.display = 'none';
+        } else {
+            tabFriends.classList.add('active');
+            tabFriends.style.borderBottomColor = 'var(--accent)';
+            tabFriends.style.color = 'var(--text-primary)';
+            tabAlerts.classList.remove('active');
+            tabAlerts.style.borderBottomColor = 'transparent';
+            tabAlerts.style.color = 'var(--text-secondary)';
+            contentFriends.style.display = '';
+            contentAlerts.style.display = 'none';
+        }
+    }
+
+    tabAlerts?.addEventListener('click', () => switchTab('alerts'));
+    tabFriends?.addEventListener('click', () => switchTab('friends'));
+    switchTab(activeNotifTab);
+
+    // Mark all read
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    markAllBtn?.addEventListener('click', async () => {
+        try {
+            await api.markNotificationsRead();
+            refreshAllNotifications();
+        } catch (e) { /* ignore */ }
+    });
+
+    // Accept friend request delegation
+    const friendsList = document.getElementById('notifContentFriends');
+    friendsList?.addEventListener('click', async (event) => {
         const button = event.target.closest('.notification-accept-btn');
         if (!button) return;
-
         const requestId = button.dataset.requestId;
         if (!requestId) return;
-
         button.disabled = true;
         button.textContent = 'Accepting...';
         try {
             await api.acceptFriendRequest(requestId);
-            await refreshFriendNotifications();
+            await refreshAllNotifications();
             window.dispatchEvent(new CustomEvent('cc:friendsUpdated'));
         } catch (error) {
             button.disabled = false;
@@ -115,6 +163,7 @@ function initializeFriendNotifications() {
         }
     });
 
+    // Close on outside click
     if (!notificationDocListenerBound) {
         document.addEventListener('click', () => {
             const currentWrap = document.getElementById('friendNotificationWrap');
@@ -123,47 +172,96 @@ function initializeFriendNotifications() {
         notificationDocListenerBound = true;
     }
 
-    refreshFriendNotifications();
+    refreshAllNotifications();
     teardownFriendNotifications();
-    friendNotificationPoller = setInterval(refreshFriendNotifications, 8000);
+    friendNotificationPoller = setInterval(refreshAllNotifications, 8000);
 }
 
-async function refreshFriendNotifications() {
+function getNotifIcon(type) {
+    switch (type) {
+        case 'EVENT_ANNOUNCED': return '📢';
+        case 'BIDDING_SELECTED': return '🏆';
+        case 'BIDDING_REFUNDED': return '💰';
+        case 'CONTEST_READY': return '🏁';
+        default: return '🔔';
+    }
+}
+
+async function refreshAllNotifications() {
     const badge = document.getElementById('friendNotificationBadge');
-    const list = document.getElementById('friendNotificationList');
-    if (!badge || !list || !api.isLoggedIn()) return;
+    const alertsList = document.getElementById('notifContentAlerts');
+    const friendsList = document.getElementById('notifContentFriends');
+    const markReadWrap = document.getElementById('notifMarkReadWrap');
+    if (!badge || !alertsList || !friendsList || !api.isLoggedIn()) return;
 
+    let friendCount = 0;
+    let alertCount = 0;
+
+    // Fetch friend requests
     try {
-        const notifications = await api.getFriendNotifications();
-        const count = notifications.length;
+        const friendNotifs = await api.getFriendNotifications();
+        friendCount = friendNotifs.length;
 
-        if (count > 0) {
-            badge.textContent = count > 99 ? '99+' : String(count);
-            badge.classList.remove('hidden');
+        if (friendCount === 0) {
+            friendsList.innerHTML = '<div class="notification-empty">No pending friend requests</div>';
         } else {
-            badge.classList.add('hidden');
-        }
-
-        if (count === 0) {
-            list.innerHTML = '<div class="notification-empty">No pending friend requests</div>';
-            return;
-        }
-
-        list.innerHTML = notifications.map(item => {
-            const displayName = escapeHtml(item.fromDisplayName || item.fromUsername || 'Coder');
-            const username = escapeHtml(item.fromUsername || 'user');
-            return `
-                <div class="notification-item">
-                    <div class="notification-body">
-                        <div class="notification-user">${displayName}</div>
-                        <div class="notification-sub">@${username} sent you a request · ${timeAgo(item.createdAt)}</div>
+            friendsList.innerHTML = friendNotifs.map(item => {
+                const displayName = escapeHtml(item.fromDisplayName || item.fromUsername || 'Coder');
+                const username = escapeHtml(item.fromUsername || 'user');
+                return `
+                    <div class="notification-item">
+                        <div class="notification-body">
+                            <div class="notification-user">${displayName}</div>
+                            <div class="notification-sub">@${username} sent you a request · ${timeAgo(item.createdAt)}</div>
+                        </div>
+                        <button class="btn btn-primary btn-sm notification-accept-btn" data-request-id="${item.requestId}">Accept</button>
                     </div>
-                    <button class="btn btn-primary btn-sm notification-accept-btn" data-request-id="${item.requestId}">Accept</button>
-                </div>
-            `;
-        }).join('');
-    } catch (error) {
-        list.innerHTML = '<div class="notification-empty">Could not load notifications</div>';
+                `;
+            }).join('');
+        }
+    } catch (e) {
+        friendsList.innerHTML = '<div class="notification-empty">Could not load requests</div>';
+    }
+
+    // Fetch system notifications
+    try {
+        const countData = await api.getNotificationCount();
+        alertCount = countData.count || 0;
+
+        const notifications = await api.getNotifications();
+        if (!notifications || notifications.length === 0) {
+            alertsList.innerHTML = '<div class="notification-empty">No notifications yet</div>';
+        } else {
+            alertsList.innerHTML = notifications.slice(0, 20).map(n => {
+                const icon = getNotifIcon(n.type);
+                const readClass = n.read ? 'opacity: 0.6;' : '';
+                return `
+                    <div class="notification-item" style="${readClass}">
+                        <div style="font-size:1.3rem;margin-right:0.5rem;">${icon}</div>
+                        <div class="notification-body">
+                            <div class="notification-user">${escapeHtml(n.title)}</div>
+                            <div class="notification-sub">${escapeHtml(n.message)} · ${timeAgo(n.createdAt)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Show mark read button only if unread alerts exist
+        if (markReadWrap) {
+            markReadWrap.style.display = alertCount > 0 ? '' : 'none';
+        }
+    } catch (e) {
+        alertsList.innerHTML = '<div class="notification-empty">Could not load notifications</div>';
+    }
+
+    // Update badge
+    const totalCount = friendCount + alertCount;
+    if (totalCount > 0) {
+        badge.textContent = totalCount > 99 ? '99+' : String(totalCount);
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
     }
 }
 

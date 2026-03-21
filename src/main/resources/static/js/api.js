@@ -179,6 +179,11 @@ const api = {
     },
     getLeetcodeProfile() {
         return this.request('/leetcode/profile');
-    }
+    },
+
+    // Notifications
+    getNotifications() { return this.request('/notifications'); },
+    getNotificationCount() { return this.request('/notifications/unread-count'); },
+    markNotificationsRead() { return this.request('/notifications/mark-read', { method: 'POST' }); }
 };
 

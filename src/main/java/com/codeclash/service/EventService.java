@@ -28,6 +28,7 @@ public class EventService {
     private final EventBidRepository eventBidRepository;
     private final UserRepository userRepository;
     private final CoinService coinService;
+    private final NotificationService notificationService;
 
     private static final int BID_DURATION_MINS = 2;
     private static final ZoneId IST = ZoneId.of("Asia/Kolkata");
@@ -37,7 +38,17 @@ public class EventService {
     // ──────────────────────────────────────────────────────────────
 
     public Event createEvent(Event event) {
-        return eventRepository.save(event);
+        Event saved = eventRepository.save(event);
+        try {
+            notificationService.notifyAll(
+                    "EVENT_ANNOUNCED",
+                    "📢 New Event: " + saved.getTitle(),
+                    "A new event has been announced! Bidding starts soon. Entry fee: " + saved.getEntryFee()
+                            + " coins.");
+        } catch (Exception e) {
+            log.warn("Failed to broadcast event notification: {}", e.getMessage());
+        }
+        return saved;
     }
 
     public List<Event> getAllEvents(boolean onlyActive) {
@@ -324,9 +335,29 @@ public class EventService {
             if (i < limit && bid.getAmount() > 0) {
                 bid.setSelected(true);
                 bid.setRank(i + 1);
+                // Notify selected user
+                try {
+                    notificationService.notify(
+                            bid.getUser(),
+                            "BIDDING_SELECTED",
+                            "🏆 You're Selected for " + event.getTitle() + "!",
+                            "Congratulations! You ranked #" + (i + 1) + " in bidding. Get ready for the contest!");
+                } catch (Exception e) {
+                    log.warn("Failed to notify selected user: {}", e.getMessage());
+                }
             } else {
                 bid.setRefunded(true);
                 coinService.awardCoins(bid.getUser(), bid.getAmount(), "Bidding refund for: " + event.getTitle());
+                // Notify refunded user
+                try {
+                    notificationService.notify(
+                            bid.getUser(),
+                            "BIDDING_REFUNDED",
+                            "💰 Bidding Refund for " + event.getTitle(),
+                            "You were not selected. Your bid of " + bid.getAmount() + " coins has been refunded.");
+                } catch (Exception e) {
+                    log.warn("Failed to notify refunded user: {}", e.getMessage());
+                }
             }
             eventBidRepository.save(bid);
         }
