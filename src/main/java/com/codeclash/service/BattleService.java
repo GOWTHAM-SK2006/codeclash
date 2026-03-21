@@ -284,6 +284,22 @@ public class BattleService {
                         battleRepository.save(battle);
                         int winnerReward = getEntryFeeByDifficulty(battle.getProblem().getDifficulty()) * 2;
                         coinService.awardCoins(user, winnerReward, "Battle victory reward (2x) #" + battleId);
+                } else if (!correct && battle.getWinnerId() == null) {
+                        // Current user failed, declare opponent as winner immediately
+                        BattleParticipant opponentEntry = participants.stream()
+                                        .filter(p -> !p.getUser().getId().equals(user.getId()))
+                                        .findFirst()
+                                        .orElse(null);
+                        if (opponentEntry != null) {
+                                User opponent = opponentEntry.getUser();
+                                battle.setWinnerId(opponent.getId());
+                                battle.setStatus("FINISHED");
+                                battle.setEndedAt(LocalDateTime.now());
+                                battleRepository.save(battle);
+                                int winnerReward = getEntryFeeByDifficulty(battle.getProblem().getDifficulty()) * 2;
+                                coinService.awardCoins(opponent, winnerReward,
+                                                "Battle victory (opponent failed submission) #" + battleId);
+                        }
                 }
 
                 return battle;

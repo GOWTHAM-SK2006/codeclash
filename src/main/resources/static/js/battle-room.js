@@ -591,8 +591,8 @@ function showResult(result) {
         resultEl.innerHTML = `
             <div class="card" style="border-color:var(--danger);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">😔</span>
-                <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Opponent Won</h2>
-                <p style="color:var(--text-secondary);">Better luck next time!</p>
+                <h2 style="font-size:1.5rem;font-weight:800;color:var(--danger);margin-bottom:0.5rem;">Your Loss</h2>
+                <p style="color:var(--text-secondary);">Your solution was incorrect. better luck next time!</p>
                 <button onclick="window.location.href='battle-mode.html'" class="btn btn-primary mt-6">Back to Lobby</button>
             </div>
         `;
@@ -600,12 +600,12 @@ function showResult(result) {
         resultEl.innerHTML = `
             <div class="card" style="border-color:var(--accent);text-align:center;padding:2rem;max-width:720px;width:100%;margin-top:1rem;">
                 <span style="font-size:3rem;display:block;margin-bottom:1rem;">⏳</span>
-                <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;">Solution Submitted</h2>
-                <p style="color:var(--text-secondary);">Waiting for opponent...</p>
+                <h2 style="font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;">Processing...</h2>
+                <p style="color:var(--text-secondary);">Evaluating your submission...</p>
             </div>
         `;
         // Keep polling for results
-        setTimeout(loadBattleDetails, 5000);
+        setTimeout(loadBattleDetails, 2000);
     }
 }
 
