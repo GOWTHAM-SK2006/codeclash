@@ -157,8 +157,7 @@ public class DockerSandboxService {
         String containerId = null;
         Path tempDir = null;
         try {
-            tempDir = Files.createTempDirectory("codeclash-exec-" + UUID.randomUUID());
-            String fileName = getFileName(language);
+            String fileName = getFileName(language, code);
             File codeFile = new File(tempDir.toFile(), fileName);
             try (FileWriter writer = new FileWriter(codeFile)) {
                 writer.write(code);
@@ -256,7 +255,7 @@ public class DockerSandboxService {
         Path tempDir = null;
         try {
             tempDir = Files.createTempDirectory("codeclash-local-exec-" + UUID.randomUUID());
-            String fileName = getFileName(language);
+            String fileName = getFileName(language, code);
             File codeFile = new File(tempDir.toFile(), fileName);
             try (FileWriter writer = new FileWriter(codeFile)) {
                 writer.write(code);
@@ -305,7 +304,7 @@ public class DockerSandboxService {
                     .timedOut(false)
                     .build();
         } catch (IOException ioException) {
-            String command = Arrays.toString(getRunCommand(language, getFileName(language), code));
+            String command = Arrays.toString(getRunCommand(language, getFileName(language, code), code));
             return ExecutionResult.builder()
                     .stderr("Local runner unavailable for language " + language + ". Command: " + command
                             + "\nReason: " + ioException.getMessage())
@@ -339,10 +338,17 @@ public class DockerSandboxService {
         }
     }
 
-    private String getFileName(String language) {
+    private String getJavaClassName(String code) {
+        if (code == null)
+            return "Solution";
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("public\\s+class\\s+(\\w+)").matcher(code);
+        return matcher.find() ? matcher.group(1) : "Solution";
+    }
+
+    private String getFileName(String language, String code) {
         return switch (language.toUpperCase()) {
             case "PYTHON" -> "solution.py";
-            case "JAVA" -> "Solution.java";
+            case "JAVA" -> getJavaClassName(code) + ".java";
             case "JAVASCRIPT" -> "solution.js";
             case "C" -> "solution.c";
             case "CPP" -> "solution.cpp";
@@ -364,14 +370,14 @@ public class DockerSandboxService {
         return switch (language.toUpperCase()) {
             case "PYTHON" -> new String[] { "sh", "-c", "python3 " + fileName + " < input.txt" };
             case "JAVA" -> {
-                String javaMainClass = (code != null && code.contains("class __CodeClashMain"))
-                        ? "__CodeClashMain"
-                        : "Solution";
-                yield new String[] { "sh", "-c", "javac " + fileName + " && java " + javaMainClass + " < input.txt" };
+                String className = getJavaClassName(code);
+                yield new String[] { "sh", "-c", "javac " + fileName + " && java " + className + " < input.txt" };
             }
             case "JAVASCRIPT" -> new String[] { "sh", "-c", "node " + fileName + " < input.txt" };
-            case "C" -> new String[] { "sh", "-c", "gcc -O2 -std=c11 " + fileName + " -o solution && ./solution < input.txt" };
-            case "CPP" -> new String[] { "sh", "-c", "g++ -O2 -std=c++17 " + fileName + " -o solution && ./solution < input.txt" };
+            case "C" ->
+                new String[] { "sh", "-c", "gcc -O2 -std=c11 " + fileName + " -o solution && ./solution < input.txt" };
+            case "CPP" -> new String[] { "sh", "-c",
+                    "g++ -O2 -std=c++17 " + fileName + " -o solution && ./solution < input.txt" };
             default -> new String[] { "cat", fileName };
         };
     }

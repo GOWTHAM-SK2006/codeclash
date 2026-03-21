@@ -646,195 +646,31 @@ public class BattleService {
         }
 
         private String buildExecutableJavaCode(Problem problem, String userCode, String rawInput) {
-                JsonNode config = problemService.resolveWrapperConfig(problem, userCode);
-                if (config != null) {
-                        return buildJavaWrapper(userCode, config, rawInput);
-                }
-
-                String functionName = extractFirstJavaMethodName(userCode);
-                if (functionName != null) {
-                        return buildJavaAutoWrapper(userCode, functionName, rawInput);
-                }
                 return userCode;
         }
 
-        /**
-         * Chooses the right execution strategy:
-         * 1. Problem has wrapperConfig → LeetCode-style function wrapper (preferred)
-         * 2. User code calls input() → patch builtins.input with stdin lines
-         * 3. Auto-detect function name → generic JSON-parsing wrapper
-         * 4. Plain script → pipe stdin as-is
-         */
         private String buildExecutablePythonCode(Problem problem, String userCode, String rawInput) {
-                JsonNode config = problemService.resolveWrapperConfig(problem, userCode);
-                if (config != null) {
-                        return buildLeetCodeWrapper(userCode, config, rawInput);
-                }
-                if (usesInputFunction(userCode)) {
-                        return buildPythonInputPatchedScript(userCode, rawInput);
-                }
-                String functionName = problemService.resolveWrapperConfig(problem, userCode).path("functionName")
-                                .asText(null);
-                if (functionName != null) {
-                        return buildAutoFunctionWrapper(userCode, functionName, rawInput);
-                }
-                return buildPythonInputPatchedScript(userCode, rawInput);
+                return userCode;
         }
 
         private boolean usesInputFunction(String userCode) {
-                if (userCode == null || userCode.isBlank()) {
-                        return false;
-                }
-                return Pattern.compile("\\binput\\s*\\(").matcher(userCode).find();
+                return false;
         }
 
         private String buildPythonInputPatchedScript(String userCode, String rawInput) {
-                String inputLiteral = toPythonStringLiteral(rawInput == null ? "" : rawInput);
-                return "import builtins\n"
-                                + "__cc_raw = " + inputLiteral + "\n"
-                                + "__cc_lines = __cc_raw.splitlines()\n"
-                                + "__cc_iter = iter(__cc_lines)\n"
-                                + "builtins.input = lambda: next(__cc_iter, '')\n\n"
-                                + userCode;
+                return userCode;
         }
 
-        /**
-         * LeetCode-style wrapper: reads each parameter from a separate stdin line,
-         * converts to the declared type, calls the user's function, prints the result.
-         *
-         * wrapperConfig JSON example:
-         * {"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}
-         *
-         * Supported param types: json (list/dict/any), int, float, bool, str
-         */
         private String buildLeetCodeWrapper(String userCode, JsonNode config, String rawInput) {
-                String functionName = config.path("functionName").asText("").trim();
-                JsonNode params = config.path("params");
-                JsonNode inputs = config.path("inputs");
-
-                if ((!params.isArray() || params.size() == 0) && inputs.isArray() && inputs.size() > 0) {
-                        params = mapInputsToParams(inputs);
-                }
-
-                if (functionName.isEmpty() || !params.isArray() || params.size() == 0) {
-                        return buildPythonInputPatchedScript(userCode, rawInput);
-                }
-
-                StringBuilder sb = new StringBuilder();
-                sb.append(userCode).append("\n\n");
-                sb.append("import sys\n");
-                sb.append("import json\n\n");
-                sb.append("if __name__ == '__main__':\n");
-                sb.append("    _lines = sys.stdin.read().strip().split('\\n')\n");
-
-                List<String> argNames = new ArrayList<>();
-                for (int i = 0; i < params.size(); i++) {
-                        JsonNode p = params.get(i);
-                        String name = p.path("name").asText("_arg" + i);
-                        String type = p.path("type").asText("str").toLowerCase();
-                        argNames.add(name);
-                        String parse = switch (type) {
-                                case "json", "list", "array", "dict" -> "json.loads(_lines[" + i + "])";
-                                case "int" -> "int(_lines[" + i + "].strip())";
-                                case "float" -> "float(_lines[" + i + "].strip())";
-                                case "bool" -> "_lines[" + i + "].strip() == 'True'";
-                                default -> "str(_lines[" + i + "])";
-                        };
-                        sb.append("    ").append(name).append(" = ").append(parse).append("\n");
-                }
-
-                sb.append("    _result = ").append(functionName).append("(").append(String.join(", ", argNames))
-                                .append(")\n");
-                sb.append("    if _result is not None:\n");
-                sb.append("        print(_result)\n");
-
-                return sb.toString();
+                return userCode;
         }
 
         private String buildJavaWrapper(String userCode, JsonNode config, String rawInput) {
-                String functionName = config.path("functionName").asText("").trim();
-                JsonNode params = config.path("params");
-                JsonNode inputs = config.path("inputs");
-
-                if ((!params.isArray() || params.size() == 0) && inputs.isArray() && inputs.size() > 0) {
-                        params = mapInputsToParams(inputs);
-                }
-
-                if (functionName.isEmpty() || !params.isArray() || params.size() == 0) {
-                        return userCode;
-                }
-
-                String inputLiteral = toJavaStringLiteral(rawInput == null ? "" : rawInput);
-                StringBuilder sb = new StringBuilder();
-                sb.append("import java.util.*;\n");
-                sb.append(userCode).append("\n\n");
-                sb.append("class __CodeClashMain {\n");
-                sb.append("    private static int[] parseIntArray(String line) {\n");
-                sb.append("        String clean = line == null ? \"\" : line.trim();\n");
-                sb.append("        clean = clean.replaceAll(\"[\\\\[\\\\]\\\\s]\", \"\");\n");
-                sb.append("        if (clean.isEmpty()) return new int[0];\n");
-                sb.append("        String[] parts = clean.split(\",\");\n");
-                sb.append("        int[] nums = new int[parts.length];\n");
-                sb.append("        for (int i = 0; i < parts.length; i++) nums[i] = Integer.parseInt(parts[i]);\n");
-                sb.append("        return nums;\n");
-                sb.append("    }\n");
-                sb.append("    public static void main(String[] args) {\n");
-                sb.append("        String[] __lines = ").append(inputLiteral).append(".split(\"\\n\", -1);\n");
-
-                List<String> argVars = new ArrayList<>();
-                for (int i = 0; i < params.size(); i++) {
-                        JsonNode p = params.get(i);
-                        String name = p.path("name").asText("arg" + i);
-                        String type = p.path("type").asText("str").toLowerCase();
-                        String lineRef = "(__lines.length > " + i + " ? __lines[" + i + "] : \"\")";
-
-                        if ("int".equals(type) || "number".equals(type)) {
-                                sb.append("        int ").append(name).append(" = Integer.parseInt(").append(lineRef)
-                                                .append(".trim());\n");
-                        } else if ("float".equals(type)) {
-                                sb.append("        double ").append(name).append(" = Double.parseDouble(")
-                                                .append(lineRef)
-                                                .append(".trim());\n");
-                        } else if ("bool".equals(type) || "boolean".equals(type)) {
-                                sb.append("        boolean ").append(name).append(" = \"true\".equalsIgnoreCase(")
-                                                .append(lineRef).append(".trim());\n");
-                        } else if ("json".equals(type) || "array".equals(type) || "list".equals(type)) {
-                                sb.append("        int[] ").append(name).append(" = parseIntArray(").append(lineRef)
-                                                .append(");\n");
-                        } else {
-                                sb.append("        String ").append(name).append(" = ").append(lineRef).append(";\n");
-                        }
-                        argVars.add(name);
-                }
-
-                sb.append("        Solution __sol = new Solution();\n");
-                sb.append("        Object __result = __sol.").append(functionName).append("(")
-                                .append(String.join(", ", argVars)).append(");\n");
-                sb.append("        if (__result == null) return;\n");
-                sb.append("        if (__result instanceof int[]) {\n");
-                sb.append("            System.out.println(Arrays.toString((int[]) __result));\n");
-                sb.append("        } else if (__result instanceof long[]) {\n");
-                sb.append("            System.out.println(Arrays.toString((long[]) __result));\n");
-                sb.append("        } else if (__result instanceof Object[]) {\n");
-                sb.append("            System.out.println(Arrays.toString((Object[]) __result));\n");
-                sb.append("        } else {\n");
-                sb.append("            System.out.println(__result);\n");
-                sb.append("        }\n");
-                sb.append("    }\n");
-                sb.append("}\n");
-
-                return sb.toString();
+                return userCode;
         }
 
         private String buildJavaAutoWrapper(String userCode, String functionName, String rawInput) {
-                String config = "{\"functionName\":\"" + functionName
-                                + "\",\"params\":[{\"name\":\"arg0\",\"type\":\"array\"},{\"name\":\"arg1\",\"type\":\"int\"}]}";
-                try {
-                        JsonNode node = OBJECT_MAPPER.readTree(config);
-                        return buildJavaWrapper(userCode, node, rawInput);
-                } catch (Exception ignored) {
-                        return userCode;
-                }
+                return userCode;
         }
 
         private JsonNode mapInputsToParams(JsonNode inputs) {
