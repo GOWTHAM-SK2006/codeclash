@@ -1,96 +1,99 @@
 import { inferParamTypesFromTestcases, mapType } from '../utils.js';
 
 /**
- * Standardizes user code for all languages.
- * @param {string} userCode - The raw user code
- * @param {object} problem - Problem object with functionName, testcases, etc.
- * @param {string} language - 'python' | 'java' | 'c' | 'cpp'
- * @returns {object} - { code, paramTypes, functionName }
+ * Intelligent Code Standardizer (Magical Transformation)
+ * Transforms beginner/incorrect code into platform-compatible Solution format.
  */
 export function standardizeUserCode(userCode, problem, language) {
   const paramTypes = inferParamTypesFromTestcases(problem);
   const functionName = problem.functionName || 'solve';
+  const returnType = detectReturnType(problem);
 
-  const { body, userParamNames } = stripUserSignature(userCode, language);
+  let normalized = userCode.trim();
 
-  // Use user's parameter names if available, fallback to inferred names
-  const finalParams = paramTypes.map((p, i) => ({
-    ...p,
-    name: userParamNames[i] || p.name
-  }));
-
-  let correctedCode = '';
-
-  if (language === 'python') {
-    const pySig = `def ${functionName}(${finalParams.map(p => p.name).join(', ')}):`;
-    const indentedBody = (body || 'pass').split('\n').map(line => '    ' + line).join('\n');
-    correctedCode = `${pySig}\n${indentedBody}`;
-  } else if (language === 'java') {
-    const javaRet = mapType(detectReturnType(problem), 'java');
-    const javaSig = `public ${javaRet} ${functionName}(${finalParams.map(p => mapType(p.type, 'java') + ' ' + p.name).join(', ')})`;
-    correctedCode = `class Solution {\n    ${javaSig} {\n${body}\n    }\n}`;
+  if (language === 'java') {
+    normalized = normalizeJava(normalized, functionName, paramTypes, returnType);
+  } else if (language === 'python' || language === 'python3') {
+    normalized = normalizePython(normalized, functionName, paramTypes);
   } else if (language === 'cpp') {
-    const cppRet = mapType(detectReturnType(problem), 'cpp');
-    const cppSig = `${cppRet} ${functionName}(${finalParams.map(p => {
-      const t = mapType(p.type, 'cpp');
-      return (t.startsWith('vector') ? 'const ' + t + '&' : t) + ' ' + p.name;
-    }).join(', ')})`;
-    correctedCode = `${cppSig} {\n${body}\n}`;
+    normalized = normalizeCpp(normalized, functionName, paramTypes, returnType);
   } else if (language === 'c') {
-    const cRet = mapType(detectReturnType(problem), 'c');
-    const cSig = `${cRet} ${functionName}(${finalParams.map(p => mapType(p.type, 'c') + ' ' + p.name).join(', ')})`;
-    correctedCode = `${cSig} {\n${body}\n}`;
+    normalized = normalizeC(normalized, functionName, paramTypes, returnType);
   }
 
-  return { code: correctedCode, paramTypes: finalParams, functionName };
+  return { code: normalized, paramTypes, functionName };
 }
 
-function stripUserSignature(userCode, language) {
-  let body = userCode.trim();
-  let userParamNames = [];
+function normalizeJava(code, functionName, params, returnType) {
+  // 1. Remove packages and imports (we provide standard imports)
+  let clean = code.replace(/package\s+[\w\.]+;/g, '');
 
-  if (language === 'python') {
-    const match = userCode.match(/^\s*def\s+\w+\s*\(([^)]*)\)\s*:/m);
-    if (match) {
-      userParamNames = match[1].split(',').map(n => n.trim().split(':')[0].trim()).filter(Boolean);
-      body = userCode.replace(/^\s*def\s+\w+\s*\([^)]*\)\s*:\s*/, '').replace(/^\s*pass\s*/, '').trim();
-    }
-  } else if (language === 'java') {
-    const match = userCode.match(/public\s+[\w\[\]<>]+\s+\w+\s*\(([^)]*)\)\s*\{/);
-    if (match) {
-      userParamNames = match[1].split(',').map(n => n.trim().split(/\s+/).pop()).filter(Boolean);
-      let temp = userCode.trim();
-      // Remove everything up to and including the signature's opening brace
-      const sigIndex = temp.indexOf(match[0]);
-      if (sigIndex !== -1) {
-        temp = temp.substring(sigIndex + match[0].length);
-      }
-      // Remove last two closing braces (one for method, one for class)
-      let count = 0;
-      while (count < 2) {
-        const lastBrace = temp.lastIndexOf('}');
-        if (lastBrace === -1) break;
-        temp = temp.substring(0, lastBrace);
-        count++;
-      }
-      body = temp.trim();
-    }
-  } else if (language === 'cpp' || language === 'c') {
-    const match = userCode.match(/\w+\s*\(([^)]*)\)\s*\{/);
-    if (match) {
-      userParamNames = match[1].split(',').map(n => n.trim().split(/\s+/).pop().replace(/^[*&]/, '')).filter(Boolean);
-      let temp = userCode.trim();
-      const sigIndex = temp.indexOf(match[0]);
-      if (sigIndex !== -1) {
-        temp = temp.substring(sigIndex + match[0].length);
-      }
-      const lastBrace = temp.lastIndexOf('}');
-      if (lastBrace !== -1) temp = temp.substring(0, lastBrace);
-      body = temp.trim();
-    }
+  // 2. Remove all class declarations but keep their bodies
+  // Simple regex for top-level classes
+  clean = clean.replace(/public\s+class\s+\w+\s*\{|class\s+\w+\s*\{/g, '');
+  // Remove last closing brace if we removed a class (best effort)
+  if (code.includes('class')) {
+    const lastBrace = clean.lastIndexOf('}');
+    if (lastBrace !== -1) clean = clean.substring(0, lastBrace);
   }
 
-  return { body, userParamNames };
+  // 3. Remove main method if exists
+  clean = clean.replace(/public\s+static\s+void\s+main\s*\([^)]*\)\s*\{[^}]*\}/g, '');
+
+  // 4. Remove I/O distractions
+  clean = clean.replace(/Scanner\s+\w+\s*=\s*new\s*Scanner\([^)]*\);/g, '');
+  clean = clean.replace(/System\.out\.println\(/g, '// System.out.println(');
+
+  // 5. Wrap everything into Solution class and target method
+  const javaRet = mapType(returnType, 'java');
+  const javaParams = params.map(p => `${mapType(p.type, 'java')} ${p.name}`).join(', ');
+
+  // If user already wrote the method, don't double wrap
+  if (clean.includes(`${functionName}(`)) {
+    return `class Solution {\n    public ${javaRet} ${functionName}(${javaParams}) {\n        ${clean}\n    }\n}`;
+  }
+
+  // Raw logic wrap
+  return `class Solution {\n    public ${javaRet} ${functionName}(${javaParams}) {\n        ${clean}\n    }\n}`;
+}
+
+function normalizePython(code, functionName, params) {
+  let clean = code.trim();
+
+  // Remove common boilerplate
+  clean = clean.replace(/import\s+sys/g, '');
+  clean = clean.replace(/input\(\)/g, 'None # input() removed');
+  clean = clean.replace(/print\(/g, '# print(');
+
+  // Wrap in function if not already
+  if (!clean.includes(`def ${functionName}`)) {
+    const indent = clean.split('\n').map(l => '    ' + l).join('\n');
+    return `def ${functionName}(${params.map(p => p.name).join(', ')}):\n${indent}`;
+  }
+  return clean;
+}
+
+function normalizeCpp(code, functionName, params, returnType) {
+  let clean = code.trim();
+
+  // Remove main
+  clean = clean.replace(/int\s+main\s*\([^)]*\)\s*\{[^}]*\}/g, '');
+
+  // Remove class Solution if user provided it to avoid double nesting
+  clean = clean.replace(/class\s+Solution\s*\{/g, '').replace(/public:/g, '');
+
+  const cppRet = mapType(returnType, 'cpp');
+  const cppParams = params.map(p => `${mapType(p.type, 'cpp')} ${p.name}`).join(', ');
+
+  return `class Solution {\npublic:\n    ${cppRet} ${functionName}(${cppParams}) {\n        ${clean}\n    }\n};`;
+}
+
+function normalizeC(code, functionName, params, returnType) {
+  let clean = code.trim();
+  clean = clean.replace(/int\s+main\s*\([^)]*\)\s*\{[^}]*\}/g, '');
+  const cRet = mapType(returnType, 'c');
+  const cParams = params.map(p => `${mapType(p.type, 'c')} ${p.name}`).join(', ');
+  return `${cRet} ${functionName}(${cParams}) {\n    ${clean}\n}`;
 }
 
 function detectReturnType(problem) {

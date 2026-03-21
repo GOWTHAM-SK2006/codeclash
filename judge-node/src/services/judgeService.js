@@ -151,7 +151,8 @@ export async function judgeSubmission({ code, problem, language = 'python', time
   return {
     verdict: "Accepted ✅",
     passed,
-    total: testcases.length
+    total: testcases.length,
+    results: allResults
   };
 }
 

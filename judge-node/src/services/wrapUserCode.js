@@ -25,20 +25,21 @@ function wrapPython(userCode, functionName, testcases) {
 function wrapJava(userCode, functionName, testcases, paramTypes) {
   let runner = `import java.util.*;\n\n`;
   runner += userCode + '\n\n';
-  runner += `class SolutionRunner {\n`; // Removed public to avoid filename mismatch if any
+  runner += `class SolutionRunner {\n`;
   runner += `    public static String toString(Object obj) {\n`;
   runner += `        if (obj == null) return "null";\n`;
   runner += `        if (obj instanceof int[]) return Arrays.toString((int[])obj);\n`;
   runner += `        if (obj instanceof double[]) return Arrays.toString((double[])obj);\n`;
   runner += `        if (obj instanceof boolean[]) return Arrays.toString((boolean[])obj);\n`;
   runner += `        if (obj instanceof String[]) return Arrays.toString((String[])obj);\n`;
+  runner += `        if (obj instanceof List) return String.valueOf(obj);\n`;
   runner += `        return String.valueOf(obj);\n`;
   runner += `    }\n`;
   runner += `    public static void main(String[] args) {\n`;
-  runner += `        Solution sol = new Solution();\n`;
+  runner += `        try {\n`;
+  runner += `            Solution sol = new Solution();\n`;
   testcases.forEach((tc, idx) => {
     const inputs = smartSplitInput(tc.input);
-    runner += `        try {\n`;
     const callArgs = inputs.map((val, i) => {
       const type = paramTypes[i].type;
       if (type.endsWith('[]')) {
@@ -49,10 +50,10 @@ function wrapJava(userCode, functionName, testcases, paramTypes) {
       return val;
     }).join(', ');
     runner += `            System.out.println("CASE${idx}: " + toString(sol.${functionName}(${callArgs})));\n`;
-    runner += `        } catch (Exception e) {\n`;
-    runner += `            System.out.println("CASE${idx}:__EXCEPTION__ " + e.getMessage());\n`;
-    runner += `        }\n`;
   });
+  runner += `        } catch (Exception e) {\n`;
+  runner += `            System.err.println("Runtime Error: " + e.getMessage());\n`;
+  runner += `        }\n`;
   runner += `    }\n}\n`;
   return runner;
 }
@@ -66,6 +67,7 @@ function wrapCpp(userCode, functionName, testcases, paramTypes) {
   runner += `string toString(bool b) { return b ? "true" : "false"; }\n\n`;
   runner += userCode + '\n\n';
   runner += `int main() {\n`;
+  runner += `    Solution sol;\n`;
   testcases.forEach((tc, idx) => {
     const inputs = smartSplitInput(tc.input);
     runner += `    try {\n`;
@@ -78,7 +80,7 @@ function wrapCpp(userCode, functionName, testcases, paramTypes) {
       }
       return val;
     }).join(', ');
-    runner += `        cout << "CASE${idx}: " << toString(${functionName}(${callArgs})) << endl;\n`;
+    runner += `        cout << "CASE${idx}: " << toString(sol.${functionName}(${callArgs})) << endl;\n`;
     runner += `    } catch (...) {\n`;
     runner += `        cout << "CASE${idx}:__EXCEPTION__" << endl;\n`;
     runner += `    }\n`;
