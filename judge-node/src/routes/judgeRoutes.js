@@ -1,6 +1,6 @@
 import express from "express";
 import { getProblemById } from "../data/problems.js";
-import { judgeSubmission, runVisibleTestcases } from "../services/judgeService.js";
+import { judgeSubmission, runVisibleTestcases, runFunctionStyleTestcases } from "../services/judgeService.js";
 import { getBattle, upsertSubmission } from "../services/battleService.js";
 
 const router = express.Router();
@@ -74,6 +74,33 @@ router.post("/submit-code", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: "Submit failed", details: err.message });
+  }
+});
+
+// LeetCode-style function-only code execution
+router.post("/run-function-style", async (req, res) => {
+  try {
+    const { code, functionName, problemId, language = "python" } = req.body || {};
+    if (language !== "python") {
+      return res.status(400).json({ error: "Only python supported currently" });
+    }
+    if (!code || typeof code !== "string") {
+      return res.status(400).json({ error: "Code is required" });
+    }
+    if (!functionName || typeof functionName !== "string") {
+      return res.status(400).json({ error: "functionName is required" });
+    }
+    if (!problemId) {
+      return res.status(400).json({ error: "problemId is required" });
+    }
+    const problem = getProblemById(problemId);
+    if (!problem) {
+      return res.status(404).json({ error: "Problem not found" });
+    }
+    const result = await runFunctionStyleTestcases({ userCode: code, functionName, problem, timeoutMs: 2000 });
+    return res.json(result);
+  } catch (err) {
+    return res.status(500).json({ error: "Run failed", details: err.message });
   }
 });
 

@@ -1,4 +1,5 @@
 import { executePython } from "./executor.js";
+import { wrapUserCode } from "./wrapUserCode.js";
 
 function normalizeOutput(value) {
   return String(value ?? "")
@@ -137,5 +138,44 @@ export async function judgeSubmission({ code, problem, timeoutMs = 2000 }) {
     verdict: "Accepted ✅",
     passed,
     total: testcases.length
+  };
+}
+
+// LeetCode-style function-only execution (no input/print)
+export async function runFunctionStyleTestcases({ userCode, functionName, problem, timeoutMs = 2000 }) {
+  // Wrap user code with test runner
+  const wrapped = wrapUserCode(userCode, functionName, problem.testcases);
+  // Execute wrapped code
+  const exec = await executePython({ code: wrapped, stdin: "", timeoutMs });
+  // Parse output for each testcase
+  const results = [];
+  let passed = 0;
+  for (let i = 0; i < problem.testcases.length; i++) {
+    const tc = problem.testcases[i];
+    const regex = new RegExp(`CASE${i}:(.*)`);
+    const match = exec.stdout.match(regex);
+    let actual = match ? match[1].trim() : '';
+    let status = "Wrong Answer";
+    let errorMsg = null;
+    if (actual.startsWith('__EXCEPTION__')) {
+      status = "Runtime Error";
+      errorMsg = actual.replace('__EXCEPTION__', '').trim();
+    } else if (normalizeOutput(actual) === normalizeOutput(tc.expected)) {
+      status = "Accepted";
+      passed++;
+    }
+    results.push({
+      input: tc.input,
+      expected: tc.expected,
+      actual,
+      status,
+      error: errorMsg
+    });
+  }
+  return {
+    status: passed === problem.testcases.length ? "Accepted" : (passed > 0 ? "Partial" : "Wrong Answer"),
+    passed,
+    total: problem.testcases.length,
+    results
   };
 }
