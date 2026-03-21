@@ -38,11 +38,13 @@ function render(data) {
 
     if (data.phase === 'NOT_STARTED') {
         statusEl.textContent = 'Upcoming';
+        statusEl.classList.remove('live');
         labelEl.textContent = 'Bidding Starts In';
         timerEl.textContent = formatTime(data.secondsUntilBidding);
         bidAction.style.display = 'none';
     } else if (data.phase === 'BIDDING_LIVE') {
         statusEl.textContent = '🔥 Bidding LIVE';
+        statusEl.classList.add('live');
         labelEl.textContent = 'Ends In';
         timerEl.textContent = formatTime(data.secondsRemainingBidding);
         bidAction.style.display = 'block';
@@ -53,6 +55,7 @@ function render(data) {
         document.getElementById('userBalance').textContent = user.coins || 0;
     } else {
         statusEl.textContent = 'Bidding Ended';
+        statusEl.classList.remove('live');
         timerEl.textContent = '00:00:00';
         bidAction.style.display = 'none';
 
@@ -87,14 +90,18 @@ function render(data) {
     const lb = data.leaderboard || [];
     lbTotal.textContent = `(${lb.length} users)`;
 
-    lbContainer.innerHTML = lb.map((row, i) => `
-        <div class="lb-row" style="${row.username === getUsername() ? 'background:rgba(255,107,0,0.1); outline:1px solid rgba(255,107,0,0.3);' : ''}">
-            <div class="lb-rank">${i + 1}</div>
-            <div class="lb-user">${row.displayName}</div>
-            <div class="lb-amount">${row.amount}</div>
-            ${i < data.maxParticipants ? '<div class="lb-selected">IN</div>' : ''}
-        </div>
-    `).join('');
+    if (lb.length === 0) {
+        lbContainer.innerHTML = '<div class="lb-empty"><span>⏳</span>Waiting for bidders...</div>';
+    } else {
+        lbContainer.innerHTML = lb.map((row, i) => `
+            <div class="lb-row" style="${row.username === getUsername() ? 'background:rgba(255,107,0,0.1); outline:1px solid rgba(255,107,0,0.3);' : ''}">
+                <div class="lb-rank">${i + 1}</div>
+                <div class="lb-user">${row.displayName}</div>
+                <div class="lb-amount">${row.amount}</div>
+                ${i < data.maxParticipants ? '<div class="lb-selected">IN</div>' : ''}
+            </div>
+        `).join('');
+    }
 }
 
 function formatTime(seconds) {
