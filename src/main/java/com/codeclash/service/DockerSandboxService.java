@@ -157,6 +157,8 @@ public class DockerSandboxService {
         String containerId = null;
         Path tempDir = null;
         try {
+            log.info("Running code with input: {}", inputData);
+            tempDir = Files.createTempDirectory("codeclash-exec-" + UUID.randomUUID());
             String fileName = getFileName(language, code);
             File codeFile = new File(tempDir.toFile(), fileName);
             try (FileWriter writer = new FileWriter(codeFile)) {
@@ -197,6 +199,11 @@ public class DockerSandboxService {
             } catch (Exception e) {
                 timedOut = true;
                 log.warn("Container timed out: {}", containerId);
+                try {
+                    dockerClient.killContainerCmd(containerId).exec();
+                } catch (Exception killEx) {
+                    log.warn("Failed to kill container {}: {}", containerId, killEx.getMessage());
+                }
             }
 
             // Capture logs
@@ -341,8 +348,8 @@ public class DockerSandboxService {
     private String getJavaClassName(String code) {
         if (code == null)
             return "Solution";
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("public\\s+class\\s+(\\w+)").matcher(code);
-        return matcher.find() ? matcher.group(1) : "Solution";
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(public\\s+)?class\\s+(\\w+)").matcher(code);
+        return matcher.find() ? matcher.group(2) : "Solution";
     }
 
     private String getFileName(String language, String code) {
