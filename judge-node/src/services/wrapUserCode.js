@@ -1,10 +1,10 @@
 import { smartSplitInput, mapType } from '../utils.js';
 
-export function wrapUserCode(userCode, functionName, testcases, language, paramTypes) {
+export function wrapUserCode(userCode, functionName, testcases, language, paramTypes, returnType) {
   if (language === 'python') return wrapPython(userCode, functionName, testcases);
-  if (language === 'java') return wrapJava(userCode, functionName, testcases, paramTypes);
-  if (language === 'cpp') return wrapCpp(userCode, functionName, testcases, paramTypes);
-  if (language === 'c') return wrapC(userCode, functionName, testcases, paramTypes);
+  if (language === 'java') return wrapJava(userCode, functionName, testcases, paramTypes, returnType);
+  if (language === 'cpp') return wrapCpp(userCode, functionName, testcases, paramTypes, returnType);
+  if (language === 'c') return wrapC(userCode, functionName, testcases, paramTypes, returnType);
   return userCode;
 }
 
@@ -87,25 +87,69 @@ function wrapCpp(userCode, functionName, testcases, paramTypes) {
   return runner;
 }
 
-function wrapC(userCode, functionName, testcases, paramTypes) {
-  let runner = `#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n\n`;
+function wrapC(userCode, functionName, testcases, paramTypes, returnType = 'int') {
+  let runner = `#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <stdbool.h>\n\n`;
   runner += userCode + '\n\n';
   runner += `int main() {\n`;
   testcases.forEach((tc, idx) => {
     const inputs = smartSplitInput(tc.input);
-    const callArgs = inputs.map((val, i) => {
+    const callParams = [];
+    inputs.forEach((val, i) => {
       const p = paramTypes[i];
       if (p.type.endsWith('[]')) {
         const innerVal = val.replace(/^\[/, '{').replace(/\]$/, '}');
         const innerType = p.type.replace('[]', '');
+        // Calculate size by counting commas outside depth
+        let size = 1;
+        if (val === '[]') size = 0;
+        else {
+          let depth = 0;
+          for (let char of val) {
+            if (char === '[' || char === '{') depth++;
+            if (char === ']' || char === '}') depth--;
+            if (depth === 1 && char === ',') size++;
+          }
+        }
         runner += `    ${innerType} p${i}_${idx}[] = ${innerVal};\n`;
-        return `p${i}_${idx}`;
+        callParams.push(`p${i}_${idx}`);
+        callParams.push(size); // Auto-append size parameter for C
+      } else {
+        callParams.push(val);
       }
-      return val;
-    }).join(', ');
+    });
 
-    // For C, we assume int return for now, or double if detectReturnType says so.
-    runner += `    printf("CASE${idx}: %d\\n", ${functionName}(${callArgs}));\n`;
+    const callArgs = callParams.join(', ');
+
+    if (returnType === 'int') {
+      runner += `    printf("CASE${idx}: %d\\n", ${functionName}(${callArgs}));\n`;
+    } else if (returnType === 'double' || returnType === 'float') {
+      runner += `    printf("CASE${idx}: %f\\n", ${functionName}(${callArgs}));\n`;
+    } else if (returnType === 'bool' || returnType === 'boolean') {
+      runner += `    printf("CASE${idx}: %s\\n", ${functionName}(${callArgs}) ? "True" : "False");\n`;
+    } else if (returnType === 'string' || returnType === 'String' || returnType === 'str') {
+      runner += `    printf("CASE${idx}: %s\\n", ${functionName}(${callArgs}));\n`;
+    } else if (returnType === 'int[]') {
+      runner += `    int returnSize${idx} = 0;\n`;
+      runner += `    int* res${idx} = ${functionName}(${callArgs}, &returnSize${idx});\n`;
+      runner += `    printf("CASE${idx}: [");\n`;
+      runner += `    for(int i=0; i<returnSize${idx}; i++) {\n`;
+      runner += `        printf("%d%s", res${idx}[i], i == returnSize${idx}-1 ? "" : ", ");\n`;
+      runner += `    }\n`;
+      runner += `    printf("]\\n");\n`;
+      runner += `    free(res${idx});\n`;
+    } else if (returnType === 'String[]' || returnType === 'string[]') {
+      runner += `    int returnSize${idx} = 0;\n`;
+      runner += `    char** res${idx} = ${functionName}(${callArgs}, &returnSize${idx});\n`;
+      runner += `    printf("CASE${idx}: [");\n`;
+      runner += `    for(int i=0; i<returnSize${idx}; i++) {\n`;
+      runner += `        printf("\\"%s\\"%s", res${idx}[i], i == returnSize${idx}-1 ? "" : ", ");\n`;
+      runner += `        free(res${idx}[i]);\n`;
+      runner += `    }\n`;
+      runner += `    printf("]\\n");\n`;
+      runner += `    free(res${idx});\n`;
+    } else {
+      runner += `    printf("CASE${idx}: %d\\n", ${functionName}(${callArgs}));\n`;
+    }
   });
   runner += `    return 0;\n}\n`;
   return runner;

@@ -36,7 +36,9 @@ export async function runFunctionStyleTestcases({ userCode, problem, language = 
   const { code: stdCode, paramTypes, functionName } = standardizeUserCode(userCode, problem, language);
 
   // 2. Wrap with Test Runner
-  const wrapped = wrapUserCode(stdCode, functionName, problem.testcases, language, paramTypes);
+  const config = JSON.parse(problem.wrapperConfig || '{}');
+  const returnType = config.returnType || 'int';
+  const wrapped = wrapUserCode(stdCode, functionName, problem.testcases, language, paramTypes, returnType);
 
   // 3. Execute with appropriate executor
   const executor = executors[language] || executePython;

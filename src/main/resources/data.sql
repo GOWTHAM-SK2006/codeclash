@@ -47,10 +47,10 @@ You can return the answer in any order.',
     input_format = 'Line 1: Array of integers `nums`
 Line 2: Integer `target`',
     output_format = 'Array of two integers representing the indices.',
-    function_signatures = '{"python":"def twoSum(nums, target):\n    pass","java":"class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    \n}","javascript":"/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    \n};"}',
+    function_signatures = '{"python":"def twoSum(nums, target):\n    pass","java":"class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    \n}","javascript":"var twoSum = function(nums, target) {\n    \n};"}',
     test_cases = '[{"input":"[2,7,11,15]\\n9","expected":"[0, 1]"},{"input":"[3,2,4]\\n6","expected":"[1, 2]"},{"input":"[3,3]\\n6","expected":"[0, 1]"}]',
     expected_output = '[0, 1]',
-    wrapper_config = '{"functionName":"twoSum","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}'
+    wrapper_config = '{"functionName":"twoSum","returnType":"int[]","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}'
 WHERE title = 'Two Sum';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -61,14 +61,10 @@ print(s[::-1])',
 '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
 'olleh', 10, 'Strings') ON CONFLICT DO NOTHING;
 
-UPDATE problems SET
-    description = 'Write a function that reverses a string. The input string is given as an array of characters `s`.',
-    input_format = 'A single string `s`.',
-    output_format = 'The reversed string.',
-    function_signatures = '{"python":"def reverseString(s):\n    pass","java":"class Solution {\n    public String reverseString(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string reverseString(string s) {\n        \n    }\n};","c":"char* reverseString(char* s) {\n    \n}","javascript":"/**\n * @param {string} s\n * @return {string}\n */\nvar reverseString = function(s) {\n    \n};"}',
+    function_signatures = '{"python":"def reverseString(s):\n    pass","java":"class Solution {\n    public String reverseString(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string reverseString(string s) {\n        \n    }\n};","c":"char* reverseString(char* s) {\n    \n}","javascript":"var reverseString = function(s) {\n    \n};"}',
     test_cases = '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
     expected_output = 'olleh',
-    wrapper_config = '{"functionName":"reverseString","params":[{"name":"s","type":"str"}]}'
+    wrapper_config = '{"functionName":"reverseString","returnType":"string","params":[{"name":"s","type":"str"}]}'
 WHERE title = 'Reverse String';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -95,10 +91,10 @@ UPDATE problems SET
 - `answer[i] == i` (as a string) if none of the above conditions are true.',
     input_format = 'An integer `n`.',
     output_format = 'A list of strings from 1 to `n`.',
-    function_signatures = '{"python":"def fizzBuzz(n):\n    pass","java":"class Solution {\n    public List<String> fizzBuzz(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<string> fizzBuzz(int n) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** fizzBuzz(int n, int* returnSize) {\n    \n}","javascript":"/**\n * @param {number} n\n * @return {string[]}\n */\nvar fizzBuzz = function(n) {\n    \n};"}',
+    function_signatures = '{"python":"def fizzBuzz(n):\n    pass","java":"class Solution {\n    public List<String> fizzBuzz(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<string> fizzBuzz(int n) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nchar** fizzBuzz(int n, int* returnSize) {\n    \n}","javascript":"var fizzBuzz = function(n) {\n    \n};"}',
     test_cases = '[{"input":"5","expected":"[\\"1\\",\\"2\\",\\"Fizz\\",\\"4\\",\\"Buzz\\"]"},{"input":"3","expected":"[\\"1\\",\\"2\\",\\"Fizz\\"]"}]',
     expected_output = '["1","2","Fizz","4","Buzz"]',
-    wrapper_config = '{"functionName":"fizzBuzz","params":[{"name":"n","type":"int"}]}'
+    wrapper_config = '{"functionName":"fizzBuzz","returnType":"String[]","params":[{"name":"n","type":"int"}]}'
 WHERE title = 'FizzBuzz';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -127,10 +123,10 @@ An input string is valid if:
 3. Every close bracket has a corresponding open bracket of the same type.',
     input_format = 'A single string `s` containing brackets.',
     output_format = 'Boolean `True` or `False`.',
-    function_signatures = '{"python":"def isValid(s):\n    pass","java":"class Solution {\n    public boolean isValid(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isValid(string s) {\n        \n    }\n};","c":"bool isValid(char* s) {\n    \n}","javascript":"/**\n * @param {string} s\n * @return {boolean}\n */\nvar isValid = function(s) {\n    \n};"}',
+    function_signatures = '{"python":"def isValid(s):\n    pass","java":"class Solution {\n    public boolean isValid(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isValid(string s) {\n        \n    }\n};","c":"bool isValid(char* s) {\n    \n}","javascript":"var isValid = function(s) {\n    \n};"}',
     test_cases = '[{"input":"()[]{}","expected":"True"},{"input":"(]","expected":"False"},{"input":"([)]","expected":"False"}]',
     expected_output = 'True',
-    wrapper_config = '{"functionName":"isValid","params":[{"name":"s","type":"str"}]}'
+    wrapper_config = '{"functionName":"isValid","returnType":"bool","params":[{"name":"s","type":"str"}]}'
 WHERE title = 'Valid Parentheses';
 
 INSERT INTO problems (title, description, difficulty, starter_code, test_cases, expected_output, points, category) VALUES
@@ -148,10 +144,10 @@ UPDATE problems SET
     input_format = 'Line 1: Sorted array `nums1`
 Line 2: Sorted array `nums2`',
     output_format = 'A single merged sorted array.',
-    function_signatures = '{"python":"def merge(nums1, nums2):\n    pass","java":"class Solution {\n    public int[] merge(int[] nums1, int[] nums2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> merge(vector<int>& nums1, vector<int>& nums2) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* merge(int* nums1, int size1, int* nums2, int size2, int* returnSize) {\n    \n}","javascript":"/**\n * @param {number[]} nums1\n * @param {number[]} nums2\n * @return {number[]}\n */\nvar merge = function(nums1, nums2) {\n    \n};"}',
+    function_signatures = '{"python":"def merge(nums1, nums2):\n    pass","java":"class Solution {\n    public int[] merge(int[] nums1, int[] nums2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> merge(vector<int>& nums1, vector<int>& nums2) {\n        \n    }\n};","c":"/**\n * Note: The returned array must be malloced, assume caller calls free().\n */\nint* merge(int* nums1, int m, int* nums2, int n, int* returnSize) {\n    \n}","javascript":"var merge = function(nums1, nums2) {\n    \n};"}',
     test_cases = '[{"input":"[1,3,5]\\n[2,4,6]","expected":"[1, 2, 3, 4, 5, 6]"},{"input":"[1,2]\\n[3,4]","expected":"[1, 2, 3, 4]"}]',
     expected_output = '[1, 2, 3, 4, 5, 6]',
-    wrapper_config = '{"functionName":"merge","params":[{"name":"nums1","type":"json"},{"name":"nums2","type":"json"}]}'
+    wrapper_config = '{"functionName":"merge","returnType":"int[]","params":[{"name":"nums1","type":"json"},{"name":"nums2","type":"json"}]}'
 WHERE title = 'Merge Sorted Arrays';
 
 INSERT INTO problems (title, description, difficulty, input_format, output_format, function_signatures, test_cases, expected_output, points, category, wrapper_config) VALUES
@@ -159,9 +155,9 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Line 1: Sorted array `nums`
 Line 2: Integer `target`', 
 'Index of `target` or -1.', 
-'{"python":"def search(nums, target):\n    pass","java":"class Solution {\n    public int search(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        \n    }\n};","c":"int search(int* nums, int numsSize, int target) {\n    \n}","javascript":"/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number}\n */\nvar search = function(nums, target) {\n    \n};"}', 
+'{"python":"def search(nums, target):\n    pass","java":"class Solution {\n    public int search(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int search(vector<int>& nums, int target) {\n        \n    }\n};","c":"int search(int* nums, int numsSize, int target) {\n    \n}","javascript":"var search = function(nums, target) {\n    \n};"}', 
 '[{"input":"[1,3,5,7,9]\\n5","expected":"2"},{"input":"[1,3,5,7,9]\\n2","expected":"-1"}]', 
-'2', 20, 'Search', '{"functionName":"search","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'2', 20, 'Search', '{"functionName":"search","returnType":"int","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -176,9 +172,9 @@ A subsequence of a string is a new string generated from the original string wit
 'Line 1: String `text1`
 Line 2: String `text2`', 
 'Length of the longest common subsequence.', 
-'{"python":"def longestCommonSubsequence(text1, text2):\n    pass","java":"class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n        \n    }\n};","c":"int longestCommonSubsequence(char* text1, char* text2) {\n    \n}","javascript":"/**\n * @param {string} text1\n * @param {string} text2\n * @return {number}\n */\nvar longestCommonSubsequence = function(text1, text2) {\n    \n};"}', 
+'{"python":"def longestCommonSubsequence(text1, text2):\n    pass","java":"class Solution {\n    public int longestCommonSubsequence(String text1, String text2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int longestCommonSubsequence(string text1, string text2) {\n        \n    }\n};","c":"int longestCommonSubsequence(char* text1, char* text2) {\n    \n}","javascript":"var longestCommonSubsequence = function(text1, text2) {\n    \n};"}', 
 '[{"input":"abcde\\nace","expected":"3"},{"input":"abc\\nabc","expected":"3"},{"input":"abc\\ndef","expected":"0"}]', 
-'3', 30, 'Dynamic Programming', '{"functionName":"longestCommonSubsequence","params":[{"name":"text1","type":"str"},{"name":"text2","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'3', 30, 'Dynamic Programming', '{"functionName":"longestCommonSubsequence","returnType":"int","params":[{"name":"text1","type":"str"},{"name":"text2","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -192,9 +188,9 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Line 1: Sorted array `nums1`
 Line 2: Sorted array `nums2`', 
 'The median as a float.', 
-'{"python":"def findMedianSortedArrays(nums1, nums2):\n    pass","java":"class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {\n        \n    }\n};","c":"double findMedianSortedArrays(int* nums1, int nums1Size, int* nums2, int nums2Size) {\n    \n}","javascript":"/**\n * @param {number[]} nums1\n * @param {number[]} nums2\n * @return {number}\n */\nvar findMedianSortedArrays = function(nums1, nums2) {\n    \n};"}', 
+'{"python":"def findMedianSortedArrays(nums1, nums2):\n    pass","java":"class Solution {\n    public double findMedianSortedArrays(int[] nums1, int[] nums2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {\n        \n    }\n};","c":"double findMedianSortedArrays(int* nums1, int nums1Size, int* nums2, int nums2Size) {\n    \n}","javascript":"var findMedianSortedArrays = function(nums1, nums2) {\n    \n};"}', 
 '[{"input":"[1,3]\\n[2]","expected":"2.0"},{"input":"[1,2]\\n[3,4]","expected":"2.5"}]', 
-'2.0', 30, 'Binary Search', '{"functionName":"findMedianSortedArrays","params":[{"name":"nums1","type":"json"},{"name":"nums2","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'2.0', 30, 'Binary Search', '{"functionName":"findMedianSortedArrays","returnType":"double","params":[{"name":"nums1","type":"json"},{"name":"nums2","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -212,7 +208,7 @@ UPDATE problems SET
     function_signatures = '{"python":"def reverseString(s):\n    pass","java":"class Solution {\n    public String reverseString(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string reverseString(string s) {\n        \n    }\n};","c":"char* reverseString(char* s) {\n    \n}","javascript":"/**\n * @param {string} s\n * @return {string}\n */\nvar reverseString = function(s) {\n    \n};"}',
     test_cases = '[{"input":"hello","expected":"olleh"},{"input":"world","expected":"dlrow"},{"input":"abcd","expected":"dcba"}]',
     expected_output = 'olleh',
-    wrapper_config = '{"functionName":"reverseString","params":[{"name":"s","type":"str"}]}'
+    wrapper_config = '{"functionName":"reverseString","returnType":"string","params":[{"name":"s","type":"str"}]}'
 WHERE title = 'Reverse String';
 
 INSERT INTO problems (title, description, difficulty, input_format, output_format, function_signatures, test_cases, expected_output, points, category, wrapper_config) VALUES
@@ -221,7 +217,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The maximum integer in the array.', 
 '{"python":"def findMax(nums):\n    pass","java":"class Solution {\n    public int findMax(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findMax(vector<int>& nums) {\n        \n    }\n};","c":"int findMax(int* nums, int numsSize) {\n    \n}","javascript":"var findMax = function(nums) {\n    \n};"}', 
 '[{"input":"[1,5,3,9,2]","expected":"9"},{"input":"[10,20,5]","expected":"20"},{"input":"[1]","expected":"1"}]', 
-'9', 10, 'Arrays', '{"functionName":"findMax","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'9', 10, 'Arrays', '{"functionName":"findMax","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -236,7 +232,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The total sum of elements.', 
 '{"python":"def sumArray(nums):\n    pass","java":"class Solution {\n    public int sumArray(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int sumArray(vector<int>& nums) {\n        \n    }\n};","c":"int sumArray(int* nums, int numsSize) {\n    \n}","javascript":"var sumArray = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4]","expected":"10"},{"input":"[5,5,5]","expected":"15"},{"input":"[0]","expected":"0"}]', 
-'10', 10, 'Arrays', '{"functionName":"sumArray","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'10', 10, 'Arrays', '{"functionName":"sumArray","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -251,7 +247,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'String "Even" or "Odd".', 
 '{"python":"def checkEvenOdd(n):\n    pass","java":"class Solution {\n    public String checkEvenOdd(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string checkEvenOdd(int n) {\n        \n    }\n};","c":"char* checkEvenOdd(int n) {\n    \n}","javascript":"var checkEvenOdd = function(n) {\n    \n};"}', 
 '[{"input":"7","expected":"Odd"},{"input":"4","expected":"Even"},{"input":"0","expected":"Even"}]', 
-'Odd', 10, 'Logic', '{"functionName":"checkEvenOdd","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'Odd', 10, 'Logic', '{"functionName":"checkEvenOdd","returnType":"string","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -296,7 +292,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The minimum integer in the array.', 
 '{"python":"def findMin(nums):\n    pass","java":"class Solution {\n    public int findMin(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findMin(vector<int>& nums) {\n        \n    }\n};","c":"int findMin(int* nums, int numsSize) {\n    \n}","javascript":"var findMin = function(nums) {\n    \n};"}', 
 '[{"input":"[4,2,7,1]","expected":"1"},{"input":"[10,5,15]","expected":"5"},{"input":"[5]","expected":"5"}]', 
-'1', 10, 'Arrays', '{"functionName":"findMin","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'1', 10, 'Arrays', '{"functionName":"findMin","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -311,7 +307,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The factorial of `n`.', 
 '{"python":"def factorial(n):\n    pass","java":"class Solution {\n    public long factorial(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    long long factorial(int n) {\n        \n    }\n};","c":"long long factorial(int n) {\n    \n}","javascript":"var factorial = function(n) {\n    \n};"}', 
 '[{"input":"5","expected":"120"},{"input":"0","expected":"1"},{"input":"3","expected":"6"}]', 
-'120', 10, 'Math', '{"functionName":"factorial","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'120', 10, 'Math', '{"functionName":"factorial","returnType":"int","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -341,7 +337,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The reversed array.', 
 '{"python":"def reverseArray(nums):\n    pass","java":"class Solution {\n    public int[] reverseArray(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> reverseArray(vector<int>& nums) {\n        \n    }\n};","c":"int* reverseArray(int* nums, int numsSize, int* returnSize) {\n    \n}","javascript":"var reverseArray = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3]","expected":"[3,2,1]"},{"input":"[10,20]","expected":"[20,10]"},{"input":"[5]","expected":"[5]"}]', 
-'[3,2,1]', 10, 'Arrays', '{"functionName":"reverseArray","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'[3,2,1]', 10, 'Arrays', '{"functionName":"reverseArray","returnType":"int[]","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -356,7 +352,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The number of digits.', 
 '{"python":"def countDigits(n):\n    pass","java":"class Solution {\n    public int countDigits(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int countDigits(int n) {\n        \n    }\n};","c":"int countDigits(int n) {\n    \n}","javascript":"var countDigits = function(n) {\n    \n};"}', 
 '[{"input":"12345","expected":"5"},{"input":"100","expected":"3"},{"input":"9","expected":"1"}]', 
-'5', 10, 'Math', '{"functionName":"countDigits","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'5', 10, 'Math', '{"functionName":"countDigits","returnType":"int","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -371,7 +367,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The sum of digits.', 
 '{"python":"def sumOfDigits(n):\n    pass","java":"class Solution {\n    public int sumOfDigits(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int sumOfDigits(int n) {\n        \n    }\n};","c":"int sumOfDigits(int n) {\n    \n}","javascript":"var sumOfDigits = function(n) {\n    \n};"}', 
 '[{"input":"123","expected":"6"},{"input":"100","expected":"1"},{"input":"555","expected":"15"}]', 
-'6', 10, 'Math', '{"functionName":"sumOfDigits","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'6', 10, 'Math', '{"functionName":"sumOfDigits","returnType":"int","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -386,7 +382,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isPrime(n):\n    pass","java":"class Solution {\n    public boolean isPrime(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isPrime(int n) {\n        \n    }\n};","c":"bool isPrime(int n) {\n    \n}","javascript":"var isPrime = function(n) {\n    \n};"}', 
 '[{"input":"7","expected":"True"},{"input":"4","expected":"False"},{"input":"2","expected":"True"}]', 
-'True', 10, 'Math', '{"functionName":"isPrime","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Math', '{"functionName":"isPrime","returnType":"bool","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -401,7 +397,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The largest integer.', 
 '{"python":"def largestOfThree(a, b, c):\n    pass","java":"class Solution {\n    public int largestOfThree(int a, int b, int c) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int largestOfThree(int a, int b, int c) {\n        \n    }\n};","c":"int largestOfThree(int a, int b, int c) {\n    \n}","javascript":"var largestOfThree = function(a, b, c) {\n    \n};"}', 
 '[{"input":"3 7 5","expected":"7"},{"input":"10 5 15","expected":"15"},{"input":"1 1 1","expected":"1"}]', 
-'7', 10, 'Logic', '{"functionName":"largestOfThree","params":[{"name":"a","type":"int"},{"name":"b","type":"int"},{"name":"c","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'7', 10, 'Logic', '{"functionName":"largestOfThree","returnType":"int","params":[{"name":"a","type":"int"},{"name":"b","type":"int"},{"name":"c","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -416,7 +412,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The length of the string.', 
 '{"python":"def stringLength(s):\n    pass","java":"class Solution {\n    public int stringLength(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int stringLength(string s) {\n        \n    }\n};","c":"int stringLength(char* s) {\n    \n}","javascript":"var stringLength = function(s) {\n    \n};"}', 
 '[{"input":"hello","expected":"5"},{"input":"world","expected":"5"},{"input":"a","expected":"1"}]', 
-'5', 10, 'Strings', '{"functionName":"stringLength","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'5', 10, 'Strings', '{"functionName":"stringLength","returnType":"int","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -431,7 +427,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The uppercase version of `s`.', 
 '{"python":"def toUppercase(s):\n    pass","java":"class Solution {\n    public String toUppercase(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string toUppercase(string s) {\n        \n    }\n};","c":"char* toUppercase(char* s) {\n    \n}","javascript":"var toUppercase = function(s) {\n    \n};"}', 
 '[{"input":"hello","expected":"HELLO"},{"input":"World","expected":"WORLD"}]', 
-'HELLO', 10, 'Strings', '{"functionName":"toUppercase","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'HELLO', 10, 'Strings', '{"functionName":"toUppercase","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -446,7 +442,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The lowercase version of `s`.', 
 '{"python":"def toLowercase(s):\n    pass","java":"class Solution {\n    public String toLowercase(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string toLowercase(string s) {\n        \n    }\n};","c":"char* toLowercase(char* s) {\n    \n}","javascript":"var toLowercase = function(s) {\n    \n};"}', 
 '[{"input":"HELLO","expected":"hello"},{"input":"World","expected":"world"}]', 
-'hello', 10, 'Strings', '{"functionName":"toLowercase","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'hello', 10, 'Strings', '{"functionName":"toLowercase","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -461,7 +457,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The first character.', 
 '{"python":"def firstChar(s):\n    pass","java":"class Solution {\n    public char firstChar(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    char firstChar(string s) {\n        \n    }\n};","c":"char firstChar(char* s) {\n    \n}","javascript":"var firstChar = function(s) {\n    \n};"}', 
 '[{"input":"hello","expected":"h"},{"input":"world","expected":"w"},{"input":"a","expected":"a"}]', 
-'h', 10, 'Strings', '{"functionName":"firstChar","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'h', 10, 'Strings', '{"functionName":"firstChar","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -476,7 +472,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The last character.', 
 '{"python":"def lastChar(s):\n    pass","java":"class Solution {\n    public char lastChar(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    char lastChar(string s) {\n        \n    }\n};","c":"char lastChar(char* s) {\n    \n}","javascript":"var lastChar = function(s) {\n    \n};"}', 
 '[{"input":"hello","expected":"o"},{"input":"world","expected":"d"},{"input":"a","expected":"a"}]', 
-'o', 10, 'Strings', '{"functionName":"lastChar","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'o', 10, 'Strings', '{"functionName":"lastChar","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -491,7 +487,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'An array `[b, a]`.', 
 '{"python":"def swapNumbers(a, b):\n    pass","java":"class Solution {\n    public int[] swapNumbers(int a, int b) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> swapNumbers(int a, int b) {\n        \n    }\n};","c":"int* swapNumbers(int a, int b, int* returnSize) {\n    \n}","javascript":"var swapNumbers = function(a, b) {\n    \n};"}', 
 '[{"input":"3 5","expected":"[5, 3]"},{"input":"10 20","expected":"[20, 10]"},{"input":"1 1","expected":"[1, 1]"}]', 
-'[5, 3]', 10, 'Logic', '{"functionName":"swapNumbers","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'[5, 3]', 10, 'Logic', '{"functionName":"swapNumbers","returnType":"int[]","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -506,7 +502,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'String "Positive", "Negative", or "Zero".', 
 '{"python":"def checkSign(n):\n    pass","java":"class Solution {\n    public String checkSign(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string checkSign(int n) {\n        \n    }\n};","c":"char* checkSign(int n) {\n    \n}","javascript":"var checkSign = function(n) {\n    \n};"}', 
 '[{"input":"-5","expected":"Negative"},{"input":"10","expected":"Positive"},{"input":"0","expected":"Zero"}]', 
-'Negative', 10, 'Logic', '{"functionName":"checkSign","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'Negative', 10, 'Logic', '{"functionName":"checkSign","returnType":"string","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -521,7 +517,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The sum of the first `n` natural numbers.', 
 '{"python":"def sumFirstN(n):\n    pass","java":"class Solution {\n    public int sumFirstN(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int sumFirstN(int n) {\n        \n    }\n};","c":"int sumFirstN(int n) {\n    \n}","javascript":"var sumFirstN = function(n) {\n    \n};"}', 
 '[{"input":"5","expected":"15"},{"input":"10","expected":"55"},{"input":"1","expected":"1"}]', 
-'15', 10, 'Math', '{"functionName":"sumFirstN","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'15', 10, 'Math', '{"functionName":"sumFirstN","returnType":"int","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -536,7 +532,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'An array of 10 integers.', 
 '{"python":"def multiplicationTable(n):\n    pass","java":"class Solution {\n    public int[] multiplicationTable(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> multiplicationTable(int n) {\n        \n    }\n};","c":"int* multiplicationTable(int n, int* returnSize) {\n    \n}","javascript":"var multiplicationTable = function(n) {\n    \n};"}', 
 '[{"input":"3","expected":"[3, 6, 9, 12, 15, 18, 21, 24, 27, 30]"},{"input":"2","expected":"[2, 4, 6, 8, 10, 12, 14, 16, 18, 20]"}]', 
-'[3, 6, 9, 12, 15, 18, 21, 24, 27, 30]', 10, 'Logic', '{"functionName":"multiplicationTable","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'[3, 6, 9, 12, 15, 18, 21, 24, 27, 30]', 10, 'Logic', '{"functionName":"multiplicationTable","returnType":"int[]","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -551,7 +547,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The count of even numbers.', 
 '{"python":"def countEven(nums):\n    pass","java":"class Solution {\n    public int countEven(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int countEven(vector<int>& nums) {\n        \n    }\n};","c":"int countEven(int* nums, int numsSize) {\n    \n}","javascript":"var countEven = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4,6]","expected":"3"},{"input":"[1,3,5]","expected":"0"},{"input":"[2,4]","expected":"2"}]', 
-'3', 10, 'Arrays', '{"functionName":"countEven","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'3', 10, 'Arrays', '{"functionName":"countEven","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -566,7 +562,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The count of odd numbers.', 
 '{"python":"def countOdd(nums):\n    pass","java":"class Solution {\n    public int countOdd(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int countOdd(vector<int>& nums) {\n        \n    }\n};","c":"int countOdd(int* nums, int numsSize) {\n    \n}","javascript":"var countOdd = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4,5]","expected":"3"},{"input":"[2,4]","expected":"0"},{"input":"[1,3,5]","expected":"3"}]', 
-'3', 10, 'Arrays', '{"functionName":"countOdd","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'3', 10, 'Arrays', '{"functionName":"countOdd","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -581,7 +577,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'An array of squared integers.', 
 '{"python":"def squareArray(nums):\n    pass","java":"class Solution {\n    public int[] squareArray(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> squareArray(vector<int>& nums) {\n        \n    }\n};","c":"int* squareArray(int* nums, int numsSize, int* returnSize) {\n    \n}","javascript":"var squareArray = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3]","expected":"[1,4,9]"},{"input":"[2,3,4]","expected":"[4,9,16]"}]', 
-'[1,4,9]', 10, 'Arrays', '{"functionName":"squareArray","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'[1,4,9]', 10, 'Arrays', '{"functionName":"squareArray","returnType":"int[]","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -596,7 +592,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'An array of cubed integers.', 
 '{"python":"def cubeArray(nums):\n    pass","java":"class Solution {\n    public int[] cubeArray(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> cubeArray(vector<int>& nums) {\n        \n    }\n};","c":"int* cubeArray(int* nums, int numsSize, int* returnSize) {\n    \n}","javascript":"var cubeArray = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3]","expected":"[1,8,27]"},{"input":"[2,3]","expected":"[8,27]"}]', 
-'[1,8,27]', 10, 'Arrays', '{"functionName":"cubeArray","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'[1,8,27]', 10, 'Arrays', '{"functionName":"cubeArray","returnType":"int[]","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -611,7 +607,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isArmstrong(n):\n    pass","java":"class Solution {\n    public boolean isArmstrong(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isArmstrong(int n) {\n        \n    }\n};","c":"bool isArmstrong(int n) {\n    \n}","javascript":"var isArmstrong = function(n) {\n    \n};"}', 
 '[{"input":"153","expected":"True"},{"input":"370","expected":"True"},{"input":"123","expected":"False"}]', 
-'True', 10, 'Math', '{"functionName":"isArmstrong","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Math', '{"functionName":"isArmstrong","returnType":"bool","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -626,7 +622,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The reversed integer.', 
 '{"python":"def reverseNum(n):\n    pass","java":"class Solution {\n    public int reverseNum(int n) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int reverseNum(int n) {\n        \n    }\n};","c":"int reverseNum(int n) {\n    \n}","javascript":"var reverseNum = function(n) {\n    \n};"}', 
 '[{"input":"123","expected":"321"},{"input":"1000","expected":"1"},{"input":"456","expected":"654"}]', 
-'321', 10, 'Math', '{"functionName":"reverseNum","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'321', 10, 'Math', '{"functionName":"reverseNum","returnType":"int","params":[{"name":"n","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -641,7 +637,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The sum of even numbers.', 
 '{"python":"def sumEven(nums):\n    pass","java":"class Solution {\n    public int sumEven(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int sumEven(vector<int>& nums) {\n        \n    }\n};","c":"int sumEven(int* nums, int numsSize) {\n    \n}","javascript":"var sumEven = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4]","expected":"6"},{"input":"[2,4,6]","expected":"12"},{"input":"[1,3,5]","expected":"0"}]', 
-'6', 10, 'Arrays', '{"functionName":"sumEven","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'6', 10, 'Arrays', '{"functionName":"sumEven","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -656,7 +652,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The sum of odd numbers.', 
 '{"python":"def sumOdd(nums):\n    pass","java":"class Solution {\n    public int sumOdd(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int sumOdd(vector<int>& nums) {\n        \n    }\n};","c":"int sumOdd(int* nums, int numsSize) {\n    \n}","javascript":"var sumOdd = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4,5]","expected":"9"},{"input":"[1,3,5]","expected":"9"},{"input":"[2,4]","expected":"0"}]', 
-'9', 10, 'Arrays', '{"functionName":"sumOdd","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'9', 10, 'Arrays', '{"functionName":"sumOdd","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -671,7 +667,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The second largest integer.', 
 '{"python":"def secondLargest(nums):\n    pass","java":"class Solution {\n    public int secondLargest(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int secondLargest(vector<int>& nums) {\n        \n    }\n};","c":"int secondLargest(int* nums, int numsSize) {\n    \n}","javascript":"var secondLargest = function(nums) {\n    \n};"}', 
 '[{"input":"[1,5,3,9,2]","expected":"5"},{"input":"[10,20,15]","expected":"15"},{"input":"[1,2]","expected":"1"}]', 
-'5', 10, 'Arrays', '{"functionName":"secondLargest","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'5', 10, 'Arrays', '{"functionName":"secondLargest","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -686,7 +682,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isSorted(nums):\n    pass","java":"class Solution {\n    public boolean isSorted(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isSorted(vector<int>& nums) {\n        \n    }\n};","c":"bool isSorted(int* nums, int numsSize) {\n    \n}","javascript":"var isSorted = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4]","expected":"True"},{"input":"[4,3,2,1]","expected":"False"},{"input":"[1,1,1]","expected":"True"}]', 
-'True', 10, 'Arrays', '{"functionName":"isSorted","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Arrays', '{"functionName":"isSorted","returnType":"bool","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -701,7 +697,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The count of spaces.', 
 '{"python":"def countSpaces(s):\n    pass","java":"class Solution {\n    public int countSpaces(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int countSpaces(string s) {\n        \n    }\n};","c":"int countSpaces(char* s) {\n    \n}","javascript":"var countSpaces = function(s) {\n    \n};"}', 
 '[{"input":"hello world","expected":"1"},{"input":"hello  world","expected":"2"},{"input":"nospaces","expected":"0"}]', 
-'1', 10, 'Strings', '{"functionName":"countSpaces","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'1', 10, 'Strings', '{"functionName":"countSpaces","returnType":"int","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -716,7 +712,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The string without spaces.', 
 '{"python":"def removeSpaces(s):\n    pass","java":"class Solution {\n    public String removeSpaces(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string removeSpaces(string s) {\n        \n    }\n};","c":"char* removeSpaces(char* s) {\n    \n}","javascript":"var removeSpaces = function(s) {\n    \n};"}', 
 '[{"input":"hello world","expected":"helloworld"},{"input":"h e l l o","expected":"hello"},{"input":"nosp","expected":"nosp"}]', 
-'helloworld', 10, 'Strings', '{"functionName":"removeSpaces","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'helloworld', 10, 'Strings', '{"functionName":"removeSpaces","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -731,7 +727,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The updated string.', 
 '{"python":"def replaceChar(s, old, new):\n    pass","java":"class Solution {\n    public String replaceChar(String s, char old, char new) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string replaceChar(string s, char old, char new) {\n        \n    }\n};","c":"char* replaceChar(char* s, char old, char new) {\n    \n}","javascript":"var replaceChar = function(s, old, new) {\n    \n};"}', 
 '[{"input":"hello l x","expected":"hexxo"},{"input":"aaa a b","expected":"bbb"}]', 
-'hexxo', 10, 'Strings', '{"functionName":"replaceChar","params":[{"name":"s","type":"str"},{"name":"old","type":"str"},{"name":"new","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'hexxo', 10, 'Strings', '{"functionName":"replaceChar","returnType":"string","params":[{"name":"s","type":"str"},{"name":"old","type":"str"},{"name":"new","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -746,7 +742,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'A frequency string.', 
 '{"python":"def charFrequency(s):\n    pass","java":"class Solution {\n    public String charFrequency(String s) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string charFrequency(string s) {\n        \n    }\n};","c":"char* charFrequency(char* s) {\n    \n}","javascript":"var charFrequency = function(s) {\n    \n};"}', 
 '[{"input":"hello","expected":"h:1 e:1 l:2 o:1"},{"input":"aabbcc","expected":"a:2 b:2 c:2"}]', 
-'h:1 e:1 l:2 o:1', 10, 'Strings', '{"functionName":"charFrequency","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'h:1 e:1 l:2 o:1', 10, 'Strings', '{"functionName":"charFrequency","returnType":"string","params":[{"name":"s","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -761,7 +757,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isAnagram(s1, s2):\n    pass","java":"class Solution {\n    public boolean isAnagram(String s1, String s2) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isAnagram(string s1, string s2) {\n        \n    }\n};","c":"bool isAnagram(char* s1, char* s2) {\n    \n}","javascript":"var isAnagram = function(s1, s2) {\n    \n};"}', 
 '[{"input":"listen silent","expected":"True"},{"input":"hello world","expected":"False"}]', 
-'True', 10, 'Strings', '{"functionName":"isAnagram","params":[{"name":"s1","type":"str"},{"name":"s2","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Strings', '{"functionName":"isAnagram","returnType":"bool","params":[{"name":"s1","type":"str"},{"name":"s2","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -776,7 +772,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'A merged sorted array.', 
 '{"python":"def mergeArrays(a, b):\n    pass","java":"class Solution {\n    public int[] mergeArrays(int[] a, int[] b) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> mergeArrays(vector<int>& a, vector<int>& b) {\n        \n    }\n};","c":"int* mergeArrays(int* a, int aSize, int* b, int bSize, int* returnSize) {\n    \n}","javascript":"var mergeArrays = function(a, b) {\n    \n};"}', 
 '[{"input":"[1,2] [3,4]","expected":"[1,2,3,4]"},{"input":"[1] [2]","expected":"[1,2]"}]', 
-'[1,2,3,4]', 10, 'Arrays', '{"functionName":"mergeArrays","params":[{"name":"a","type":"json"},{"name":"b","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'[1,2,3,4]', 10, 'Arrays', '{"functionName":"mergeArrays","returnType":"int[]","params":[{"name":"a","type":"json"},{"name":"b","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -791,7 +787,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'An array with unique elements.', 
 '{"python":"def removeDuplicates(nums):\n    pass","java":"class Solution {\n    public int[] removeDuplicates(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    vector<int> removeDuplicates(vector<int>& nums) {\n        \n    }\n};","c":"int* removeDuplicates(int* nums, int numsSize, int* returnSize) {\n    \n}","javascript":"var removeDuplicates = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,2,3,3]","expected":"[1,2,3]"},{"input":"[1,1,1]","expected":"[1]"}]', 
-'[1,2,3]', 10, 'Arrays', '{"functionName":"removeDuplicates","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'[1,2,3]', 10, 'Arrays', '{"functionName":"removeDuplicates","returnType":"int[]","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -806,7 +802,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The index or -1.', 
 '{"python":"def findIndex(nums, target):\n    pass","java":"class Solution {\n    public int findIndex(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findIndex(vector<int>& nums, int target) {\n        \n    }\n};","c":"int findIndex(int* nums, int numsSize, int target) {\n    \n}","javascript":"var findIndex = function(nums, target) {\n    \n};"}', 
 '[{"input":"[1,2,3,4] 3","expected":"2"},{"input":"[5,10,15] 10","expected":"1"}]', 
-'2', 10, 'Arrays', '{"functionName":"findIndex","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'2', 10, 'Arrays', '{"functionName":"findIndex","returnType":"int","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -821,7 +817,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The count of occurrences.', 
 '{"python":"def countOccurrences(nums, target):\n    pass","java":"class Solution {\n    public int countOccurrences(int[] nums, int target) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int countOccurrences(vector<int>& nums, int target) {\n        \n    }\n};","c":"int countOccurrences(int* nums, int numsSize, int target) {\n    \n}","javascript":"var countOccurrences = function(nums, target) {\n    \n};"}', 
 '[{"input":"[1,2,2,3] 2","expected":"2"},{"input":"[1,1,1,1] 1","expected":"4"}]', 
-'2', 10, 'Arrays', '{"functionName":"countOccurrences","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'2', 10, 'Arrays', '{"functionName":"countOccurrences","returnType":"int","params":[{"name":"nums","type":"json"},{"name":"target","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -836,7 +832,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isSubstring(s, sub):\n    pass","java":"class Solution {\n    public boolean isSubstring(String s, String sub) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isSubstring(string s, string sub) {\n        \n    }\n};","c":"bool isSubstring(char* s, char* sub) {\n    \n}","javascript":"var isSubstring = function(s, sub) {\n    \n};"}', 
 '[{"input":"hello l","expected":"True"},{"input":"world ol","expected":"False"}]', 
-'True', 10, 'Strings', '{"functionName":"isSubstring","params":[{"name":"s","type":"str"},{"name":"sub","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Strings', '{"functionName":"isSubstring","returnType":"bool","params":[{"name":"s","type":"str"},{"name":"sub","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -851,7 +847,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'String without occurrences of `ch`.', 
 '{"python":"def removeChar(s, ch):\n    pass","java":"class Solution {\n    public String removeChar(String s, char ch) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    string removeChar(string s, char ch) {\n        \n    }\n};","c":"char* removeChar(char* s, char ch) {\n    \n}","javascript":"var removeChar = function(s, ch) {\n    \n};"}', 
 '[{"input":"hello l","expected":"heo"},{"input":"aabbaa a","expected":"bb"}]', 
-'heo', 10, 'Strings', '{"functionName":"removeChar","params":[{"name":"s","type":"str"},{"name":"ch","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
+'heo', 10, 'Strings', '{"functionName":"removeChar","returnType":"string","params":[{"name":"s","type":"str"},{"name":"ch","type":"str"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -866,7 +862,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The product of all elements.', 
 '{"python":"def multiplyAll(nums):\n    pass","java":"class Solution {\n    public int multiplyAll(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int multiplyAll(vector<int>& nums) {\n        \n    }\n};","c":"int multiplyAll(int* nums, int numsSize) {\n    \n}","javascript":"var multiplyAll = function(nums) {\n    \n};"}', 
 '[{"input":"[1,2,3,4]","expected":"24"},{"input":"[2,3]","expected":"6"},{"input":"[5]","expected":"5"}]', 
-'24', 10, 'Arrays', '{"functionName":"multiplyAll","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'24', 10, 'Arrays', '{"functionName":"multiplyAll","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -881,7 +877,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The average as an integer.', 
 '{"python":"def findAverage(nums):\n    pass","java":"class Solution {\n    public int findAverage(int[] nums) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findAverage(vector<int>& nums) {\n        \n    }\n};","c":"int findAverage(int* nums, int numsSize) {\n    \n}","javascript":"var findAverage = function(nums) {\n    \n};"}', 
 '[{"input":"[2,4,6,8]","expected":"5"},{"input":"[1,2,3]","expected":"2"},{"input":"[10]","expected":"10"}]', 
-'5', 10, 'Arrays', '{"functionName":"findAverage","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
+'5', 10, 'Arrays', '{"functionName":"findAverage","returnType":"int","params":[{"name":"nums","type":"json"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -896,7 +892,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'Boolean `True` or `False`.', 
 '{"python":"def isLeapYear(year):\n    pass","java":"class Solution {\n    public boolean isLeapYear(int year) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    bool isLeapYear(int year) {\n        \n    }\n};","c":"bool isLeapYear(int year) {\n    \n}","javascript":"var isLeapYear = function(year) {\n    \n};"}', 
 '[{"input":"2024","expected":"True"},{"input":"2000","expected":"True"},{"input":"1900","expected":"False"}]', 
-'True', 10, 'Logic', '{"functionName":"isLeapYear","params":[{"name":"year","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'True', 10, 'Logic', '{"functionName":"isLeapYear","returnType":"bool","params":[{"name":"year","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -911,7 +907,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The result as an integer.', 
 '{"python":"def powerOf(base, exp):\n    pass","java":"class Solution {\n    public int powerOf(int base, int exp) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int powerOf(int base, int exp) {\n        \n    }\n};","c":"int powerOf(int base, int exp) {\n    \n}","javascript":"var powerOf = function(base, exp) {\n    \n};"}', 
 '[{"input":"2 3","expected":"8"},{"input":"3 2","expected":"9"},{"input":"5 0","expected":"1"}]', 
-'8', 10, 'Math', '{"functionName":"powerOf","params":[{"name":"base","type":"int"},{"name":"exp","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'8', 10, 'Math', '{"functionName":"powerOf","returnType":"int","params":[{"name":"base","type":"int"},{"name":"exp","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -926,7 +922,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The GCD as an integer.', 
 '{"python":"def findGCD(a, b):\n    pass","java":"class Solution {\n    public int findGCD(int a, int b) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findGCD(int a, int b) {\n        \n    }\n};","c":"int findGCD(int a, int b) {\n    \n}","javascript":"var findGCD = function(a, b) {\n    \n};"}', 
 '[{"input":"12 18","expected":"6"},{"input":"10 20","expected":"10"},{"input":"7 11","expected":"1"}]', 
-'6', 10, 'Math', '{"functionName":"findGCD","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'6', 10, 'Math', '{"functionName":"findGCD","returnType":"int","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
@@ -941,7 +937,7 @@ INSERT INTO problems (title, description, difficulty, input_format, output_forma
 'The LCM as an integer.', 
 '{"python":"def findLCM(a, b):\n    pass","java":"class Solution {\n    public int findLCM(int a, int b) {\n        \n    }\n}","cpp":"class Solution {\npublic:\n    int findLCM(int a, int b) {\n        \n    }\n};","c":"int findLCM(int a, int b) {\n    \n}","javascript":"var findLCM = function(a, b) {\n    \n};"}', 
 '[{"input":"12 18","expected":"36"},{"input":"5 10","expected":"10"},{"input":"7 11","expected":"77"}]', 
-'36', 10, 'Math', '{"functionName":"findLCM","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
+'36', 10, 'Math', '{"functionName":"findLCM","returnType":"int","params":[{"name":"a","type":"int"},{"name":"b","type":"int"}]}') ON CONFLICT (title) DO UPDATE SET
     description = EXCLUDED.description,
     input_format = EXCLUDED.input_format,
     output_format = EXCLUDED.output_format,
