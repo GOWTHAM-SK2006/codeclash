@@ -39,15 +39,15 @@ public class AdminController {
 
     @PostMapping("/live-battles/{battleId}/force-end")
     public Map<String, Object> forceEnd(@RequestHeader("X-Admin-Session") String token,
-                                         @PathVariable Long battleId) {
+            @PathVariable Long battleId) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.forceEndBattle(battleId);
     }
 
     @PostMapping("/live-battles/{battleId}/disqualify")
     public Map<String, Object> disqualify(@RequestHeader("X-Admin-Session") String token,
-                                          @PathVariable Long battleId,
-                                          @RequestBody Map<String, Object> body) {
+            @PathVariable Long battleId,
+            @RequestBody Map<String, Object> body) {
         adminPanelService.verifyAdminSession(token);
         Long userId = Long.valueOf(String.valueOf(body.getOrDefault("userId", "0")));
         return adminPanelService.disqualifyUser(battleId, userId);
@@ -55,9 +55,9 @@ public class AdminController {
 
     @GetMapping("/match-history")
     public List<Map<String, Object>> matchHistory(@RequestHeader("X-Admin-Session") String token,
-                                                   @RequestParam(required = false) String date,
-                                                   @RequestParam(required = false) String user,
-                                                   @RequestParam(required = false) String result) {
+            @RequestParam(required = false) String date,
+            @RequestParam(required = false) String user,
+            @RequestParam(required = false) String result) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.getMatchHistory(date, user, result);
     }
@@ -71,15 +71,15 @@ public class AdminController {
     @PostMapping("/problems")
     @ResponseStatus(HttpStatus.CREATED)
     public Problem createProblem(@RequestHeader("X-Admin-Session") String token,
-                                 @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.createProblem(body);
     }
 
     @PutMapping("/problems/{id}")
     public Problem updateProblem(@RequestHeader("X-Admin-Session") String token,
-                                 @PathVariable Long id,
-                                 @RequestBody Map<String, Object> body) {
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.updateProblem(id, body);
     }
@@ -87,22 +87,22 @@ public class AdminController {
     @DeleteMapping("/problems/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteProblem(@RequestHeader("X-Admin-Session") String token,
-                              @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         adminPanelService.deleteProblem(id);
     }
 
     @GetMapping("/problems/{id}/testcases")
     public List<Map<String, Object>> testcases(@RequestHeader("X-Admin-Session") String token,
-                                                @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.getTestcases(id);
     }
 
     @PutMapping("/problems/{id}/testcases")
     public Map<String, Object> updateTestcases(@RequestHeader("X-Admin-Session") String token,
-                                                @PathVariable Long id,
-                                                @RequestBody Map<String, List<Map<String, Object>>> body) {
+            @PathVariable Long id,
+            @RequestBody Map<String, List<Map<String, Object>>> body) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.updateTestcases(id, body.get("testcases"));
     }
@@ -115,35 +115,35 @@ public class AdminController {
 
     @PostMapping("/users/{id}/ban")
     public User banUser(@RequestHeader("X-Admin-Session") String token,
-                        @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.setUserBan(id, true);
     }
 
     @PostMapping("/users/{id}/unban")
     public User unbanUser(@RequestHeader("X-Admin-Session") String token,
-                          @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.setUserBan(id, false);
     }
 
     @PostMapping("/users/{id}/reset-stats")
     public User resetUserStats(@RequestHeader("X-Admin-Session") String token,
-                               @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.resetUserStats(id);
     }
 
     @GetMapping("/users/{id}/submissions")
     public List<Map<String, Object>> userSubmissions(@RequestHeader("X-Admin-Session") String token,
-                                                      @PathVariable Long id) {
+            @PathVariable Long id) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.getUserSubmissions(id);
     }
 
     @GetMapping("/submissions")
     public List<Map<String, Object>> submissions(@RequestHeader("X-Admin-Session") String token,
-                                                  @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.getSubmissions(status);
     }
@@ -168,22 +168,29 @@ public class AdminController {
 
     @PostMapping("/leaderboard/{id}/adjust-points")
     public User adjustPoints(@RequestHeader("X-Admin-Session") String token,
-                             @PathVariable Long id,
-                             @RequestBody Map<String, Object> body) {
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
         adminPanelService.verifyAdminSession(token);
         Integer delta = Integer.valueOf(String.valueOf(body.getOrDefault("delta", "0")));
         return adminPanelService.adjustPoints(id, delta);
     }
 
     @GetMapping("/settings")
-    public Map<String, Object> settings(@RequestHeader("X-Admin-Session") String token) {
-        adminPanelService.verifyAdminSession(token);
+    public Map<String, Object> settings(@RequestHeader(value = "X-Admin-Session", required = false) String token) {
+        if (token != null && !token.isBlank()) {
+            adminPanelService.verifyAdminSession(token);
+        }
+        return adminPanelService.getSettings();
+    }
+
+    @GetMapping("/public-settings")
+    public Map<String, Object> publicSettings() {
         return adminPanelService.getSettings();
     }
 
     @PutMapping("/settings")
     public Map<String, Object> updateSettings(@RequestHeader("X-Admin-Session") String token,
-                                               @RequestBody Map<String, Object> payload) {
+            @RequestBody Map<String, Object> payload) {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.updateSettings(payload);
     }

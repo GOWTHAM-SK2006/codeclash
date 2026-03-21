@@ -42,14 +42,26 @@ const DEFAULT_STARTER_CODE = '';
 })();
 
 async function startBattleAfterTermsAccepted() {
+    // Fetch global settings to see if fullscreen is enforced
+    try {
+        const settings = await api.getSettings();
+        fullscreenGuardEnabled = settings?.battle?.allowFullscreen !== false;
+        pageExitGuardEnabled = settings?.safety?.antiCheat !== false;
+        console.log('Battle guards initialized:', { fullscreen: fullscreenGuardEnabled, antiCheat: pageExitGuardEnabled });
+    } catch (e) {
+        console.warn('Failed to fetch platform settings, defaulting to strict guards:', e);
+        fullscreenGuardEnabled = true;
+        pageExitGuardEnabled = true;
+    }
+
     const termsModal = document.getElementById('battleTermsModal');
     const agreeBtn = document.getElementById('agreeTermsBtn');
 
     if (!termsModal || !agreeBtn) {
-        initFullscreenGuard();
-        initPageExitGuard();
+        if (fullscreenGuardEnabled) initFullscreenGuard();
+        if (pageExitGuardEnabled) initPageExitGuard();
         await loadBattleDetails();
-        await requestBattleFullscreen();
+        if (fullscreenGuardEnabled) await requestBattleFullscreen();
         return;
     }
 
@@ -62,14 +74,18 @@ async function startBattleAfterTermsAccepted() {
     agreeBtn.disabled = true;
     agreeBtn.textContent = 'Starting Battle...';
 
-    const enteredFullscreen = await requestBattleFullscreen();
+    let enteredFullscreen = true;
+    if (fullscreenGuardEnabled) {
+        enteredFullscreen = await requestBattleFullscreen();
+    }
+
     termsModal.style.display = 'none';
 
-    initFullscreenGuard();
-    initPageExitGuard();
+    if (fullscreenGuardEnabled) initFullscreenGuard();
+    if (pageExitGuardEnabled) initPageExitGuard();
     await loadBattleDetails();
 
-    if (!enteredFullscreen) {
+    if (fullscreenGuardEnabled && !enteredFullscreen) {
         alert('Fullscreen is required for this battle. Please allow fullscreen to continue.');
         await requestBattleFullscreen();
     }

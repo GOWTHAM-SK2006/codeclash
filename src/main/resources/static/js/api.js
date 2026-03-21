@@ -184,6 +184,7 @@ const api = {
     // Notifications
     getNotifications() { return this.request('/notifications'); },
     getNotificationCount() { return this.request('/notifications/unread-count'); },
-    markNotificationsRead() { return this.request('/notifications/mark-read', { method: 'POST' }); }
+    markNotificationsRead() { return this.request('/notifications/mark-read', { method: 'POST' }); },
+    getSettings() { return this.request('/admin/public-settings'); }
 };
 
