@@ -123,7 +123,7 @@ async function loadProblems() {
         const problems = await Promise.all(ids.map(id => api.getProblem(id)));
 
         list.innerHTML = problems.map(prob => `
-            <div class="problem-item" onclick="window.location.href='/problem.html?id=${prob.id}&eventId=${eventId}'">
+            <div class="problem-item" onclick="window.location.href='/contest-problem.html?id=${prob.id}&eventId=${eventId}'">
                 <div>
                     <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-primary);">${prob.title}</div>
                     <div style="display: flex; gap: 0.75rem; margin-top: 0.4rem; align-items: center;">

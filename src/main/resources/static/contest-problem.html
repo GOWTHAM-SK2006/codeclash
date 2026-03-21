@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contest Arena — CodeClash</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .contest-battle-layout {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        /* ── Top Bar ── */
+        .contest-top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+        }
+
+        .contest-top-bar .contest-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .contest-top-bar .contest-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255, 107, 0, 0.1);
+            border: 1px solid rgba(255, 107, 0, 0.25);
+            color: var(--accent);
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 0.35rem 0.9rem;
+            border-radius: 20px;
+        }
+
+        .contest-top-bar .contest-title-text {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .contest-timer {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .contest-timer .timer-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .contest-timer .timer-value {
+            font-family: 'Courier New', monospace;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        .contest-back-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .contest-back-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── Main Split ── */
+        .contest-split {
+            display: grid;
+            grid-template-columns: 28% 72%;
+            gap: 1rem;
+            min-height: calc(100vh - 160px);
+        }
+
+        @media (max-width: 1024px) {
+            .contest-split {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Problem Panel ── */
+        .contest-problem-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.2rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 160px);
+        }
+
+        .contest-problem-panel .problem-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 0.6rem;
+        }
+
+        .contest-problem-panel h2 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .contest-problem-panel .problem-desc {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.7;
+            white-space: pre-wrap;
+            margin-bottom: 1rem;
+        }
+
+        .contest-problem-panel .tc-section h4 {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .contest-problem-panel .tc-block {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.6rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: #E0E0E0;
+            white-space: pre-wrap;
+            min-height: 40px;
+            margin-bottom: 0.6rem;
+        }
+
+        /* Problem nav tabs within contest */
+        .contest-problem-tabs {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .contest-problem-tab {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .contest-problem-tab:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .contest-problem-tab.active {
+            background: rgba(255, 107, 0, 0.1);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* ── Editor Panel ── */
+        .contest-editor-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.6rem;
+        }
+
+        .editor-toolbar .badge-group {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .contest-code-area {
+            flex: 1;
+            min-height: 500px;
+        }
+
+        .contest-code-area textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 500px;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #E0E0E0;
+            resize: vertical;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .contest-code-area textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(255, 107, 0, 0.1);
+        }
+
+        .contest-action-bar {
+            display: flex;
+            gap: 0.65rem;
+            margin-top: 0.7rem;
+        }
+
+        .contest-action-bar .btn {
+            font-weight: 800;
+        }
+
+        /* ── Output ── */
+        .contest-output {
+            margin-top: 0.8rem;
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.8rem;
+            display: none;
+        }
+
+        .contest-output h4 {
+            font-size: 0.9rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+        }
+
+        .contest-output pre {
+            white-space: pre-wrap;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar" id="navbar"></nav>
+
+    <div class="contest-battle-layout">
+        <!-- Top Bar -->
+        <div class="contest-top-bar">
+            <div class="contest-info">
+                <button class="contest-back-btn" id="backBtn">← Back to Arena</button>
+                <div class="contest-badge">⚔️ Contest</div>
+                <span class="contest-title-text" id="contestTitleText">Loading...</span>
+            </div>
+            <div class="contest-timer">
+                <span class="timer-label" id="timerLabel">Time Left</span>
+                <span class="timer-value" id="contestTimer">00:00:00</span>
+            </div>
+        </div>
+
+        <!-- Problem Tabs -->
+        <div class="contest-problem-tabs" id="problemTabs">
+            <!-- Problem tab buttons injected here -->
+        </div>
+
+        <!-- Main Split -->
+        <div class="contest-split">
+            <!-- Problem Panel -->
+            <div class="contest-problem-panel" id="problemPanel">
+                <div class="spinner" style="margin: 2rem auto;"></div>
+            </div>
+
+            <!-- Editor Panel -->
+            <div class="contest-editor-panel">
+                <div class="editor-toolbar">
+                    <div class="badge-group">
+                        <span class="badge badge-accent">Code</span>
+                    </div>
+                    <select id="langSelect" class="form-input"
+                        style="width:auto;padding:0.35rem 0.7rem;font-size:0.78rem;background:var(--bg-tertiary);border:1px solid var(--border);border-radius:8px;color:var(--text-primary);">
+                        <option value="python">Python</option>
+                        <option value="java">Java</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="c">C</option>
+                        <option value="cpp">C++</option>
+                    </select>
+                </div>
+
+                <div class="contest-code-area">
+                    <textarea id="codeEditor" spellcheck="false" placeholder="Write your solution here..."></textarea>
+                </div>
+
+                <div class="contest-action-bar">
+                    <button onclick="runCode()" class="btn btn-secondary" style="min-width:130px;">▶ Run Code</button>
+                    <button onclick="submitCode()" class="btn btn-primary" style="flex:1;">⚡ Submit Solution</button>
+                </div>
+
+                <div class="contest-output" id="outputArea">
+                    <h4 id="outputTitle">Output</h4>
+                    <pre id="outputContent"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/contest-problem.js"></script>
+</body>
+
+</html>
