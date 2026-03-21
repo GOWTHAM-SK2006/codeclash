@@ -26,8 +26,8 @@ export async function executeC({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_M
 
 export async function executeJava({ code, stdin = "", timeoutMs = DEFAULT_TIMEOUT_MS }) {
   // Detect public class name for Java
-  const classMatch = code.match(/public\s+class\s+(\w+)/);
-  const className = classMatch ? classMatch[1] : "Solution";
+  const classMatch = code.match(/(public\s+)?class\s+(\w+)/);
+  const className = classMatch ? classMatch[2] : "Solution";
   const filename = `${className}.java`;
 
   return executeGeneric({

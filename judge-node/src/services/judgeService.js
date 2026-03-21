@@ -29,19 +29,19 @@ export async function judgeSubmission({ code, language = 'python', testcases = [
       timeoutMs: 3000 // Standard 3s timeout
     });
 
-    let result = "Pass";
+    let result = "AC";
     const actual = normalizeOutput(exec.stdout);
     const expected = normalizeOutput(tc.expected);
 
     if (exec.timedOut) {
-      result = "Time Limit Exceeded";
+      result = "TLE";
     } else if (exec.exitCode !== 0) {
-      result = "Runtime Error";
+      result = "RE";
     } else if (actual !== expected) {
-      result = "Fail";
+      result = "WA";
     }
 
-    if (result === "Pass") passedCount++;
+    if (result === "AC") passedCount++;
 
     tcResults.push({
       input: tc.input,
@@ -51,8 +51,8 @@ export async function judgeSubmission({ code, language = 'python', testcases = [
     });
   }
 
-  const status = passedCount === testcases.length ? "Accepted"
-    : (tcResults.some(r => r.result === "Runtime Error") ? "Error" : "Failed");
+  const status = passedCount === testcases.length ? "ACCEPTED"
+    : (tcResults.some(r => r.result === "RE") ? "RUNTIME_ERROR" : (tcResults.some(r => r.result === "TLE") ? "TIME_LIMIT_EXCEEDED" : "WRONG_ANSWER"));
 
   return {
     status,
