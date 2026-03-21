@@ -45,8 +45,8 @@ async function adminRequest(path, options = {}) {
     if (res.status === 401) {
         localStorage.removeItem('cc_admin_session');
         if (window.adminInterval) clearInterval(window.adminInterval);
-        window.location.href = 'login.html';
-        return;
+        window.location.replace('login.html');
+        throw new Error('Admin session expired. Redirecting to login...');
     }
 
     const payload = await res.json().catch(() => ({}));
