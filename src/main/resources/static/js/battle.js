@@ -6,6 +6,10 @@ let selectedDifficulty = null;
     renderNav('battle');
     if (!requireAuth()) return;
 
+    // Simulated live data for visual appeal
+    updateLiveCounters();
+    setInterval(updateLiveCounters, 5000);
+
     // Check if user is already in a battle
     try {
         const active = await api.checkMyActiveBattle();
@@ -15,22 +19,46 @@ let selectedDifficulty = null;
     } catch (e) { }
 })();
 
+function updateLiveCounters() {
+    const playersEl = document.getElementById('onlinePlayersCount');
+    const battlesEl = document.getElementById('dailyBattlesCount');
+
+    if (playersEl) {
+        const basePlayers = 120;
+        const randomPlayers = Math.floor(Math.random() * 15);
+        playersEl.textContent = basePlayers + randomPlayers;
+    }
+
+    if (battlesEl) {
+        const baseBattles = 840;
+        const randomBattles = Math.floor(Math.random() * 5);
+        battlesEl.textContent = baseBattles + randomBattles;
+    }
+}
+
 async function findRandomBattle(difficulty) {
     selectedDifficulty = difficulty;
-    document.getElementById('defaultLobby').style.display = 'none';
-    document.getElementById('waitingLobby').style.display = 'block';
-    document.getElementById('waitingInfo').textContent = `Searching for a ${difficulty} opponent...`;
+
+    const lobby = document.getElementById('defaultLobby');
+    const waiting = document.getElementById('waitingLobby');
+    const info = document.getElementById('waitingInfo');
+
+    if (lobby) lobby.style.display = 'none';
+    if (waiting) {
+        waiting.classList.remove('hidden');
+        waiting.style.display = 'block';
+    }
+    if (info) info.textContent = `Scanning for ${difficulty} opponents...`;
 
     try {
         const res = await api.findBattle(difficulty);
         if (res.status === 'matched') {
             handleMatch(res);
         } else {
-            // Start polling
             startPolling();
         }
     } catch (e) {
-        alert('Error: ' + e.message);
+        console.error('Battle search error:', e);
         cancelSearch();
     }
 }
@@ -49,24 +77,36 @@ function startPolling() {
 }
 
 function handleMatch(data) {
-    document.getElementById('waitingLobby').style.display = 'none';
-    document.getElementById('matchedLobby').style.display = 'block';
+    const waiting = document.getElementById('waitingLobby');
+    const matched = document.getElementById('matchedLobby');
+    const opponent = document.getElementById('opponentInfo');
+    const problem = document.getElementById('problemInfo');
 
-    if (data.opponentName) {
-        document.getElementById('opponentInfo').textContent = `Opponent: ${data.opponentName}`;
+    if (waiting) waiting.style.display = 'none';
+    if (matched) {
+        matched.classList.remove('hidden');
+        matched.style.display = 'block';
     }
-    if (data.problemName) {
-        document.getElementById('problemInfo').textContent = `Problem: ${data.problemName}`;
+
+    if (opponent && data.opponentName) {
+        opponent.textContent = data.opponentName;
+    }
+    if (problem && data.problemName) {
+        problem.textContent = data.problemName;
     }
 
     setTimeout(() => {
         window.location.href = `battle-room.html?battleId=${data.battleId}`;
-    }, 2000);
+    }, 3000);
 }
 
 function cancelSearch() {
     if (searchInterval) clearInterval(searchInterval);
     selectedDifficulty = null;
-    document.getElementById('waitingLobby').style.display = 'none';
-    document.getElementById('defaultLobby').style.display = 'block';
+
+    const waiting = document.getElementById('waitingLobby');
+    const lobby = document.getElementById('defaultLobby');
+
+    if (waiting) waiting.style.display = 'none';
+    if (lobby) lobby.style.display = 'block';
 }
