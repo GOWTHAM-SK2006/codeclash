@@ -40,7 +40,6 @@
                             <div class="score-display">${p2.score}</div>
                             <div class="podium-stats">
                                 <span class="stat-badge">⚔️ ${p2.battleWins || 0}</span>
-                                <span class="stat-badge">🪙 ${p2.totalCoins || 0}</span>
                             </div>
                         </div>
                     ` : ''}
@@ -55,7 +54,6 @@
                         <div class="score-display">${p1.score}</div>
                         <div class="podium-stats">
                             <span class="stat-badge">⚔️ ${p1.battleWins || 0}</span>
-                            <span class="stat-badge">🪙 ${p1.totalCoins || 0}</span>
                         </div>
                     </div>
                     
@@ -69,7 +67,6 @@
                             <div class="score-display">${p3.score}</div>
                             <div class="podium-stats">
                                 <span class="stat-badge">⚔️ ${p3.battleWins || 0}</span>
-                                <span class="stat-badge">🪙 ${p3.totalCoins || 0}</span>
                             </div>
                         </div>
                     ` : ''}
@@ -89,7 +86,6 @@
                             </div>
                             <div class="card-stats">
                                 <span><b>${u.battleWins || 0}</b> wins</span>
-                                <span><b>${u.totalCoins || 0}</b> coins</span>
                                 <span><b>${u.problemsSolved || 0}</b> solved</span>
                             </div>
                             <div class="card-score">${u.score}</div>
