@@ -912,7 +912,11 @@ function renderRunVerdict(result, testCase) {
     verdict.innerHTML = `
         <div class="card" style="border-color:${passed ? 'var(--success)' : 'var(--danger)'};padding:0.75rem;">
             <strong style="color:${passed ? 'var(--success)' : 'var(--danger)'};">Testcase ${selectedTestcaseIndex + 1}: ${passed ? 'Passed' : 'Failed'}</strong>
-            ${passed ? '' : `<div style="margin-top:0.5rem;color:var(--text-secondary);">Expected: <code>${escapeHtml(testCase?.expected || '<empty>')}</code><br/>Got: <code>${escapeHtml(result?.actual || result?.stdout || '<empty>')}</code></div>`}
+            <div style="margin-top:0.5rem;color:var(--text-secondary);">
+                Input: <code>${escapeHtml(testCase?.input || '<empty>')}</code><br/>
+                Expected: <code>${escapeHtml(testCase?.expected || '<empty>')}</code><br/>
+                Got: <code>${escapeHtml(result?.actual || result?.stdout || '<empty>')}</code>
+            </div>
         </div>
     `;
 }
@@ -952,6 +956,12 @@ function buildRunOutputText(run, caseNo) {
     lines.push(`Language: ${run.language || 'PYTHON'}`);
     lines.push(`Exit Code: ${run.exitCode}`);
     lines.push(`Timed Out: ${run.timedOut ? 'Yes' : 'No'}`);
+
+    if (run.input !== undefined) {
+        lines.push('');
+        lines.push('Input:');
+        lines.push(String(run.input || '<empty>').trim());
+    }
 
     if (run.actual && String(run.actual).trim()) {
         lines.push('');
