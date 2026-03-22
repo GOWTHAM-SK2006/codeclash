@@ -1,5 +1,5 @@
 const ROADMAP_SOURCE = `
-1️⃣ Prefix Sum 
+🚀 PREFIX SUM
 1480 Running Sum of 1D Array
 1732 Find Highest Altitude
 1991 Find Middle Index
@@ -31,7 +31,7 @@ const ROADMAP_SOURCE = `
 1878 Rhombus Sum Grid
 221 Maximal Square
 
-2️⃣ Kadane Algorithm 
+🚀 KADANE ALGORITHM
 53 Maximum Subarray
 152 Maximum Product Subarray
 918 Maximum Sum Circular Subarray
@@ -63,7 +63,7 @@ const ROADMAP_SOURCE = `
 53 revisit
 152 revisit
 
-3️⃣ Two Pointer 
+🚀 TWO POINTER
 26 Remove Duplicates from Sorted Array
 27 Remove Element
 283 Move Zeroes
@@ -95,7 +95,7 @@ const ROADMAP_SOURCE = `
 986 Interval List Intersections
 1574 Shortest Subarray to Remove
 
-4️⃣ Sliding Window
+🚀 SLIDING WINDOW
 3 Longest Substring Without Repeating Characters
 76 Minimum Window Substring
 209 Minimum Size Subarray Sum
@@ -127,7 +127,7 @@ const ROADMAP_SOURCE = `
 76 revisit
 239 revisit
 
-5️⃣ Binary Search 
+🚀 BINARY SEARCH
 704 Binary Search
 35 Search Insert Position
 69 Sqrt(x)
@@ -159,7 +159,7 @@ const ROADMAP_SOURCE = `
 719 Kth Smallest Pair Distance
 4 Median Two Sorted Arrays
 
-6️⃣ Hashing 
+🚀 HASHING
 217 Contains Duplicate
 242 Valid Anagram
 169 Majority Element
@@ -191,7 +191,7 @@ const ROADMAP_SOURCE = `
 2364 Bad Pairs
 2306 Naming a Company
 
-7️⃣ Stack 
+🚀 STACK
 20 Valid Parentheses
 155 Min Stack
 496 Next Greater Element I
@@ -223,7 +223,7 @@ const ROADMAP_SOURCE = `
 1598 Crawler Log Folder
 1614 Max Nesting Depth
 
-8️⃣ Greedy 
+🚀 GREEDY
 455 Assign Cookies
 1710 Maximum Units Truck
 1403 Minimum Subsequence Non Increasing
@@ -255,7 +255,7 @@ const ROADMAP_SOURCE = `
 1090 Largest Values From Labels
 1717 Maximum Score Removing Substrings
 
-9️⃣ Linked List 
+🚀 LINKED LIST
 
 206 Reverse Linked List
 21 Merge Two Sorted Lists
@@ -292,7 +292,7 @@ const ROADMAP_SOURCE = `
 817 Linked List Components
 1019 Next Greater Node in Linked List
 
-🔟 Trees (35)
+🚀 TREES
 
 94 Binary Tree Inorder Traversal
 100 Same Tree
@@ -334,8 +334,7 @@ const ROADMAP_SOURCE = `
 543 Diameter of Binary Tree
 662 Maximum Width of Binary Tree
 
-1️⃣1️⃣ Graphs (35)
-
+🚀 GRAPHS
 733 Flood Fill
 841 Keys and Rooms
 1971 Find if Path Exists in Graph
@@ -376,7 +375,7 @@ const ROADMAP_SOURCE = `
 2392 Build Matrix With Conditions
 2467 Most Profitable Path in Tree
 
-1️⃣2️⃣ Dynamic Programming (40)
+🚀 DYNAMIC PROGRAMMING
 
 509 Fibonacci Number
 746 Min Cost Climbing Stairs
