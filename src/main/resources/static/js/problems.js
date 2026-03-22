@@ -1,5 +1,5 @@
 const ROADMAP_SOURCE = `
-1️⃣ Prefix Sum (30)
+1️⃣ Prefix Sum 
 1480 Running Sum of 1D Array
 1732 Find Highest Altitude
 1991 Find Middle Index
@@ -31,7 +31,7 @@ const ROADMAP_SOURCE = `
 1878 Rhombus Sum Grid
 221 Maximal Square
 
-2️⃣ Kadane Algorithm (30)
+2️⃣ Kadane Algorithm 
 53 Maximum Subarray
 152 Maximum Product Subarray
 918 Maximum Sum Circular Subarray
@@ -63,7 +63,7 @@ const ROADMAP_SOURCE = `
 53 revisit
 152 revisit
 
-3️⃣ Two Pointer (30)
+3️⃣ Two Pointer 
 26 Remove Duplicates from Sorted Array
 27 Remove Element
 283 Move Zeroes
@@ -95,7 +95,7 @@ const ROADMAP_SOURCE = `
 986 Interval List Intersections
 1574 Shortest Subarray to Remove
 
-4️⃣ Sliding Window (30)
+4️⃣ Sliding Window
 3 Longest Substring Without Repeating Characters
 76 Minimum Window Substring
 209 Minimum Size Subarray Sum
@@ -127,7 +127,7 @@ const ROADMAP_SOURCE = `
 76 revisit
 239 revisit
 
-5️⃣ Binary Search (30)
+5️⃣ Binary Search 
 704 Binary Search
 35 Search Insert Position
 69 Sqrt(x)
@@ -159,7 +159,7 @@ const ROADMAP_SOURCE = `
 719 Kth Smallest Pair Distance
 4 Median Two Sorted Arrays
 
-6️⃣ Hashing (30)
+6️⃣ Hashing 
 217 Contains Duplicate
 242 Valid Anagram
 169 Majority Element
@@ -191,7 +191,7 @@ const ROADMAP_SOURCE = `
 2364 Bad Pairs
 2306 Naming a Company
 
-7️⃣ Stack (30)
+7️⃣ Stack 
 20 Valid Parentheses
 155 Min Stack
 496 Next Greater Element I
@@ -223,7 +223,7 @@ const ROADMAP_SOURCE = `
 1598 Crawler Log Folder
 1614 Max Nesting Depth
 
-8️⃣ Greedy (30)
+8️⃣ Greedy 
 455 Assign Cookies
 1710 Maximum Units Truck
 1403 Minimum Subsequence Non Increasing
@@ -255,8 +255,8 @@ const ROADMAP_SOURCE = `
 1090 Largest Values From Labels
 1717 Maximum Score Removing Substrings
 
-9️⃣ Linked List (30)
-🟢 Easy
+9️⃣ Linked List 
+
 206 Reverse Linked List
 21 Merge Two Sorted Lists
 141 Linked List Cycle
@@ -268,7 +268,7 @@ const ROADMAP_SOURCE = `
 876 Middle of the Linked List
 1290 Convert Binary Number in a Linked List to Integer
 
-🟡 Easy → Medium
+
 2 Add Two Numbers
 19 Remove Nth Node From End of List
 24 Swap Nodes in Pairs
@@ -280,7 +280,7 @@ const ROADMAP_SOURCE = `
 147 Insertion Sort List
 148 Sort List
 
-🟠 Medium
+
 138 Copy List with Random Pointer
 328 Odd Even Linked List
 369 Plus One Linked List
@@ -293,7 +293,7 @@ const ROADMAP_SOURCE = `
 1019 Next Greater Node in Linked List
 
 🔟 Trees (35)
-🟢 Easy
+
 94 Binary Tree Inorder Traversal
 100 Same Tree
 101 Symmetric Tree
@@ -305,7 +305,7 @@ const ROADMAP_SOURCE = `
 144 Binary Tree Preorder Traversal
 145 Binary Tree Postorder Traversal
 
-🟡 Medium
+
 102 Level Order Traversal
 103 Zigzag Level Order Traversal
 105 Construct Binary Tree from Preorder and Inorder
@@ -322,7 +322,7 @@ const ROADMAP_SOURCE = `
 285 Inorder Successor in BST
 297 Serialize and Deserialize Binary Tree
 
-🔴 Hard
+
 124 Binary Tree Maximum Path Sum
 222 Count Complete Tree Nodes
 337 House Robber III
@@ -335,14 +335,14 @@ const ROADMAP_SOURCE = `
 662 Maximum Width of Binary Tree
 
 1️⃣1️⃣ Graphs (35)
-🟢 Easy
+
 733 Flood Fill
 841 Keys and Rooms
 1971 Find if Path Exists in Graph
 1791 Find Center of Star Graph
 1557 Minimum Number of Vertices to Reach All Nodes
 
-🟡 Medium
+
 200 Number of Islands
 130 Surrounded Regions
 133 Clone Graph
@@ -359,7 +359,7 @@ const ROADMAP_SOURCE = `
 947 Most Stones Removed with Same Row or Column
 1129 Shortest Path with Alternating Colors
 
-🔴 Hard
+
 1192 Critical Connections in a Network
 1319 Make Network Connected
 1462 Course Schedule IV
@@ -377,14 +377,14 @@ const ROADMAP_SOURCE = `
 2467 Most Profitable Path in Tree
 
 1️⃣2️⃣ Dynamic Programming (40)
-🟢 Easy
+
 509 Fibonacci Number
 746 Min Cost Climbing Stairs
 1137 Tribonacci Number
 121 Best Time to Buy and Sell Stock
 198 House Robber
 
-🟡 Medium
+
 213 House Robber II
 300 Longest Increasing Subsequence
 322 Coin Change
@@ -408,7 +408,7 @@ const ROADMAP_SOURCE = `
 646 Maximum Length of Pair Chain
 673 Number of Longest Increasing Subsequence
 
-🔴 Hard
+
 72 Edit Distance
 97 Interleaving String
 115 Distinct Subsequences
