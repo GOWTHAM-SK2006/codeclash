@@ -330,17 +330,22 @@ async function renderLeaderboard() {
             <button class="btn btn-secondary btn-sm" id="lbReset">Reset Leaderboard</button>
         </div>
         ${makeTable(
-        ['Rank', 'Name', 'Coins', 'Solved', 'Adjust'],
-        rows.map(row => `<tr>
+        ['Rank', 'Name', 'Coins', 'Attended', 'Wins', 'Score', 'Adjust'],
+        rows.map(row => {
+            const score = (row.coins || 0) * 2 + (row.battleWins || 0) * 2 + (row.battlesAttended || 0);
+            return `<tr>
                 <td>${row.rank}</td>
                 <td>${row.name}</td>
                 <td>${row.coins}</td>
-                <td>${row.problemsSolved}</td>
+                <td>${row.battlesAttended || 0}</td>
+                <td>${row.battleWins || 0}</td>
+                <td style="font-weight:800; color:var(--accent);">${score}</td>
                 <td>
                     <button class="btn btn-secondary btn-sm" data-plus="${row.id}">+25</button>
                     <button class="btn btn-secondary btn-sm" data-minus="${row.id}">-25</button>
                 </td>
-            </tr>`)
+            </tr>`;
+        })
     )}
     `;
 

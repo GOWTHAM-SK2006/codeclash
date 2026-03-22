@@ -418,6 +418,8 @@ public class AdminPanelService {
                     "id", u.getId(),
                     "name", safeName(u),
                     "coins", u.getCoins() == null ? 0 : u.getCoins(),
+                    "battleWins", battleRepository.countByWinnerId(u.getId()),
+                    "battlesAttended", battleParticipantRepository.countByUserId(u.getId()),
                     "problemsSolved", u.getProblemsSolved() == null ? 0 : u.getProblemsSolved()));
         }
         return rows;
