@@ -407,6 +407,7 @@ async function runBattleCode() {
 
         const startedAt = performance.now();
         testcaseRunResults = [];
+        let firstFailure = null;
 
         for (let index = 0; index < testcases.length; index++) {
             const testCase = testcases[index];
@@ -422,7 +423,7 @@ async function runBattleCode() {
                         ? 'PASSED'
                         : 'FAILED';
 
-            testcaseRunResults.push({
+            const runResult = {
                 index,
                 input: testCase.input,
                 expected: testCase.expected,
@@ -432,22 +433,37 @@ async function runBattleCode() {
                 timedOut: !!result?.timedOut,
                 language: result?.language || language.toUpperCase(),
                 status: runStatus
-            });
+            };
+
+            testcaseRunResults.push(runResult);
+
+            if (runStatus !== 'PASSED') {
+                firstFailure = runResult;
+                break; // Stop at the first failure as requested
+            }
         }
 
-        const passedCount = testcaseRunResults.filter(c => c.status === 'PASSED').length;
-        const allPassed = testcaseRunResults.length > 0 && passedCount === testcaseRunResults.length;
         const runtimeMs = Math.max(0, Math.round(performance.now() - startedAt));
+        const allPassed = !firstFailure && testcaseRunResults.length === testcases.length;
 
-        renderRunSummary(allPassed, runtimeMs);
+        renderRunSummary(allPassed, runtimeMs, false, firstFailure ? firstFailure.index + 1 : null);
         renderTestcaseTabs();
         renderSelectedTestcase();
 
-        const selectedRun = testcaseRunResults[selectedTestcaseIndex] || testcaseRunResults[0];
-        if (selectedRun) {
-            outputText.textContent = buildRunOutputText(selectedRun, selectedTestcaseIndex + 1);
+        if (firstFailure) {
+            // Select the failing test case
+            selectedTestcaseIndex = firstFailure.index;
+            outputText.textContent = buildRunOutputText(firstFailure, firstFailure.index + 1);
             outputCard.style.display = 'block';
-            renderRunVerdict(selectedRun, selectedRun);
+            renderRunVerdict(firstFailure, firstFailure);
+            renderTestcaseTabs(); // Re-render to show selection
+        } else if (allPassed) {
+            outputText.textContent = `All ${testcases.length} test cases passed!`;
+            outputCard.style.display = 'block';
+            // Optionally clear verdict or show success
+            if (testcaseRunResults.length > 0) {
+                renderRunVerdict(testcaseRunResults[0], testcaseRunResults[0]);
+            }
         }
     } catch (e) {
         outputText.textContent = `Run failed: ${e.message}`;
@@ -765,10 +781,10 @@ function parseBattleTestcases(problem) {
         const parsed = JSON.parse(testCaseText);
         if (Array.isArray(parsed) && parsed.length) {
             const normalized = parsed
-                .filter(item => item.sample === true || item.sample === undefined)
                 .map(item => ({
                     input: String(item?.input ?? ''),
-                    expected: String(item?.expected ?? '')
+                    expected: String(item?.expected ?? ''),
+                    sample: item.sample === true
                 }))
                 .filter(item => item.expected.length > 0 || item.input.length > 0);
             if (normalized.length) return normalized;
@@ -812,7 +828,28 @@ function renderTestcaseTabs() {
         return;
     }
 
-    tabs.innerHTML = battleTestcases.map((_, idx) => {
+    // Only show the failing testcase if it's hidden
+    // Otherwise show only sample testcases that were run
+    let showCases = battleTestcases.map((tc, idx) => ({ ...tc, index: idx }));
+
+    // Find if we have a failure
+    const firstFailure = testcaseRunResults.find(r => r.status !== 'PASSED');
+
+    if (firstFailure) {
+        // Find the index of the first failure
+        const failedIdx = firstFailure.index;
+        // User wants "only that test case"
+        showCases = showCases.filter(c => c.index === failedIdx);
+    } else if (testcaseRunResults.length === battleTestcases.length && testcaseRunResults.every(r => r.status === 'PASSED')) {
+        // All passed, maybe show first sample
+        showCases = showCases.filter(c => c.sample !== false).slice(0, 1);
+    } else {
+        // Still running or not started, show samples (or anything that isn't explicitly hidden)
+        showCases = showCases.filter(c => c.sample !== false);
+    }
+
+    tabs.innerHTML = showCases.map((tc) => {
+        const idx = tc.index;
         const active = idx === selectedTestcaseIndex;
         const status = testcaseRunResults[idx]?.status;
         const statusColor = status === 'PASSED' ? 'var(--success)' : (status ? 'var(--danger)' : 'var(--text-secondary)');
@@ -880,23 +917,32 @@ function renderRunVerdict(result, testCase) {
     `;
 }
 
-function renderRunSummary(allPassed, runtimeMs, forceFailed = false) {
+function renderRunSummary(allPassed, runtimeMs, forceFailed = false, failureNo = null) {
     const statusTitle = document.getElementById('judgeStatusTitle');
     const runtime = document.getElementById('judgeRuntime');
     const badges = document.getElementById('judgeCaseBadges');
 
     if (statusTitle) {
-        statusTitle.textContent = (!forceFailed && allPassed) ? 'Accepted' : 'Failed';
-        statusTitle.style.color = (!forceFailed && allPassed) ? 'var(--success)' : 'var(--danger)';
+        if (!forceFailed && allPassed) {
+            statusTitle.textContent = 'Accepted';
+            statusTitle.style.color = 'var(--success)';
+        } else {
+            statusTitle.textContent = failureNo ? `Failed (Test Case #${failureNo})` : 'Failed';
+            statusTitle.style.color = 'var(--danger)';
+        }
     }
     if (runtime) {
         runtime.textContent = `Runtime: ${runtimeMs} ms`;
     }
     if (badges) {
-        badges.innerHTML = testcaseRunResults.map((c, i) => {
-            const passed = c.status === 'PASSED';
-            return `<span class="badge" style="background:${passed ? 'rgba(0,200,83,0.12)' : 'rgba(255,61,0,0.12)'};color:${passed ? 'var(--success)' : 'var(--danger)'};">${passed ? '✅' : '❌'} Case ${i + 1}</span>`;
-        }).join('');
+        // Clear badges or show only the failing one
+        if (failureNo) {
+            badges.innerHTML = `<span class="badge" style="background:rgba(255,61,0,0.12);color:var(--danger);">❌ Case ${failureNo}</span>`;
+        } else if (allPassed) {
+            badges.innerHTML = `<span class="badge" style="background:rgba(0,200,83,0.12);color:var(--success);">✅ All Passed</span>`;
+        } else {
+            badges.innerHTML = '';
+        }
     }
 }
 
