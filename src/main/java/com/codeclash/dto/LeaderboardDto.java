@@ -13,4 +13,8 @@ public class LeaderboardDto {
     private String displayName;
     private Integer totalCoins;
     private Integer problemsSolved;
+    @Builder.Default
+    private Long battleWins = 0L;
+    @Builder.Default
+    private Long battlesAttended = 0L;
 }

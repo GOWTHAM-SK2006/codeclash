@@ -11,6 +11,15 @@
             return;
         }
 
+        // Calculate score and sort
+        const rankedData = leaderboard.map(u => ({
+            ...u,
+            score: (u.totalCoins || 0) * 2 + (u.battleWins || 0) * 2 + (u.battlesAttended || 0)
+        })).sort((a, b) => b.score - a.score);
+
+        // Assign ranks
+        rankedData.forEach((u, i) => u.rank = i + 1);
+
         el.innerHTML = `
             <div class="table-container">
                 <table>
@@ -19,11 +28,11 @@
                             <th style="width:70px">Rank</th>
                             <th>User</th>
                             <th style="text-align:right">Problems</th>
-                            <th style="text-align:right">Coins</th>
+                            <th style="text-align:right">Score</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${leaderboard.map(u => `
+                        ${rankedData.map(u => `
                             <tr>
                                 <td style="font-weight:700; color:${u.rank <= 3 ? 'var(--accent)' : 'inherit'};">
                                     ${u.rank === 1 ? '🥇' : u.rank === 2 ? '🥈' : u.rank === 3 ? '🥉' : `#${u.rank}`}
@@ -33,7 +42,7 @@
                                     <div style="font-size:0.75rem; color:var(--text-secondary);">@${u.username}</div>
                                 </td>
                                 <td style="text-align:right; font-family:'JetBrains Mono', monospace;">${u.problemsSolved}</td>
-                                <td style="text-align:right; font-weight:800; color:var(--accent);">🪙 ${u.totalCoins}</td>
+                                <td style="text-align:right; font-weight:800; color:var(--accent);">${u.score}</td>
                             </tr>
                         `).join('')}
                     </tbody>
