@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // LeetCode Elements
     const leetcodeConnectView = document.getElementById('leetcodeConnectView');
     const leetcodeSyncView = document.getElementById('leetcodeSyncView');
+    const lcStatsView = document.getElementById('lcStatsView');
     const leetcodeUsernameInput = document.getElementById('leetcodeUsernameInput');
     const connectLeetcodeBtn = document.getElementById('connectLeetcodeBtn');
     const syncLeetcodeBtn = document.getElementById('syncLeetcodeBtn');
@@ -25,7 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const easyCountEl = document.getElementById('easySolvedCount');
     const mediumCountEl = document.getElementById('mediumSolvedCount');
     const hardCountEl = document.getElementById('hardSolvedCount');
-    const viewAllHistoryContainer = document.getElementById('viewAllHistoryContainer');
+    const profileAvatar = document.getElementById('profileAvatar');
     const viewAllHistoryBtn = document.getElementById('viewAllHistoryBtn');
     const historyModal = document.getElementById('historyModal');
     const historyModalContent = document.getElementById('historyModalContent');
@@ -34,36 +35,45 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let allTransactions = [];
 
+    function updateAvatar(username) {
+        if (!profileAvatar || !username) return;
+        const initials = username.substring(0, 2).toUpperCase();
+        profileAvatar.textContent = initials;
+
+        // Dynamic gradient based on username string
+        const colors = [
+            ['#3A245E', '#1B1031'],
+            ['#1E3A8A', '#1E1B4B'],
+            ['#064E3B', '#022C22'],
+            ['#7C2D12', '#431407']
+        ];
+        const index = username.length % colors.length;
+        profileAvatar.style.background = `linear-gradient(135deg, ${colors[index][0]}, ${colors[index][1]})`;
+    }
+
     function renderTransactionCard(item) {
         const isPositive = item.amount >= 0;
         const date = new Date(item.createdAt);
         const day = date.getDate();
         const month = date.toLocaleString('default', { month: 'short' });
-        const year = date.getFullYear();
 
         return `
-            <div class="transaction-card ${isPositive ? 'transaction-positive' : 'transaction-negative'} p-4 rounded-xl border border-[#2A2A2A] flex items-center justify-between group shadow-lg">
+            <div class="transaction-card p-4 flex items-center justify-between group shadow-sm">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border ${isPositive ? 'border-[#00C853]/20' : 'border-[#FF3D00]/20'} shadow-inner">
-                        <span class="text-xl font-bold">${isPositive ? '↑' : '↓'}</span>
+                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border border-white/5 shadow-inner">
+                        <span class="text-lg font-black">${isPositive ? '＋' : '－'}</span>
                     </div>
                     <div>
-                        <h4 class="font-bold text-white group-hover:text-[#FF6B00] transition-colors">${item.reason}</h4>
-                        <div class="flex items-center gap-2 mt-0.5">
-                            <span class="text-[10px] font-bold tracking-widest uppercase py-0.5 px-2 rounded bg-[#242424] text-gray-400">
-                                ${isPositive ? 'Credit' : 'Debit'}
-                            </span>
-                            <span class="text-[10px] font-medium text-gray-500 uppercase tracking-widest">
-                                ${month} ${day}, ${year}
-                            </span>
-                        </div>
+                        <h4 class="text-sm font-black text-white group-hover:text-[#FF6B00] transition-colors line-clamp-1">${item.reason}</h4>
+                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">
+                            ${month} ${day} • ${isPositive ? 'Credit' : 'Debit'}
+                        </p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="amount-badge text-xl font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'} drop-shadow-sm">
+                    <div class="text-sm font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'}">
                         ${isPositive ? '+' : ''}${item.amount}
                     </div>
-                    <div class="text-[9px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">CodeCoins</div>
                 </div>
             </div>
         `;
@@ -76,6 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (usernameEl) usernameEl.textContent = user.username;
             if (emailEl) emailEl.textContent = user.email;
             if (coinsEl) coinsEl.textContent = user.coins;
+            updateAvatar(user.username);
 
             // Fetch coin history
             allTransactions = await api.getCoinHistory();
@@ -83,20 +94,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (historyContainer) {
                 if (!allTransactions || allTransactions.length === 0) {
                     historyContainer.innerHTML = `
-                        <div class="p-12 text-center text-gray-500 italic bg-[#1A1A1A] rounded-xl border border-[#2A2A2A]">
+                        <div class="p-12 text-center text-gray-500 italic bg-white/5 rounded-3xl border border-white/5">
                             No coin history found.
                         </div>
                     `;
-                    if (viewAllHistoryContainer) viewAllHistoryContainer.classList.add('hidden');
+                    if (viewAllHistoryBtn) viewAllHistoryBtn.classList.add('hidden');
                 } else {
-                    // Render ONLY TOP 3
                     const top3 = allTransactions.slice(0, 3);
                     historyContainer.innerHTML = top3.map(renderTransactionCard).join('');
-
-                    if (allTransactions.length > 3) {
-                        if (viewAllHistoryContainer) viewAllHistoryContainer.classList.remove('hidden');
-                    } else {
-                        if (viewAllHistoryContainer) viewAllHistoryContainer.classList.add('hidden');
+                    if (allTransactions.length > 3 && viewAllHistoryBtn) {
+                        viewAllHistoryBtn.classList.remove('hidden');
                     }
                 }
             }
@@ -107,7 +114,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (lcProfile) {
                     leetcodeConnectView.classList.add('hidden');
                     leetcodeSyncView.classList.remove('hidden');
+                    lcStatsView.classList.remove('hidden');
                     displayLeetcodeUsername.textContent = lcProfile.leetcodeUsername;
+                    displayLeetcodeUsername.classList.remove('opacity-0');
                     lastSyncedText.textContent = lcProfile.lastSyncedAt ?
                         `Last Synced: ${new Date(lcProfile.lastSyncedAt).toLocaleString()}` :
                         'Never synced';
@@ -117,20 +126,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     leetcodeConnectView.classList.remove('hidden');
                     leetcodeSyncView.classList.add('hidden');
+                    lcStatsView.classList.add('hidden');
                 }
             } catch (e) {
-                // If 404, just show connect view
                 leetcodeConnectView.classList.remove('hidden');
                 leetcodeSyncView.classList.add('hidden');
+                lcStatsView.classList.add('hidden');
             }
 
         } catch (error) {
             console.error('Error loading profile:', error);
             if (historyContainer) {
                 historyContainer.innerHTML = `
-                    <div class="p-8 text-center text-red-500 bg-red-500/10 border border-red-500/20 rounded-xl">
-                        <p class="font-bold">Failed to load transaction history</p>
-                        <p class="text-xs mt-1 opacity-70">${error.message || 'Unknown error'}</p>
+                    <div class="p-8 text-center text-red-500 bg-red-500/10 border border-red-500/20 rounded-3xl">
+                        <p class="font-bold">Failed to load profile data</p>
                     </div>
                 `;
             }
@@ -143,17 +152,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (show) {
             historyModal.classList.remove('hidden');
             setTimeout(() => {
-                if (historyModalContent) historyModalContent.classList.remove('scale-95');
-                if (historyModalContent) historyModalContent.classList.add('scale-100');
+                if (historyModalContent) {
+                    historyModalContent.classList.remove('scale-95');
+                    historyModalContent.classList.add('scale-100');
+                }
             }, 10);
-
-            // Populate modal
             if (modalHistoryContainer) {
                 modalHistoryContainer.innerHTML = allTransactions.map(renderTransactionCard).join('');
             }
         } else {
-            if (historyModalContent) historyModalContent.classList.remove('scale-100');
-            if (historyModalContent) historyModalContent.classList.add('scale-95');
+            if (historyModalContent) {
+                historyModalContent.classList.remove('scale-100');
+                historyModalContent.classList.add('scale-95');
+            }
             setTimeout(() => {
                 historyModal.classList.add('hidden');
             }, 300);
@@ -168,7 +179,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         closeHistoryModal.addEventListener('click', () => toggleModal(false));
     }
 
-    // Close on outside click
     if (historyModal) {
         historyModal.addEventListener('click', (e) => {
             if (e.target === historyModal) toggleModal(false);
@@ -194,7 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 alert(error.message || 'Failed to connect LeetCode profile');
             } finally {
                 connectLeetcodeBtn.disabled = false;
-                connectLeetcodeBtn.textContent = 'Connect Profile';
+                connectLeetcodeBtn.textContent = 'Connect';
             }
         });
     }
@@ -207,8 +217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (syncIcon) syncIcon.classList.add('animate-spin');
 
             try {
-                const result = await api.syncLeetcode();
-                alert('Sync complete! Check your updated coins and history.');
+                await api.syncLeetcode();
                 await loadProfileData();
             } catch (error) {
                 alert(error.message || 'Failed to sync LeetCode profile');
