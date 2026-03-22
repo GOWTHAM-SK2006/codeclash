@@ -86,7 +86,6 @@
                             </div>
                             <div class="card-stats">
                                 <span><b>${u.battleWins || 0}</b> wins</span>
-                                <span><b>${u.problemsSolved || 0}</b> solved</span>
                             </div>
                             <div class="card-score">${u.score}</div>
                         </div>
