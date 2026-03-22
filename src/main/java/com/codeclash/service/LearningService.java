@@ -6,8 +6,10 @@ import com.codeclash.entity.Topic;
 import com.codeclash.repository.LanguageRepository;
 import com.codeclash.repository.LessonRepository;
 import com.codeclash.repository.TopicRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -36,8 +38,25 @@ public class LearningService {
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
     }
 
+    @Transactional
     public void clearAllLearningContent() {
         lessonRepository.deleteAll();
         topicRepository.deleteAll();
+    }
+
+    /**
+     * Temporary startup cleanup to remove existing duplicates.
+     * This will run once when the application starts.
+     * After one successful restart, this can be removed.
+     */
+    @PostConstruct
+    public void startupCleanup() {
+        try {
+            System.out.println("Starting one-time learning content cleanup...");
+            clearAllLearningContent();
+            System.out.println("Learning content cleared successfully.");
+        } catch (Exception e) {
+            System.err.println("Failed to clear learning content: " + e.getMessage());
+        }
     }
 }
