@@ -58,20 +58,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const month = date.toLocaleString('default', { month: 'short' });
 
         return `
-            <div class="transaction-card p-4 flex items-center justify-between group shadow-sm">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-2xl flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border border-white/5 shadow-inner">
-                        <span class="text-lg font-black">${isPositive ? '＋' : '－'}</span>
+            <div class="transaction-card p-3 flex items-center justify-between group shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-xl flex items-center justify-center ${isPositive ? 'bg-[#00C853]/10 text-[#00C853]' : 'bg-[#FF3D00]/10 text-[#FF3D00]'} border border-white/5 shadow-inner">
+                        <span class="text-xs font-black">${isPositive ? '＋' : '－'}</span>
                     </div>
                     <div>
-                        <h4 class="text-sm font-black text-white group-hover:text-[#FF6B00] transition-colors line-clamp-1">${item.reason}</h4>
-                        <p class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">
+                        <h4 class="text-[11px] font-black text-white group-hover:text-[#FF6B00] transition-colors line-clamp-1">${item.reason}</h4>
+                        <p class="text-[8px] font-bold text-gray-600 uppercase tracking-widest mt-0.5">
                             ${month} ${day} • ${isPositive ? 'Credit' : 'Debit'}
                         </p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-sm font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'}">
+                    <div class="text-xs font-black ${isPositive ? 'text-[#00C853]' : 'text-[#FF3D00]'}">
                         ${isPositive ? '+' : ''}${item.amount}
                     </div>
                 </div>

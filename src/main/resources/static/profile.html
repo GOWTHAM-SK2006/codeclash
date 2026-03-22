@@ -105,129 +105,132 @@
 
             <!-- Hero Section -->
             <section
-                class="profile-hero p-8 rounded-3xl relative overflow-hidden flex flex-col md:flex-row items-center gap-8 shadow-2xl">
-                <div class="absolute inset-0 bg-gradient-to-br from-[#FF6B00]/10 to-transparent pointer-events-none">
+                class="profile-hero p-6 rounded-2xl relative overflow-hidden flex flex-col md:flex-row items-center gap-6 shadow-xl">
+                <div class="absolute inset-0 bg-gradient-to-br from-[#FF6B00]/5 to-transparent pointer-events-none">
                 </div>
-                <div class="relative z-10 w-32 h-32 rounded-full bg-gradient-to-br from-[#3A245E] to-[#1B1031] border-2 border-[#FF6B00]/40 flex items-center justify-center text-4xl font-black text-[#FFD8B8] shadow-lg shadow-[#FF6B00]/20"
+                <div class="relative z-10 w-24 h-24 rounded-full bg-gradient-to-br from-[#3A245E] to-[#1B1031] border-2 border-[#FF6B00]/30 flex items-center justify-center text-3xl font-black text-[#FFD8B8] shadow-md shadow-[#FF6B00]/10"
                     id="profileAvatar">
                     --
                 </div>
-                <div class="relative z-10 flex-1 text-center md:text-left space-y-2">
-                    <h1 id="profileUsername" class="text-4xl font-black tracking-tight text-white">...</h1>
-                    <p id="profileEmail" class="text-lg font-medium text-gray-400 opacity-80">...</p>
-                    <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-4">
+                <div class="relative z-10 flex-1 text-center md:text-left space-y-1">
+                    <h1 id="profileUsername" class="text-3xl font-black tracking-tight text-white">...</h1>
+                    <p id="profileEmail" class="text-base font-medium text-gray-400 opacity-70">...</p>
+                    <div class="flex flex-wrap justify-center md:justify-start gap-4 mt-3">
                         <div
-                            class="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold text-[#FF6B00] uppercase tracking-widest">
+                            class="px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-bold text-[#FF6B00] uppercase tracking-widest">
                             Pro Member
                         </div>
                     </div>
                 </div>
             </section>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <!-- Left Column: Coins & LeetCode -->
-                <div class="lg:col-span-2 space-y-8">
+                <div class="lg:col-span-8 space-y-6">
                     <!-- Coin Summary Card -->
-                    <div class="profile-card p-8 flex items-center justify-between group h-48">
-                        <div class="space-y-2">
-                            <p class="text-xs font-black text-gray-500 uppercase tracking-[0.2em]">Total Balance</p>
-                            <div class="flex items-baseline gap-3">
-                                <h3 id="totalCoinsDisplay" class="text-6xl font-black text-white tracking-tighter">0
+                    <div class="profile-card p-6 flex items-center justify-between group h-40">
+                        <div class="space-y-1">
+                            <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest opacity-60">Total
+                                Balance</p>
+                            <div class="flex items-baseline gap-2">
+                                <h3 id="totalCoinsDisplay" class="text-5xl font-black text-white tracking-tighter">0
                                 </h3>
-                                <span class="text-[#FF6B00] font-bold text-xl uppercase italic">Coins</span>
+                                <span
+                                    class="text-[#FF6B00] font-bold text-base uppercase italic tracking-wider">Coins</span>
                             </div>
                         </div>
                         <div class="coin-icon-container relative">
                             <div
-                                class="absolute inset-0 bg-[#FF6B00]/20 rounded-full blur-2xl group-hover:bg-[#FF6B00]/30 transition-all duration-500">
+                                class="absolute inset-0 bg-[#FF6B00]/15 rounded-full blur-2xl group-hover:bg-[#FF6B00]/25 transition-all duration-500">
                             </div>
-                            <span class="text-7xl relative z-10 animate-float">🪙</span>
+                            <span class="text-6xl relative z-10 animate-float">🪙</span>
                         </div>
                     </div>
 
                     <!-- LeetCode Card -->
-                    <div class="profile-card p-8 space-y-8">
-                        <div class="flex items-center justify-between border-b border-white/5 pb-6">
+                    <div class="profile-card p-6 space-y-6">
+                        <div class="flex items-center justify-between border-b border-white/5 pb-4">
                             <div class="flex items-center gap-4">
-                                <div class="bg-white/5 p-3 rounded-2xl border border-white/10 shadow-inner">
+                                <div class="bg-white/5 p-2 rounded-xl border border-white/10 shadow-inner">
                                     <img src="https://assets.leetcode.com/static_assets/public/icons/favicon-192x192.png"
                                         alt="LeetCode"
-                                        class="w-10 h-10 grayscale opacity-80 group-hover:grayscale-0 transition-all">
+                                        class="w-8 h-8 grayscale opacity-70 group-hover:grayscale-0 transition-all">
                                 </div>
                                 <div>
-                                    <h3 class="text-xl font-black text-white">LeetCode Stats</h3>
+                                    <h3 class="text-lg font-black text-white">LeetCode Stats</h3>
                                     <p id="displayLeetcodeUsername"
-                                        class="text-xs font-bold text-[#FF6B00] uppercase tracking-widest mt-1 opacity-0 transition-opacity">
+                                        class="text-[10px] font-bold text-[#FF6B00] uppercase tracking-widest mt-0.5 opacity-0 transition-opacity">
                                         ...</p>
                                 </div>
                             </div>
                             <div id="leetcodeSyncView" class="hidden">
                                 <button id="syncLeetcodeBtn"
-                                    class="primary-btn px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 group border border-white/5">
-                                    <span id="syncIcon" class="text-lg">🔄</span>
-                                    <span>Sync</span>
+                                    class="primary-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 group border border-white/5">
+                                    <span id="syncIcon" class="text-base">🔄</span>
+                                    <span>Sync Now</span>
                                 </button>
                             </div>
                         </div>
 
-                        <div id="leetcodeConnectView" class="hidden py-4 text-center space-y-6">
-                            <p class="text-gray-400 text-sm max-w-md mx-auto leading-relaxed">Boost your rank! Connect
-                                your LeetCode and earn coins for every challenge conquered.</p>
-                            <div class="flex flex-col md:flex-row gap-3 max-w-md mx-auto">
+                        <div id="leetcodeConnectView" class="hidden py-4 text-center space-y-4">
+                            <p class="text-gray-400 text-xs max-w-sm mx-auto leading-relaxed">Connect your LeetCode
+                                profile to automatically sync your problem-solving progress and earn rewards.</p>
+                            <div class="flex flex-col md:flex-row gap-2 max-w-sm mx-auto">
                                 <input type="text" id="leetcodeUsernameInput" placeholder="LeetCode Username"
-                                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#FF6B00] transition-all">
+                                    class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#FF6B00] transition-all">
                                 <button id="connectLeetcodeBtn"
-                                    class="bg-[#FF6B00] hover:bg-[#FF8C32] text-black font-black py-3 px-8 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#FF6B00]/20 text-xs uppercase tracking-widest">
+                                    class="bg-[#FF6B00] hover:bg-[#FF8C32] text-black font-black py-2.5 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-[#FF6B00]/10 text-[10px] uppercase tracking-widest">
                                     Connect
                                 </button>
                             </div>
                         </div>
 
                         <div id="lcStatsView" class="hidden">
-                            <div class="grid grid-cols-3 gap-6">
-                                <div class="stat-bubble p-4 rounded-3xl text-center space-y-1 group">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div class="stat-bubble p-4 rounded-2xl text-center space-y-0.5 group">
                                     <p
-                                        class="text-[10px] font-black text-[#00C853] uppercase tracking-widest opacity-60">
+                                        class="text-[9px] font-black text-[#00C853] uppercase tracking-widest opacity-60">
                                         Easy</p>
                                     <p id="easySolvedCount"
-                                        class="text-3xl font-black group-hover:scale-110 transition-transform">0</p>
+                                        class="text-2xl font-black group-hover:scale-105 transition-transform">0</p>
                                 </div>
-                                <div class="stat-bubble p-4 rounded-3xl text-center space-y-1 group">
+                                <div class="stat-bubble p-4 rounded-2xl text-center space-y-0.5 group">
                                     <p
-                                        class="text-[10px] font-black text-[#FFD600] uppercase tracking-widest opacity-60">
+                                        class="text-[9px] font-black text-[#FFD600] uppercase tracking-widest opacity-60">
                                         Medium</p>
                                     <p id="mediumSolvedCount"
-                                        class="text-3xl font-black group-hover:scale-110 transition-transform">0</p>
+                                        class="text-2xl font-black group-hover:scale-105 transition-transform">0</p>
                                 </div>
-                                <div class="stat-bubble p-4 rounded-3xl text-center space-y-1 group">
+                                <div class="stat-bubble p-4 rounded-2xl text-center space-y-0.5 group">
                                     <p
-                                        class="text-[10px] font-black text-[#FF3D00] uppercase tracking-widest opacity-60">
+                                        class="text-[9px] font-black text-[#FF3D00] uppercase tracking-widest opacity-60">
                                         Hard</p>
                                     <p id="hardSolvedCount"
-                                        class="text-3xl font-black group-hover:scale-110 transition-transform">0</p>
+                                        class="text-2xl font-black group-hover:scale-105 transition-transform">0</p>
                                 </div>
                             </div>
                             <p id="lastSyncedText"
-                                class="text-[10px] text-gray-600 font-bold uppercase tracking-widest text-center mt-6">
+                                class="text-[9px] text-gray-600 font-bold uppercase tracking-widest text-center mt-6">
                                 Never synced</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Right Column: History -->
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-black text-gray-500 uppercase tracking-[0.2em]">Recent History</h3>
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-[10px] font-black text-gray-500 uppercase tracking-widest opacity-60">Recent
+                            History</h3>
                         <button id="viewAllHistoryBtn"
-                            class="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest hover:underline hidden">View
+                            class="text-[9px] font-black text-[#FF6B00] uppercase tracking-widest hover:underline hidden">See
                             All</button>
                     </div>
-                    <div class="space-y-3" id="coinHistoryContainer">
-                        <div class="px-6 py-12 text-center text-gray-600">
+                    <div class="space-y-2" id="coinHistoryContainer">
+                        <div class="px-6 py-12 text-center text-gray-700">
                             <div
-                                class="w-6 h-6 border-2 border-white/5 border-t-[#FF6B00] rounded-full animate-spin mx-auto mb-3">
+                                class="w-5 h-5 border-2 border-white/5 border-t-[#FF6B00] rounded-full animate-spin mx-auto mb-2">
                             </div>
-                            <span class="text-[10px] font-bold uppercase tracking-widest">Loading...</span>
+                            <span class="text-[9px] font-bold uppercase tracking-widest">Loading Records...</span>
                         </div>
                     </div>
                 </div>
@@ -255,19 +258,21 @@
 
     <style>
         :root {
-            --bg-primary: #09090B;
+            --bg-primary: #0A0A0C;
             --accent: #FF6B00;
         }
 
         body {
-            background: linear-gradient(135deg, #09090B 0%, #121217 100%);
+            background: radial-gradient(circle at top right, #121217, #0A0A0C);
             background-attachment: fixed;
+            overflow-x: hidden;
+            font-size: 14px;
         }
 
         @keyframes fadeInUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(12px);
             }
 
             to {
@@ -284,86 +289,83 @@
             }
 
             50% {
-                transform: translateY(-10px);
+                transform: translateY(-8px);
             }
         }
 
         .animate-float {
-            animation: float 4s ease-in-out infinite;
+            animation: float 5s ease-in-out infinite;
         }
 
         .profile-hero {
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(20px);
-            animation: fadeInUp 0.5s ease both;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .profile-card {
             background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 2rem;
-            backdrop-filter: blur(12px);
-            animation: fadeInUp 0.5s ease both 0.1s;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 1.5rem;
+            backdrop-filter: blur(16px);
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both 0.1s;
             transition: all 0.3s ease;
         }
 
         .profile-card:hover {
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 107, 0, 0.2);
-            transform: translateY(-2px);
+            border-color: rgba(255, 107, 0, 0.15);
+            background: rgba(255, 255, 255, 0.03);
         }
 
         .stat-bubble {
-            background: rgba(255, 255, 255, 0.01);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.03);
         }
 
         .transaction-card {
-            background: rgba(255, 255, 255, 0.01);
+            background: rgba(255, 255, 255, 0.015);
             border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 1.25rem;
-            transition: all 0.2s ease;
-            animation: fadeInUp 0.4s ease both;
+            border-radius: 1rem;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .transaction-card:hover {
             background: rgba(255, 255, 255, 0.03);
-            border-color: rgba(255, 255, 255, 0.1);
-            transform: translateX(4px);
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: scale(1.01);
         }
 
         .glass-card {
-            background: rgba(9, 9, 11, 0.9);
-            backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 2.5rem;
+            background: rgba(10, 10, 12, 0.95);
+            backdrop-filter: blur(32px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 2rem;
         }
 
         .primary-btn {
-            background: var(--bg-primary);
+            background: #141419;
             color: white;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s ease;
         }
 
         .primary-btn:hover {
             border-color: var(--accent);
-            box-shadow: 0 0 20px rgba(255, 107, 0, 0.15);
-            transform: translateY(-1px);
+            background: #1A1A21;
         }
 
-        /* Staggered animations for history cards */
+        /* Staggered history animations */
         #coinHistoryContainer .transaction-card:nth-child(1) {
-            animation-delay: 0.3s;
+            animation-delay: 0.2s;
         }
 
         #coinHistoryContainer .transaction-card:nth-child(2) {
-            animation-delay: 0.35s;
+            animation-delay: 0.25s;
         }
 
         #coinHistoryContainer .transaction-card:nth-child(3) {
-            animation-delay: 0.4s;
+            animation-delay: 0.3s;
         }
     </style>
 
