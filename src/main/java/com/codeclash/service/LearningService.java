@@ -35,4 +35,9 @@ public class LearningService {
         return lessonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Lesson not found"));
     }
+
+    public void clearAllLearningContent() {
+        lessonRepository.deleteAll();
+        topicRepository.deleteAll();
+    }
 }

@@ -194,4 +194,10 @@ public class AdminController {
         adminPanelService.verifyAdminSession(token);
         return adminPanelService.updateSettings(payload);
     }
+
+    @PostMapping("/learning/clear")
+    public Map<String, Object> clearLearningContent(@RequestHeader("X-Admin-Session") String token) {
+        adminPanelService.verifyAdminSession(token);
+        return adminPanelService.clearLearningContent();
+    }
 }

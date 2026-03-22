@@ -11,6 +11,7 @@ import com.codeclash.repository.ProblemRepository;
 import com.codeclash.repository.SubmissionRepository;
 import com.codeclash.repository.UserRepository;
 import com.codeclash.security.JwtUtil;
+import com.codeclash.service.LearningService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ public class AdminPanelService {
     private final BattleParticipantRepository battleParticipantRepository;
     private final Environment environment;
     private final JwtUtil jwtUtil;
+    private final LearningService learningService;
 
     @Value("${app.admin.username:admin}")
     private String adminUsername;
@@ -456,6 +458,11 @@ public class AdminPanelService {
             }
         });
         return getSettings();
+    }
+
+    public Map<String, Object> clearLearningContent() {
+        learningService.clearAllLearningContent();
+        return Map.of("ok", true, "message", "All topics and lessons cleared");
     }
 
     private boolean isProductionRequest(HttpServletRequest request) {
