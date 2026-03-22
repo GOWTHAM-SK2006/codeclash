@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for timeline and gamification */
+.timeline {
+  @apply flex flex-row items-center justify-center w-full py-8 overflow-x-auto;
+}
+.timeline-level {
+  @apply flex flex-col items-center mx-4;
+}
+.level-card {
+  @apply rounded-xl shadow-lg bg-gradient-to-br from-primary-200 to-primary-500 p-6 w-64 transition-transform duration-300 hover:scale-105 hover:shadow-glow relative;
+}
+.level-card.locked {
+  @apply bg-gray-200 cursor-not-allowed opacity-60;
+}
+.level-card.unlocked {
+  @apply cursor-pointer;
+}
+.level-title {
+  @apply text-xl font-bold mb-2;
+}
+.level-difficulty {
+  @apply text-xs font-semibold px-2 py-1 rounded bg-accent text-white mb-2;
+}
+.level-progress {
+  @apply w-full h-2 bg-primary-100 rounded-full overflow-hidden mb-2;
+}
+.level-progress-bar {
+  @apply h-2 bg-success rounded-full transition-all duration-500;
+}
+.lock-icon {
+  @apply absolute top-4 right-4 text-2xl text-locked;
+}
+.xp-badge {
+  @apply absolute top-4 left-4 bg-accent text-white px-2 py-1 rounded-full text-xs font-bold shadow;
+}
+.streak-counter {
+  @apply mt-2 text-sm text-primary-900 font-semibold;
+}
+.badge {
+  @apply mt-2 bg-success text-white px-3 py-1 rounded-full text-xs font-bold shadow;
+}
+.animated-unlock {
+  @apply animate-bounceGlow shadow-glow;
+}
