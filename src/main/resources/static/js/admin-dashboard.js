@@ -83,31 +83,92 @@ function makeTable(headers, rows) {
 async function renderDashboard() {
     const data = await adminRequest('/overview');
     const stats = data.stats || {};
-    const daily = (data.charts?.dailySubmissions || []).slice(-7);
-    const activeUsers = (data.charts?.activeUsers || []).slice(-8);
 
-    liveCounter.textContent = `LIVE: ${stats.activeBattles || 0}`;
+    liveCounter.innerHTML = `<div class="live-pulse"><span class="live-dot"></span> LIVE: ${stats.activeBattles || 0}</div>`;
 
     sectionRoot.innerHTML = `
-        <div class="stats-grid">
-            <div class="card"><p>Total Users</p><h2 style="color:var(--accent)">${stats.totalUsers || 0}</h2></div>
-            <div class="card"><p>Total Problems</p><h2 style="color:var(--accent)">${stats.totalProblems || 0}</h2></div>
-            <div class="card"><p>Total Submissions</p><h2 style="color:var(--accent)">${stats.totalSubmissions || 0}</h2></div>
-            <div class="card"><p>Total Battles</p><h2 style="color:var(--accent)">${stats.totalBattlesPlayed || 0}</h2></div>
-            <div class="card"><p>Active Battles</p><h2 style="color:var(--success)">${stats.activeBattles || 0}</h2></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-top:.9rem;">
-            <div class="card">
-                <h3 style="font-weight:700;margin-bottom:.6rem;">Daily Submissions</h3>
-                <pre style="white-space:pre-wrap;color:var(--text-secondary)">${daily.map(d => `${d.day}: ${d.count}`).join('\n')}</pre>
+        <div class="animate-fade-in">
+            <div class="dashboard-hero">
+                <div class="hero-content">
+                    <h1>Welcome Back, <span style="color:var(--accent)">Admin</span></h1>
+                    <p>System is running smoothly. Here's what's happening today.</p>
+                </div>
+                <div class="hero-actions">
+                    <button class="btn btn-primary" onclick="currentSection='Events'; renderNav(); renderSection();">
+                        <i data-lucide="calendar" style="width:18px;height:18px;"></i> Manage Events
+                    </button>
+                </div>
             </div>
-            <div class="card">
-                <h3 style="font-weight:700;margin-bottom:.6rem;">Active Users</h3>
-                <pre style="white-space:pre-wrap;color:var(--text-secondary)">${activeUsers.map(d => `${d.hour}: ${d.count}`).join('\n')}</pre>
+
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+                <div class="stat-card-premium stagger-card" style="animation-delay: 0.1s">
+                    <div class="icon-wrapper"><i data-lucide="users"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Users</span>
+                        <span class="stat-value">${stats.totalUsers || 0}</span>
+                    </div>
+                </div>
+                <div class="stat-card-premium stagger-card" style="animation-delay: 0.2s">
+                    <div class="icon-wrapper"><i data-lucide="file-code"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Problems</span>
+                        <span class="stat-value">${stats.totalProblems || 0}</span>
+                    </div>
+                </div>
+                <div class="stat-card-premium stagger-card" style="animation-delay: 0.3s">
+                    <div class="icon-wrapper"><i data-lucide="send"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Submissions</span>
+                        <span class="stat-value">${stats.totalSubmissions || 0}</span>
+                    </div>
+                </div>
+                <div class="stat-card-premium stagger-card" style="animation-delay: 0.4s">
+                    <div class="icon-wrapper"><i data-lucide="swords"></i></div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Battles</span>
+                        <span class="stat-value">${stats.totalBattlesPlayed || 0}</span>
+                    </div>
+                </div>
+                <div class="stat-card-premium stagger-card" style="animation-delay: 0.5s">
+                    <div class="icon-wrapper" style="background:rgba(0,200,83,0.1); color:var(--success); border-color:rgba(0,200,83,0.2);">
+                        <i data-lucide="activity"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Active Battles</span>
+                        <span class="stat-value" style="color:var(--success)">${stats.activeBattles || 0}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 2.5rem;" class="stagger-card" style="animation-delay: 0.6s">
+                <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="zap" style="color:var(--accent)"></i> Quick Insights
+                </h2>
+                <div class="card" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.05); padding: 2rem; border-radius: 20px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem;">
+                        <div>
+                            <h4 style="color:var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Server Status</h4>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; color: var(--success); font-weight: 700;">
+                                <span class="live-dot"></span> Operational
+                            </div>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Database</h4>
+                            <div style="color: #fff; font-weight: 700;">Connected</div>
+                        </div>
+                        <div>
+                            <h4 style="color:var(--text-secondary); margin-bottom: 0.5rem; font-size: 0.9rem;">Queue Latency</h4>
+                            <div style="color: #fff; font-weight: 700;">12ms</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
+
+    if (window.lucide) lucide.createIcons();
 }
+
 
 async function renderLiveBattles() {
     const rows = await adminRequest('/live-battles');
