@@ -803,8 +803,8 @@ async function renderSettings() {
     };
 }
 
-async function renderSection() {
-    showLoading(true);
+async function renderSection(silent = false) {
+    if (!silent) showLoading(true);
     try {
         if (currentSection === 'Dashboard') await renderDashboard();
         else if (currentSection === 'Live Battles') await renderLiveBattles();
@@ -831,7 +831,7 @@ renderNav();
 renderSection();
 window.adminInterval = setInterval(() => {
     if (currentSection === 'Live Battles' || currentSection === 'Dashboard') {
-        renderSection();
+        renderSection(true);
     }
 }, 5000);
 
