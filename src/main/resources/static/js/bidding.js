@@ -18,11 +18,14 @@ async function refresh() {
 
 function render(data) {
     document.getElementById('eventTitle').textContent = data.title;
-    document.getElementById('userBid').textContent = data.userBid || 0;
 
-    // Rank logic
+    // Animate Bid Numbers
+    animateNumber('userBid', data.userBid || 0);
+
+    // Rank logic with badges
+    const userRankEl = document.getElementById('userRank');
     const currentRank = data.userRank > 0 ? `#${data.userRank}` : '# –';
-    document.getElementById('userRank').textContent = currentRank;
+    userRankEl.textContent = currentRank;
 
     if (lastRank !== null && data.userRank > 0 && data.userRank < lastRank) {
         showRankUpNotif(`🔥 Moved to Rank #${data.userRank}!`);
@@ -37,24 +40,29 @@ function render(data) {
     const resultCard = document.getElementById('resultCard');
 
     if (data.phase === 'NOT_STARTED') {
-        statusEl.textContent = 'Upcoming';
+        statusEl.innerHTML = '<i data-lucide="calendar"></i> Upcoming';
         statusEl.classList.remove('live');
         labelEl.textContent = 'Bidding Starts In';
         timerEl.textContent = formatTime(data.secondsUntilBidding);
         bidAction.style.display = 'none';
+        resultCard.style.display = 'none';
     } else if (data.phase === 'BIDDING_LIVE') {
-        statusEl.textContent = '🔥 Bidding LIVE';
+        statusEl.innerHTML = '<span class="pulse-dot" style="width:8px; height:8px; background:var(--accent); border-radius:50%; display:inline-block; margin-right:8px; box-shadow: 0 0 10px var(--accent);"></span> Bidding LIVE';
         statusEl.classList.add('live');
-        labelEl.textContent = 'Ends In';
+        labelEl.textContent = 'Bidding Ends In';
         timerEl.textContent = formatTime(data.secondsRemainingBidding);
-        bidAction.style.display = 'block';
+        bidAction.style.display = 'flex';
         resultCard.style.display = 'none';
 
         // Balance
         const user = JSON.parse(localStorage.getItem('cc_user') || '{}');
-        document.getElementById('userBalance').textContent = user.coins || 0;
+        document.getElementById('userBalance').textContent = (user.coins || 0).toLocaleString();
+
+        // Update bid button text based on entry fee
+        const bidAmtEl = document.querySelector('#addBidBtn .amount');
+        if (bidAmtEl) bidAmtEl.textContent = `+${data.entryFee || 100}`;
     } else {
-        statusEl.textContent = 'Bidding Ended';
+        statusEl.innerHTML = '<i data-lucide="clock"></i> Bidding Ended';
         statusEl.classList.remove('live');
         timerEl.textContent = '00:00:00';
         bidAction.style.display = 'none';
@@ -63,23 +71,30 @@ function render(data) {
         resultCard.style.display = 'block';
         if (data.userSelected) {
             resultCard.innerHTML = `
-                <span style="font-size: 3rem;">🎉</span>
-                <h2 style="color:var(--success); font-weight:900; margin: 1rem 0;">You are selected!</h2>
-                <p style="color:var(--text-secondary)">Prepare yourself for the arena. The contest starts shortly.</p>
-                <button class="btn btn-primary" style="margin-top: 1.5rem;" onclick="window.location.href='/contest.html?eventId=${eventId}'">Go to Contest Page →</button>
+                <div class="animate-pop-in">
+                    <div style="font-size: 4rem; margin-bottom: 1.5rem;">🏆</div>
+                    <h2 style="color:#fff; font-size: 2.5rem; font-weight:950; margin-bottom: 1rem;">Arena Access Granted</h2>
+                    <p style="color:var(--text-secondary); font-size: 1.1rem; max-width: 500px; margin: 0 auto 2.5rem;">
+                        Congratulations! You finished in the top ${data.maxParticipants}. Prepare yourself for the ultimate challenge.
+                    </p>
+                    <button class="btn btn-primary btn-lg" style="padding: 1.2rem 3rem; border-radius: 100px; font-weight: 800; font-size: 1.1rem; box-shadow: 0 10px 30px var(--accent-glow);" 
+                        onclick="window.location.href='/contest.html?eventId=${eventId}'">ENTER CONTEST ARENA →</button>
+                </div>
             `;
         } else if (data.userBid > 0) {
             resultCard.innerHTML = `
-                <span style="font-size: 3rem;">❌</span>
-                <h2 style="color:var(--accent); font-weight:900; margin: 1rem 0;">Not Selected</h2>
-                <p style="color:var(--text-secondary)">Your bid of ${data.userBid} 🪙 has been fully refunded.</p>
-                <button class="btn btn-secondary" style="margin-top: 1.5rem;" onclick="window.location.href='/events.html'">Back to Events</button>
+                <div class="animate-pop-in">
+                    <div style="font-size: 4rem; margin-bottom: 1.5rem;">📉</div>
+                    <h2 style="color:var(--accent); font-size: 2.2rem; font-weight:900; margin-bottom: 1rem;">Not Selected</h2>
+                    <p style="color:var(--text-secondary); font-size: 1.1rem; margin-bottom: 2rem;">Your bid of ${data.userBid} 🪙 has been fully returned to your wallet.</p>
+                    <button class="btn btn-secondary" onclick="window.location.href='/events.html'">Return to Events</button>
+                </div>
             `;
         } else {
             resultCard.innerHTML = `
-                <h2 style="font-weight:900; margin: 1rem 0;">Bidding Closed</h2>
-                <p style="color:var(--text-secondary)">You did not participate in this session.</p>
-                <button class="btn btn-secondary" style="margin-top: 1.5rem;" onclick="window.location.href='/events.html'">Back to Events</button>
+                <h2 style="font-weight:900; color: #fff; margin-bottom: 1rem;">Bidding Closed</h2>
+                <p style="color:var(--text-secondary); margin-bottom: 2rem;">This session has ended. Check upcoming events for your next chance.</p>
+                <button class="btn btn-secondary" onclick="window.location.href='/events.html'">Browse Events</button>
             `;
         }
     }
@@ -88,20 +103,52 @@ function render(data) {
     const lbContainer = document.getElementById('lbContainer');
     const lbTotal = document.getElementById('lbTotalBidders');
     const lb = data.leaderboard || [];
-    lbTotal.textContent = `(${lb.length} users)`;
+    lbTotal.textContent = `${lb.length} users active`;
 
     if (lb.length === 0) {
-        lbContainer.innerHTML = '<div class="lb-empty"><span>⏳</span>Waiting for bidders...</div>';
-    } else {
-        lbContainer.innerHTML = lb.map((row, i) => `
-            <div class="lb-row" style="${row.username === getUsername() ? 'background:rgba(255,107,0,0.1); outline:1px solid rgba(255,107,0,0.3);' : ''}">
-                <div class="lb-rank">${i + 1}</div>
-                <div class="lb-user">${row.displayName}</div>
-                <div class="lb-amount">${row.amount}</div>
-                ${i < data.maxParticipants ? '<div class="lb-selected">IN</div>' : ''}
+        lbContainer.innerHTML = `
+            <div class="lb-empty">
+                <i data-lucide="users" style="width: 40px; height: 40px; margin-bottom: 1rem; opacity: 0.2;"></i>
+                <p>Waiting for bidders...</p>
             </div>
-        `).join('');
+        `;
+    } else {
+        lbContainer.innerHTML = lb.map((row, i) => {
+            const isMe = row.username === getUsername();
+            const rankClass = i === 0 ? 'rank-1' : (i === 1 ? 'rank-2' : (i === 2 ? 'rank-3' : 'rank-other'));
+            const isIn = i < data.maxParticipants;
+
+            return `
+                <div class="lb-row ${isMe ? 'me' : ''} animate-pop-in" style="animation-delay: ${i * 0.05}s">
+                    <div class="lb-rank-badge ${rankClass}">${i + 1}</div>
+                    <div class="lb-name">
+                        ${row.displayName}
+                        ${isIn ? '<span style="font-size: 0.6rem; margin-left: 0.5rem; color: var(--success); font-weight:900;">• IN</span>' : ''}
+                    </div>
+                    <div class="lb-bid">${row.amount.toLocaleString()}</div>
+                </div>
+            `;
+        }).join('');
     }
+
+    if (window.lucide) lucide.createIcons();
+}
+
+function animateNumber(id, val) {
+    const el = document.getElementById(id);
+    const start = parseInt(el.textContent) || 0;
+    if (start === val) return;
+
+    const duration = 800;
+    const startTime = performance.now();
+
+    function update(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const current = Math.floor(start + (val - start) * progress);
+        el.textContent = current.toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
 }
 
 function formatTime(seconds) {
