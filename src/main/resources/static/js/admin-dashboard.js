@@ -616,96 +616,102 @@ async function renderUsers() {
 
 async function renderLeaderboard() {
     const rows = await adminRequest('/leaderboard');
-    sectionRoot.dataset.section = 'Leaderboard';
 
-    // Podium logic
+    // Partial update logic to prevent "refresh" feel
+    const isAlreadyOnLeaderboard = sectionRoot.dataset.section === 'Leaderboard';
+
     const top3 = rows.slice(0, 3);
+    const scoreFormula = (p) => (p.coins || 0) * 2 + (p.battleWins || 0) * 2 + (p.battlesAttended || 0);
 
-    sectionRoot.innerHTML = `
-        <div class="animate-fade-in">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
-                <h2 style="font-size: 1.8rem; font-weight: 900; display:flex; align-items:center; gap:0.8rem;">
-                    <i data-lucide="award" style="color:var(--accent); width:28px; height:28px;"></i> Leaderboard Control
-                </h2>
-                <button class="btn btn-secondary btn-sm" id="lbReset" style="background:rgba(255,255,255,0.05);">
-                    <i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i> Reset All Scores
-                </button>
-            </div>
-
-            ${top3.length ? `
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; margin-bottom:3rem;">
-                    ${top3.map((player, idx) => {
-        const score = (player.coins || 0) * 2 + (player.battleWins || 0) * 2 + (player.battlesAttended || 0);
-        const colors = ['#FFD700', '#C0C0C0', '#CD7132']; // Gold, Silver, Bronze
+    const podiumHTML = top3.length ? `
+        <div class="podium-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem; margin-bottom:3rem;">
+            ${top3.map((player, idx) => {
+        const colors = ['#FFD700', '#C0C0C0', '#CD7132'];
         const titles = ['Grand Champion', 'Lead Clasher', 'Elite Warrior'];
         return `
-                            <div class="stat-card-premium stagger-card" style="animation-delay: ${idx * 0.1}s; border-color: ${colors[idx]}33; position:relative; overflow:visible;">
-                                <div style="position:absolute; top:-12px; right:20px; background:${colors[idx]}; color:#000; padding:2px 12px; border-radius:10px; font-weight:900; font-size:0.7rem; box-shadow:0 0 15px ${colors[idx]}66;">
-                                    RANK #${idx + 1}
-                                </div>
-                                <div style="text-align:center; margin-bottom:1.5rem;">
-                                    <div style="font-size:2.5rem; margin-bottom:0.5rem;">${idx === 0 ? '👑' : (idx === 1 ? '🥈' : '🥉')}</div>
-                                    <h3 style="font-weight:900; font-size:1.4rem; margin-bottom:0.2rem; color:#fff;">${player.name}</h3>
-                                    <span style="font-size:0.7rem; color:${colors[idx]}; font-weight:800; text-transform:uppercase; letter-spacing:2px;">${titles[idx]}</span>
-                                </div>
-                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.85rem; color:var(--text-secondary);">
-                                    <div style="background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:8px; text-align:center;">🪙 ${player.coins}</div>
-                                    <div style="background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:8px; text-align:center;">⚔️ ${player.battleWins || 0} Wins</div>
-                                </div>
-                                <div style="margin-top:1.5rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem; text-align:center;">
-                                    <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.2rem;">Total Points</div>
-                                    <div style="font-size:2rem; font-weight:900; color:var(--accent); line-height:1;">${score}</div>
-                                </div>
-                            </div>
-                        `;
+                    <div class="stat-card-premium stagger-card" style="animation-delay: ${idx * 0.1}s; border-color: ${colors[idx]}33; position:relative; overflow:visible;">
+                        <div style="position:absolute; top:-12px; right:20px; background:${colors[idx]}; color:#000; padding:2px 12px; border-radius:10px; font-weight:900; font-size:0.7rem; box-shadow:0 0 15px ${colors[idx]}66;">
+                            RANK #${idx + 1}
+                        </div>
+                        <div style="text-align:center; margin-bottom:1.5rem;">
+                            <div style="font-size:2.5rem; margin-bottom:0.5rem;">${idx === 0 ? '👑' : (idx === 1 ? '🥈' : '🥉')}</div>
+                            <h3 style="font-weight:900; font-size:1.4rem; margin-bottom:0.2rem; color:#fff;">${player.name}</h3>
+                            <span style="font-size:0.7rem; color:${colors[idx]}; font-weight:800; text-transform:uppercase; letter-spacing:2px;">${titles[idx]}</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; font-size:0.85rem; color:var(--text-secondary);">
+                            <div style="background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:8px; text-align:center;">🪙 ${player.coins}</div>
+                            <div style="background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:8px; text-align:center;">⚔️ ${player.battleWins || 0} Wins</div>
+                        </div>
+                        <div style="margin-top:1.5rem; border-top:1px solid rgba(255,255,255,0.05); padding-top:1rem; text-align:center;">
+                            <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.2rem;">Total Points</div>
+                            <div style="font-size:2rem; font-weight:900; color:var(--accent); line-height:1;">${scoreFormula(player)}</div>
+                        </div>
+                    </div>
+                `;
     }).join('')}
-                </div>
-            ` : ''}
-
-            <div class="history-table-container">
-                <table class="history-table">
-                    <thead>
-                        <tr>
-                            <th style="width:80px;">Rank</th>
-                            <th>Player Name</th>
-                            <th style="width:120px;">Coins</th>
-                            <th style="width:120px;">Wins</th>
-                            <th style="width:120px; color:var(--accent);">Score</th>
-                            <th style="width:120px; text-align:center;">Adjust</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rows.map((row, idx) => {
-        const score = (row.coins || 0) * 2 + (row.battleWins || 0) * 2 + (row.battlesAttended || 0);
-        return `
-                                <tr class="stagger-card" style="animation-delay: ${idx * 0.05}s">
-                                    <td style="font-weight:900;">
-                                        <div class="rank-badge ${row.rank === 1 ? 'gold' : (row.rank === 2 ? 'silver' : (row.rank === 3 ? 'bronze' : ''))}">
-                                            ${row.rank}
-                                        </div>
-                                    </td>
-                                    <td style="font-weight:700;">${row.name}</td>
-                                    <td>🪙 ${row.coins}</td>
-                                    <td>⚔️ ${row.battleWins || 0}</td>
-                                    <td style="font-weight:900; color:var(--accent);">${score}</td>
-                                    <td style="text-align:center;">
-                                        <div style="display:flex; gap:0.5rem; justify-content:center;">
-                                            <button class="action-icon-btn" data-plus="${row.id}" style="color:var(--success);">
-                                                <i data-lucide="plus" style="width:16px; height:16px;"></i>
-                                            </button>
-                                            <button class="action-icon-btn" data-minus="${row.id}" style="color:var(--secondary);">
-                                                <i data-lucide="minus" style="width:16px; height:16px;"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-    }).join('')}
-                    </tbody>
-                </table>
-            </div>
         </div>
-    `;
+    ` : '';
+
+    const tableRowsHTML = rows.map((row, idx) => `
+        <tr class="${isAlreadyOnLeaderboard ? '' : 'stagger-card'}" style="animation-delay: ${idx * 0.05}s">
+            <td style="font-weight:900;">
+                <div class="rank-badge ${row.rank === 1 ? 'gold' : (row.rank === 2 ? 'silver' : (row.rank === 3 ? 'bronze' : ''))}">
+                    ${row.rank}
+                </div>
+            </td>
+            <td style="font-weight:700;">${row.name}</td>
+            <td>🪙 ${row.coins}</td>
+            <td>⚔️ ${row.battleWins || 0}</td>
+            <td style="font-weight:900; color:var(--accent);">${scoreFormula(row)}</td>
+            <td style="text-align:center;">
+                <div style="display:flex; gap:0.5rem; justify-content:center;">
+                    <button class="action-icon-btn" data-plus="${row.id}" style="color:var(--success); width:auto; padding:0 0.8rem; gap:0.3rem; font-weight:800; font-size:0.75rem;">
+                        <i data-lucide="plus" style="width:14px; height:14px;"></i> +25
+                    </button>
+                    <button class="action-icon-btn" data-minus="${row.id}" style="color:var(--secondary); width:auto; padding:0 0.8rem; gap:0.3rem; font-weight:800; font-size:0.75rem;">
+                        <i data-lucide="minus" style="width:14px; height:14px;"></i> -25
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+
+    if (isAlreadyOnLeaderboard) {
+        const podiumWrapper = sectionRoot.querySelector('.podium-grid-wrapper');
+        const tableBody = sectionRoot.querySelector('tbody');
+        if (podiumWrapper) podiumWrapper.innerHTML = podiumHTML;
+        if (tableBody) tableBody.innerHTML = tableRowsHTML;
+    } else {
+        sectionRoot.dataset.section = 'Leaderboard';
+        sectionRoot.innerHTML = `
+            <div class="animate-fade-in">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                    <h2 style="font-size: 1.8rem; font-weight: 900; display:flex; align-items:center; gap:0.8rem;">
+                        <i data-lucide="award" style="color:var(--accent); width:28px; height:28px;"></i> Leaderboard Control
+                    </h2>
+                    <button class="btn btn-secondary btn-sm" id="lbReset" style="background:rgba(255,255,255,0.05);">
+                        <i data-lucide="rotate-ccw" style="width:14px; height:14px;"></i> Reset All Scores
+                    </button>
+                </div>
+                <div class="podium-grid-wrapper">${podiumHTML}</div>
+                <div class="history-table-container">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th style="width:80px;">Rank</th>
+                                <th>Player Name</th>
+                                <th style="width:120px;">Coins</th>
+                                <th style="width:120px;">Wins</th>
+                                <th style="width:120px; color:var(--accent);">Score</th>
+                                <th style="width:160px; text-align:center;">Adjust</th>
+                            </tr>
+                        </thead>
+                        <tbody>${tableRowsHTML}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
 
     document.getElementById('lbReset').onclick = async () => {
         await adminRequest('/leaderboard/reset', { method: 'POST' });
@@ -720,6 +726,8 @@ async function renderLeaderboard() {
         await adminRequest(`/leaderboard/${btn.dataset.minus}/adjust-points`, { method: 'POST', body: JSON.stringify({ delta: -25 }) });
         renderLeaderboard();
     });
+
+    if (window.lucide) lucide.createIcons();
 }
 
 async function renderSettings() {
