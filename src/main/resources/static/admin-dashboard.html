@@ -228,6 +228,37 @@
             color: #fff;
         }
 
+        .history-table tr.clickable {
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            border-radius: 20px;
+        }
+
+        .spinner-large {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 107, 0, 0.1);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .status-badge {
             padding: 0.35rem 0.75rem;
             border-radius: 99px;
@@ -589,7 +620,12 @@
                 <span id="liveCounter" class="badge badge-easy">LIVE: 0</span>
             </div>
             <div id="adminAlert" class="alert alert-error" style="display:none;margin-top:.8rem;"></div>
-            <div id="sectionRoot" style="margin-top:.9rem;"></div>
+            <div style="position: relative;">
+                <div id="loadingOverlay" class="loading-overlay">
+                    <div class="spinner-large"></div>
+                </div>
+                <div id="sectionRoot" style="margin-top:.9rem;"></div>
+            </div>
         </main>
     </div>
 

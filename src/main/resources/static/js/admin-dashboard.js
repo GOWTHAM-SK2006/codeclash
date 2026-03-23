@@ -24,6 +24,11 @@ const navRoot = document.getElementById('adminNav');
 const sectionRoot = document.getElementById('sectionRoot');
 const sectionTitle = document.getElementById('sectionTitle');
 const liveCounter = document.getElementById('liveCounter');
+const loadingOverlay = document.getElementById('loadingOverlay');
+
+function showLoading(show) {
+    if (loadingOverlay) loadingOverlay.style.display = show ? 'flex' : 'none';
+}
 
 function showAlert(message) {
     const alert = document.getElementById('adminAlert');
@@ -378,7 +383,7 @@ async function renderProblems() {
                     </thead>
                     <tbody>
                         ${rows.map((row, idx) => `
-                            <tr class="stagger-card" style="animation-delay: ${idx * 0.05}s">
+                            <tr class="stagger-card clickable" style="animation-delay: ${idx * 0.05}s" data-problem-row="${row.id}">
                                 <td style="color:var(--text-muted); font-weight:600;">#${row.id}</td>
                                 <td style="font-weight:700;">${row.title}</td>
                                 <td>
@@ -439,13 +444,32 @@ async function renderProblems() {
         };
     });
 
+    sectionRoot.querySelectorAll('[data-problem-row]').forEach(row => {
+        row.onclick = (e) => {
+            // Don't navigate if clicking the delete button
+            if (e.target.closest('[data-del-problem]')) return;
+            selectedProblemId = Number(row.dataset.problemRow);
+            currentSection = 'Testcases';
+            sectionTitle.textContent = currentSection;
+            renderNav();
+            renderSection();
+        };
+    });
+
     if (window.lucide) lucide.createIcons();
+}
+
+async function fetchProblems() {
+    const rows = await adminRequest('/problems');
+    problemCache = rows;
+    if (!selectedProblemId && rows.length) selectedProblemId = rows[0].id;
+    return rows;
 }
 
 
 async function renderTestcases() {
     if (!problemCache.length) {
-        await renderProblems();
+        await fetchProblems();
     }
     const options = problemCache.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
     const rows = selectedProblemId ? await adminRequest(`/problems/${selectedProblemId}/testcases`) : [];
@@ -740,18 +764,21 @@ async function renderSettings() {
 }
 
 async function renderSection() {
+    showLoading(true);
     try {
-        if (currentSection === 'Dashboard') return await renderDashboard();
-        if (currentSection === 'Live Battles') return await renderLiveBattles();
-        if (currentSection === 'Match History') return await renderMatchHistory();
-        if (currentSection === 'Problems') return await renderProblems();
-        if (currentSection === 'Testcases') return await renderTestcases();
-        if (currentSection === 'Users') return await renderUsers();
-        if (currentSection === 'Leaderboard') return await renderLeaderboard();
-        if (currentSection === 'Settings') return await renderSettings();
-        if (currentSection === 'Events') return await renderEvents();
+        if (currentSection === 'Dashboard') await renderDashboard();
+        else if (currentSection === 'Live Battles') await renderLiveBattles();
+        else if (currentSection === 'Match History') await renderMatchHistory();
+        else if (currentSection === 'Problems') await renderProblems();
+        else if (currentSection === 'Testcases') await renderTestcases();
+        else if (currentSection === 'Users') await renderUsers();
+        else if (currentSection === 'Leaderboard') await renderLeaderboard();
+        else if (currentSection === 'Settings') await renderSettings();
+        else if (currentSection === 'Events') await renderEvents();
     } catch (e) {
         showAlert(e.message || 'Failed to load section');
+    } finally {
+        showLoading(false);
     }
 }
 
