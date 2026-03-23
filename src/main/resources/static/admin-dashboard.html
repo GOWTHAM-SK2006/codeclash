@@ -307,6 +307,65 @@
             border: 1px solid rgba(255, 61, 0, 0.2);
         }
 
+        .rank-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.85rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .rank-badge.gold {
+            background: #FFD700;
+            color: #000;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .rank-badge.silver {
+            background: #C0C0C0;
+            color: #000;
+            box-shadow: 0 0 15px rgba(192, 192, 192, 0.4);
+        }
+
+        .rank-badge.bronze {
+            background: #CD7132;
+            color: #000;
+            box-shadow: 0 0 15px rgba(205, 113, 50, 0.4);
+        }
+
+        .action-icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+            padding: 0;
+            line-height: 1;
+        }
+
+        .action-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent);
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .badge-hard {
+            background: rgba(255, 61, 0, 0.12);
+            color: var(--danger);
+            border: 1px solid rgba(255, 61, 0, 0.2);
+        }
+
         .tag-badge {
             background: rgba(255, 255, 255, 0.04);
             color: var(--text-secondary);
