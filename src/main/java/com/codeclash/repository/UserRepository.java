@@ -15,6 +15,5 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u ORDER BY u.coins DESC")
-    List<User> findTopByOrderByCoinsDesc();
+    List<User> findAllByOrderByCoinsDesc();
 }
