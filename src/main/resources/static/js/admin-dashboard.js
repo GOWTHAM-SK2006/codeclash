@@ -341,44 +341,107 @@ async function renderProblems() {
     if (!selectedProblemId && rows.length) selectedProblemId = rows[0].id;
 
     sectionRoot.innerHTML = `
-        <div class="filters">
-            <input id="pTitle" placeholder="Title">
-            <select id="pDifficulty"><option>Easy</option><option>Medium</option><option>Hard</option></select>
-            <input id="pTags" placeholder="tags (comma)">
-            <button class="btn btn-primary btn-sm" id="addProblemBtn">Add Problem</button>
+        <div class="animate-fade-in">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 900; display:flex; align-items:center; gap:0.8rem;">
+                    <i data-lucide="layout-list" style="color:var(--accent); width:28px; height:28px;"></i> Problem Repository
+                </h2>
+                <div class="badge badge-accent" style="padding: 0.5rem 1rem;">Total Problems: ${rows.length}</div>
+            </div>
+
+            <div class="history-filters" style="gap: 1.2rem;">
+                <div style="flex:1; display:flex; gap:0.8rem; align-items:center;">
+                    <i data-lucide="plus-square" style="color:var(--accent); width:20px; height:20px;"></i>
+                    <input id="pTitle" placeholder="Problem Title" class="input" style="max-width:300px;">
+                    <select id="pDifficulty" class="input" style="max-width:140px;">
+                        <option>Easy</option>
+                        <option>Medium</option>
+                        <option>Hard</option>
+                    </select>
+                    <input id="pTags" placeholder="Tags (comma separated)" class="input" style="max-width:260px;">
+                </div>
+                <button class="btn btn-primary" id="addProblemBtn" style="padding: 0.6rem 1.8rem;">
+                    <i data-lucide="plus" style="width:16px; height:16px;"></i> Create Problem
+                </button>
+            </div>
+
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th style="width:80px;">ID</th>
+                            <th>Problem Title</th>
+                            <th style="width:140px;">Difficulty</th>
+                            <th>Tags</th>
+                            <th style="width:100px; text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((row, idx) => `
+                            <tr class="stagger-card" style="animation-delay: ${idx * 0.05}s">
+                                <td style="color:var(--text-muted); font-weight:600;">#${row.id}</td>
+                                <td style="font-weight:700;">${row.title}</td>
+                                <td>
+                                    <span class="status-badge ${row.difficulty.toLowerCase()}">
+                                        <i data-lucide="shield" style="width:12px; height:12px;"></i> ${row.difficulty}
+                                    </span>
+                                </td>
+                                <td>
+                                    ${(row.tags || []).map(tag => `<span class="tag-badge">${tag}</span>`).join('')}
+                                </td>
+                                <td style="text-align:center;">
+                                    <button class="action-icon-btn" data-del-problem="${row.id}" title="Delete Problem">
+                                        <i data-lucide="trash-2" style="width:18px; height:18px;"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
-        ${makeTable(
-        ['ID', 'Title', 'Difficulty', 'Tags', 'Actions'],
-        rows.map(row => `<tr>
-                <td>${row.id}</td>
-                <td>${row.title}</td>
-                <td>${row.difficulty}</td>
-                <td>${(row.tags || []).join(', ')}</td>
-                <td><button class="btn btn-secondary btn-sm" data-del-problem="${row.id}">Delete</button></td>
-            </tr>`)
-    )}
     `;
 
     document.getElementById('addProblemBtn').onclick = async () => {
-        await adminRequest('/problems', {
-            method: 'POST',
-            body: JSON.stringify({
-                title: document.getElementById('pTitle').value || 'New Problem',
-                description: 'Problem description',
-                difficulty: document.getElementById('pDifficulty').value,
-                tags: document.getElementById('pTags').value.split(',').map(s => s.trim()).filter(Boolean)
-            })
-        });
-        renderProblems();
+        const btn = document.getElementById('addProblemBtn');
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-sm"></span> Creating...';
+
+        try {
+            await adminRequest('/problems', {
+                method: 'POST',
+                body: JSON.stringify({
+                    title: document.getElementById('pTitle').value || 'New Problem',
+                    description: 'Problem description',
+                    difficulty: document.getElementById('pDifficulty').value,
+                    tags: document.getElementById('pTags').value.split(',').map(s => s.trim()).filter(Boolean)
+                })
+            });
+            renderProblems();
+        } catch (e) {
+            showAlert('Failed to create problem: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     };
 
     sectionRoot.querySelectorAll('[data-del-problem]').forEach(btn => {
         btn.onclick = async () => {
-            await adminRequest(`/problems/${btn.dataset.delProblem}`, { method: 'DELETE' });
-            renderProblems();
+            if (!confirm(`Are you sure you want to delete problem #${btn.dataset.delProblem}?`)) return;
+            try {
+                await adminRequest(`/problems/${btn.dataset.delProblem}`, { method: 'DELETE' });
+                renderProblems();
+            } catch (e) {
+                showAlert('Failed to delete problem: ' + e.message);
+            }
         };
     });
+
+    if (window.lucide) lucide.createIcons();
 }
+
 
 async function renderTestcases() {
     if (!problemCache.length) {
