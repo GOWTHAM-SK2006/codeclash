@@ -91,6 +91,20 @@ async function renderDashboard() {
 
     liveCounter.innerHTML = `<div class="live-pulse"><span class="live-dot"></span> LIVE: ${stats.activeBattles || 0}</div>`;
 
+    // Partially update if already on Dashboard to prevent animation flicker
+    if (sectionRoot.dataset.section === 'Dashboard') {
+        const valueElements = sectionRoot.querySelectorAll('.stat-value');
+        if (valueElements.length >= 5) {
+            valueElements[0].textContent = stats.totalUsers || 0;
+            valueElements[1].textContent = stats.totalProblems || 0;
+            valueElements[2].textContent = stats.totalSubmissions || 0;
+            valueElements[3].textContent = stats.totalBattlesPlayed || 0;
+            valueElements[4].textContent = stats.activeBattles || 0;
+            return;
+        }
+    }
+
+    sectionRoot.dataset.section = 'Dashboard';
     sectionRoot.innerHTML = `
         <div class="animate-fade-in">
             <div class="dashboard-hero">
@@ -179,6 +193,7 @@ async function renderLiveBattles() {
     const rows = await adminRequest('/live-battles');
     liveCounter.textContent = `LIVE: ${rows.length}`;
 
+    sectionRoot.dataset.section = 'Live Battles';
     sectionRoot.innerHTML = makeTable(
         ['P1', 'P2', 'Problem', 'Elapsed', 'Status', 'Actions'],
         rows.map(row => `
@@ -219,6 +234,7 @@ async function renderLiveBattles() {
 async function renderMatchHistory() {
     const data = await adminRequest('/match-history');
 
+    sectionRoot.dataset.section = 'Match History';
     sectionRoot.innerHTML = `
         <div class="animate-fade-in">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
@@ -345,6 +361,7 @@ async function renderProblems() {
     problemCache = rows;
     if (!selectedProblemId && rows.length) selectedProblemId = rows[0].id;
 
+    sectionRoot.dataset.section = 'Problems';
     sectionRoot.innerHTML = `
         <div class="animate-fade-in">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
@@ -514,6 +531,7 @@ async function renderTestcases() {
     const options = problemCache.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
     const rows = selectedProblemId ? await adminRequest(`/problems/${selectedProblemId}/testcases`) : [];
 
+    sectionRoot.dataset.section = 'Testcases';
     sectionRoot.innerHTML = `
         <div class="filters">
             <select id="tcProblemSelect">${options}</select>
