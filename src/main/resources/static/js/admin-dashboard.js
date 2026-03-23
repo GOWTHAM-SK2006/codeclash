@@ -213,42 +213,127 @@ async function renderLiveBattles() {
 
 async function renderMatchHistory() {
     const data = await adminRequest('/match-history');
+
     sectionRoot.innerHTML = `
-        <div class="filters">
-            <input id="historyDate" type="date">
-            <input id="historyUser" type="text" placeholder="Filter by user">
-            <select id="historyResult"><option value="">All</option><option>Win</option><option>Draw</option></select>
-            <button class="btn btn-primary btn-sm" id="historyApply">Apply</button>
+        <div class="animate-fade-in">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                <h2 style="font-size: 1.8rem; font-weight: 900; display:flex; align-items:center; gap:0.8rem;">
+                    <i data-lucide="history" style="color:var(--accent); width:28px; height:28px;"></i> Match History
+                </h2>
+                <div class="badge badge-accent" style="padding: 0.5rem 1rem;">Total Records: ${data.length}</div>
+            </div>
+
+            <div class="history-filters">
+                <div style="flex:1; display:flex; gap:0.8rem;">
+                    <input id="historyDate" type="date" class="input" style="max-width:180px;">
+                    <input id="historyUser" type="text" placeholder="Filter by user..." class="input" style="max-width:240px;">
+                    <select id="historyResult" class="input" style="max-width:140px;">
+                        <option value="">All Results</option>
+                        <option>Win</option>
+                        <option>Draw</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="historyApply" style="padding: 0.6rem 2rem;">
+                    <i data-lucide="search" style="width:16px; height:16px;"></i> Apply Filters
+                </button>
+            </div>
+
+            <div id="historyTable" class="history-table-container"></div>
         </div>
-        <div id="historyTable"></div>
     `;
 
     const renderTable = (rows) => {
-        document.getElementById('historyTable').innerHTML = makeTable(
-            ['P1', 'P2', 'Winner', 'Problem', 'Duration', 'Status'],
-            rows.map(row => `
-                <tr>
-                    <td>${row.player1}</td>
-                    <td>${row.player2}</td>
-                    <td>${row.winner}</td>
-                    <td>${row.problem}</td>
-                    <td>${Math.floor((row.durationSec || 0) / 60)}m ${(row.durationSec || 0) % 60}s</td>
-                    <td>${row.status}</td>
+        const tableBody = rows.map((row, idx) => {
+            const isWinnerP1 = row.winner === row.player1;
+            const isWinnerP2 = row.winner === row.player2;
+            const isDraw = row.winner === 'Draw';
+
+            let statusClass = 'finished';
+            let statusIcon = 'check-circle';
+            if (row.status === 'CANCELLED') {
+                statusClass = 'cancelled';
+                statusIcon = 'x-circle';
+            } else if (isDraw) {
+                statusClass = 'draw';
+                statusIcon = 'minus-circle';
+            }
+
+            return `
+                <tr class="stagger-card" style="animation-delay: ${idx * 0.05}s">
+                    <td>
+                        <div class="player-info ${isWinnerP1 ? 'winner-highlight' : ''}">
+                            <i data-lucide="user"></i> ${row.player1}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="player-info ${isWinnerP2 ? 'winner-highlight' : ''}">
+                            <i data-lucide="user"></i> ${row.player2}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="player-info ${!isDraw ? 'winner-highlight' : ''}">
+                            <i data-lucide="${isDraw ? 'minus' : 'trophy'}" style="width:14px; height:14px;"></i> 
+                            ${row.winner}
+                        </div>
+                    </td>
+                    <td><code style="color:var(--text-secondary)">${row.problem}</code></td>
+                    <td style="font-weight:700;">${Math.floor((row.durationSec || 0) / 60)}m ${(row.durationSec || 0) % 60}s</td>
+                    <td>
+                        <span class="status-badge ${statusClass}">
+                            <i data-lucide="${statusIcon}" style="width:12px; height:12px;"></i> ${row.status}
+                        </span>
+                    </td>
                 </tr>
-            `)
-        );
+            `;
+        }).join('');
+
+        document.getElementById('historyTable').innerHTML = `
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Player 1</th>
+                        <th>Player 2</th>
+                        <th>Winner</th>
+                        <th>Problem</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows.length ? tableBody : '<tr><td colspan="6" style="text-align:center; padding:3rem; color:var(--text-muted);">No match history found matching your criteria.</td></tr>'}
+                </tbody>
+            </table>
+        `;
+
+        if (window.lucide) lucide.createIcons();
     };
 
     renderTable(data);
 
     document.getElementById('historyApply').onclick = async () => {
+        const btn = document.getElementById('historyApply');
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-sm"></span> Searching...';
+
         const date = document.getElementById('historyDate').value;
         const user = document.getElementById('historyUser').value;
         const result = document.getElementById('historyResult').value;
-        const rows = await adminRequest(`/match-history?${new URLSearchParams({ date, user, result })}`);
-        renderTable(rows);
+
+        try {
+            const rows = await adminRequest(`/match-history?${new URLSearchParams({ date, user, result })}`);
+            renderTable(rows);
+        } catch (e) {
+            showAlert('Failed to filter history: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
     };
+
+    if (window.lucide) lucide.createIcons();
 }
+
 
 async function renderProblems() {
     const rows = await adminRequest('/problems');

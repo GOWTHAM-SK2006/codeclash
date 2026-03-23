@@ -177,6 +177,104 @@
             box-shadow: 0 0 10px var(--success);
         }
 
+        /* Match History Specifics */
+        .history-filters {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .history-table-container {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        .history-table th {
+            padding: 1.25rem 1.5rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .history-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: all 0.2s ease;
+        }
+
+        .history-table tr:hover td {
+            background: rgba(255, 107, 0, 0.03);
+            color: #fff;
+        }
+
+        .status-badge {
+            padding: 0.35rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .status-badge.finished {
+            background: rgba(0, 200, 83, 0.1);
+            color: var(--success);
+            border: 1px solid rgba(0, 200, 83, 0.2);
+        }
+
+        .status-badge.cancelled {
+            background: rgba(255, 61, 0, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 61, 0, 0.2);
+        }
+
+        .status-badge.draw {
+            background: rgba(255, 179, 0, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(255, 179, 0, 0.2);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-weight: 600;
+        }
+
+        .player-info i {
+            color: var(--text-muted);
+            width: 14px;
+            height: 14px;
+        }
+
+        .winner-highlight {
+            color: var(--accent);
+            font-weight: 800;
+        }
+
         .admin-layout {
             display: grid;
             grid-template-columns: 260px 1fr;
