@@ -365,9 +365,12 @@ async function renderProblems() {
                     </select>
                     <input id="pTags" placeholder="Tags (comma separated)" class="input" style="max-width:260px;">
                 </div>
-                <button class="btn btn-primary" id="addProblemBtn" style="padding: 0.6rem 1.8rem;">
-                    <i data-lucide="plus" style="width:16px; height:16px;"></i> Create Problem
-                </button>
+                <div style="display:flex; gap:0.8rem;">
+                    <input id="pSearch" placeholder="Search problems..." class="input" style="max-width:200px; background:rgba(255,255,255,0.05);">
+                    <button class="btn btn-primary" id="addProblemBtn" style="padding: 0.6rem 1.8rem;">
+                        <i data-lucide="plus" style="width:16px; height:16px;"></i> Create Problem
+                    </button>
+                </div>
             </div>
 
             <div class="history-table-container">
@@ -382,8 +385,8 @@ async function renderProblems() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${rows.map((row, idx) => `
-                            <tr class="stagger-card clickable" style="animation-delay: ${idx * 0.05}s" data-problem-row="${row.id}">
+                        ${rows.slice(0, 100).map((row, idx) => `
+                            <tr class="stagger-card clickable" style="animation-delay: ${Math.min(idx * 0.05, 1)}s" data-problem-row="${row.id}">
                                 <td style="color:var(--text-muted); font-weight:600;">#${row.id}</td>
                                 <td style="font-weight:700;">${row.title}</td>
                                 <td>
@@ -432,21 +435,44 @@ async function renderProblems() {
         }
     };
 
-    sectionRoot.querySelectorAll('[data-del-problem]').forEach(btn => {
-        btn.onclick = async () => {
-            if (!confirm(`Are you sure you want to delete problem #${btn.dataset.delProblem}?`)) return;
-            try {
-                await adminRequest(`/problems/${btn.dataset.delProblem}`, { method: 'DELETE' });
-                renderProblems();
-            } catch (e) {
-                showAlert('Failed to delete problem: ' + e.message);
-            }
-        };
-    });
+    document.getElementById('pSearch').oninput = (e) => {
+        const query = e.target.value.toLowerCase();
+        const filtered = problemCache.filter(p =>
+            p.title.toLowerCase().includes(query) ||
+            (p.tags || []).some(t => t.toLowerCase().includes(query))
+        );
+        renderProblemsRows(filtered);
+    };
 
-    sectionRoot.querySelectorAll('[data-problem-row]').forEach(row => {
+    if (window.lucide) lucide.createIcons();
+}
+
+function renderProblemsRows(rows) {
+    const tbody = sectionRoot.querySelector('.history-table tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = rows.slice(0, 100).map((row, idx) => `
+        <tr class="stagger-card clickable" style="animation-delay: ${Math.min(idx * 0.05, 0.5)}s" data-problem-row="${row.id}">
+            <td style="color:var(--text-muted); font-weight:600;">#${row.id}</td>
+            <td style="font-weight:700;">${row.title}</td>
+            <td>
+                <span class="status-badge ${row.difficulty.toLowerCase()}">
+                    <i data-lucide="shield" style="width:12px; height:12px;"></i> ${row.difficulty}
+                </span>
+            </td>
+            <td>
+                ${(row.tags || []).map(tag => `<span class="tag-badge">${tag}</span>`).join('')}
+            </td>
+            <td style="text-align:center;">
+                <button class="action-icon-btn" data-del-problem="${row.id}" title="Delete Problem">
+                    <i data-lucide="trash-2" style="width:18px; height:18px;"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+
+    tbody.querySelectorAll('[data-problem-row]').forEach(row => {
         row.onclick = (e) => {
-            // Don't navigate if clicking the delete button
             if (e.target.closest('[data-del-problem]')) return;
             selectedProblemId = Number(row.dataset.problemRow);
             currentSection = 'Testcases';
@@ -456,8 +482,22 @@ async function renderProblems() {
         };
     });
 
+    tbody.querySelectorAll('[data-del-problem]').forEach(btn => {
+        btn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm(`Are you sure you want to delete problem #${btn.dataset.delProblem}?`)) return;
+            try {
+                await adminRequest(`/problems/${btn.dataset.delProblem}`, { method: 'DELETE' });
+                renderProblems();
+            } catch (err) {
+                showAlert('Failed to delete problem: ' + err.message);
+            }
+        };
+    });
+
     if (window.lucide) lucide.createIcons();
 }
+
 
 async function fetchProblems() {
     const rows = await adminRequest('/problems');
